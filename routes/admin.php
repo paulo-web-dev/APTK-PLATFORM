@@ -1,19 +1,19 @@
 <?php
 
+use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Rotas do Painel Administrativo
+| Rotas do Painel Administrativo  (prefixo /admin, nomes admin.*)
 |--------------------------------------------------------------------------
-| Registradas em App\Providers\RouteServiceProvider com:
-|   - prefixo de URL "admin"    → tudo aqui começa em /admin
-|   - middleware "web"          → sessão, cookies, CSRF
-|   - prefixo de nome "admin."  → nomes viram admin.dashboard, admin.products.index, etc.
-|
-| O middleware de permissão (AdminMiddleware) entra na Etapa 6.
+| Protegidas por login + role admin.
 */
 
-Route::get('/ping', function () {
-    return 'admin ok';
-})->name('ping');
+Route::middleware(['auth', AdminMiddleware::class])->group(function () {
+
+    Route::get('/ping', function () {
+        return 'admin ok — autenticado com role admin';
+    })->name('ping');
+
+});

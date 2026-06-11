@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Shop\HomeController;
+use App\Http\Controllers\Shop\ProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -10,10 +11,11 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/loja', [ProductController::class, 'index'])->name('catalog');
 
 /*
 |--------------------------------------------------------------------------
-| Área logada (trazido pelo Breeze)
+| Área logada (Breeze)
 |--------------------------------------------------------------------------
 */
 Route::get('/dashboard', function () {
