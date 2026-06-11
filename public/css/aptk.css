@@ -1,0 +1,280 @@
+/* =====================================================================
+   APTK — IDENTIDADE VISUAL  ·  public/css/aptk.css
+   ---------------------------------------------------------------------
+   Carregar SEMPRE depois do Bootstrap 5 (esta folha tematiza por cima).
+   Ordem no <head>:  Bootstrap 5  →  aptk.css  →  CSS específico da página
+   Regra de ouro: nenhuma cor hardcoded fora do :root — tudo via var().
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. TOKENS (:root)
+   --------------------------------------------------------------------- */
+:root {
+  /* Fundos */
+  --color-bg:           #0D0D0D;   /* fundo principal — preto quente */
+  --color-bg-card:      #161616;   /* cards, containers */
+  --color-bg-elevated:  #1F1F1F;   /* modais, dropdowns, sidebar */
+  --color-border:       #2A2A2A;   /* bordas e separadores */
+
+  /* Dourado — cor primária APTK */
+  --color-primary:      #D4A017;   /* dourado âmbar — CTAs, destaques */
+  --color-primary-hover:#E8B820;   /* hover de botões e links */
+  --color-primary-muted:#8B6914;   /* dourado escuro — bordas sutis, badges */
+
+  /* Texto */
+  --color-text:         #F0EAD6;   /* texto principal — creme quente */
+  --color-text-muted:   #9A9082;   /* texto secundário, labels */
+  --color-text-inverse: #0D0D0D;   /* texto sobre fundo dourado */
+
+  /* Status */
+  --color-success:      #4CAF7D;
+  --color-warning:      #D4A017;   /* reutiliza o dourado */
+  --color-danger:       #E05252;
+  --color-info:         #5B8FD4;
+
+  /* Tipografia */
+  --font-display:  'Playfair Display', Georgia, serif;  /* títulos, hero */
+  --font-script:   'Dancing Script', cursive;           /* destaques cursivos */
+  --font-body:     'Inter', system-ui, sans-serif;      /* UI, corpo */
+  --font-mono:     'JetBrains Mono', monospace;          /* dados, preços */
+
+  /* Escala tipográfica */
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+  --text-4xl:  2.25rem;
+  --text-5xl:  3rem;
+
+  /* Raios */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  20px;
+
+  /* Sombras */
+  --shadow-card:   0 4px 24px rgba(0,0,0,0.6);
+  --shadow-glow:   0 0 20px rgba(212,160,23,0.15);   /* glow dourado sutil */
+
+  /* Extras tokenizados (derivados da paleta — hover/overlay) */
+  --gold-faint:    rgba(212,160,23,0.08);
+  --gold-line:     rgba(212,160,23,0.30);
+  --overlay-dark:  rgba(0,0,0,0.55);
+
+  /* Layout */
+  --container:     1200px;
+  --header-h:      76px;
+}
+
+/* ---------------------------------------------------------------------
+   2. BASE — overrides do tema escuro sobre o Reboot do Bootstrap
+   --------------------------------------------------------------------- */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.12;
+  color: var(--color-text);
+}
+
+a { color: inherit; text-decoration: none; }
+
+ul.list-clean { margin: 0; padding: 0; list-style: none; }
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+::selection { background: var(--color-primary); color: var(--color-text-inverse); }
+
+/* ---------------------------------------------------------------------
+   3. COMPONENTES
+   --------------------------------------------------------------------- */
+
+/* Container customizado (não conflita com .container do Bootstrap) */
+.container-aptk {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: 24px;
+}
+
+/* Espaçamento vertical de seção */
+.section { padding-block: clamp(64px, 9vw, 120px); }
+.section-head { max-width: 640px; margin-bottom: 48px; }
+.section-head p { color: var(--color-text-muted); font-size: var(--text-lg); margin: 0; }
+
+/* Eyebrow / rótulo de seção (mono, caixa alta, espaçado) */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before {
+  content: "";
+  width: 26px;
+  height: 1px;
+  background: var(--color-primary);
+  display: inline-block;
+}
+
+/* Título de seção com fio dourado embaixo */
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, var(--text-4xl));
+  color: var(--color-text);
+  margin-top: 14px;
+  padding-bottom: 16px;
+  position: relative;
+}
+.section-title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 64px;
+  height: 2px;
+  background: var(--color-primary);
+}
+
+/* Botão APTK — sólido dourado, texto escuro caixa alta */
+.btn-aptk {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  transition: background-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.btn-aptk:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-1px);
+  color: var(--color-text-inverse);
+}
+
+/* Variante contorno */
+.btn-aptk--outline {
+  background: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-primary-muted);
+}
+.btn-aptk--outline:hover {
+  background: var(--gold-faint);
+  color: var(--color-primary-hover);
+  border-color: var(--color-primary);
+  box-shadow: none;
+}
+
+.btn-aptk--block { width: 100%; }
+
+/* Card base */
+.card-aptk {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.card-aptk:hover {
+  border-color: var(--color-primary-muted);
+  box-shadow: var(--shadow-card);
+}
+
+/* Badge */
+.badge-aptk {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-primary-muted);
+  color: var(--color-primary);
+  background: var(--gold-faint);
+}
+
+/* Preço — fonte mono */
+.price-tag {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--color-text);
+}
+.price-tag small { color: var(--color-text-muted); font-weight: 400; }
+
+/* Nome de produto em cursivo âmbar (assinatura da marca) */
+.product-name {
+  font-family: var(--font-script);
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.1;
+}
+
+/* Placeholder de imagem (#1F1F1F) — usado durante o dev, antes das imagens reais */
+.placeholder {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+.placeholder::after {
+  content: "APTK";
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  color: var(--color-border);
+  position: absolute;
+  letter-spacing: 0.1em;
+}
+.placeholder span { position: relative; z-index: 1; align-self: end; margin-bottom: 14px; }
+
+/* ---------------------------------------------------------------------
+   4. UTILITÁRIOS
+   --------------------------------------------------------------------- */
+.text-gold   { color: var(--color-primary); }
+.bg-elevated { background: var(--color-bg-elevated); }
+.border-gold { border: 1px solid var(--color-primary-muted); }
+
+/* ---------------------------------------------------------------------
+   5. ACESSIBILIDADE — movimento reduzido
+   --------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
