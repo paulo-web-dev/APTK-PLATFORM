@@ -14,7 +14,7 @@
     .prod-card .prod-img { aspect-ratio: 1 / 1; border-radius: 0; border: none; border-bottom: 1px solid var(--color-border); }
     .prod-body { padding: 20px; display: flex; flex-direction: column; flex: 1; }
     .prod-cat { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 8px; }
-    .prod-name { font-family: var(--font-script); font-size: var(--text-2xl); color: var(--color-primary); line-height: 1.1; margin-bottom: 14px; }
+    .prod-name { font-family: var(--font-script); font-size: var(--text-2xl); color: var(--color-primary); line-height: 1.1; margin: 0 0 14px; }
     .prod-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .prod-price { font-family: var(--font-mono); font-size: var(--text-lg); color: var(--color-text); }
     .empty { text-align: center; padding: 80px 20px; color: var(--color-text-muted); border: 1px dashed var(--color-border); border-radius: var(--radius-lg); }
@@ -44,13 +44,17 @@
             <div class="prod-grid">
                 @foreach ($products as $product)
                     <div class="card-aptk prod-card">
-                        <div class="placeholder prod-img"><span>{{ $product->name }}</span></div>
+                        <a href="{{ route('product', $product->slug) }}" style="text-decoration:none; color:inherit;">
+                            <div class="placeholder prod-img"><span>{{ $product->name }}</span></div>
+                        </a>
                         <div class="prod-body">
                             <span class="prod-cat">{{ $product->category?->name ?? 'APTK' }}</span>
-                            <p class="prod-name">{{ $product->name }}</p>
+                            <a href="{{ route('product', $product->slug) }}" style="text-decoration:none;">
+                                <p class="prod-name">{{ $product->name }}</p>
+                            </a>
                             <div class="prod-foot">
                                 <span class="prod-price">R$ {{ number_format($product->price, 2, ',', '.') }}</span>
-                                <a href="#" class="btn-aptk">Comprar</a>
+                                <a href="{{ route('product', $product->slug) }}" class="btn-aptk">Ver</a>
                             </div>
                         </div>
                     </div>

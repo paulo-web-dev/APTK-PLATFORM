@@ -35,4 +35,21 @@ class ProductController extends Controller
 
         return view('shop.catalog', compact('categories', 'products', 'activeCategory'));
     }
+
+    public function show(string $slug): View
+    {
+        $product = Product::where('slug', $slug)
+            ->where('active', true)
+            ->with(['category', 'images'])
+            ->firstOrFail();
+
+        $related = Product::where('active', true)
+            ->where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->with('primaryImage')
+            ->limit(3)
+            ->get();
+
+        return view('shop.product', compact('product', 'related'));
+    }
 }
