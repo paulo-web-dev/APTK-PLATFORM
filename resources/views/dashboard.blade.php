@@ -15,11 +15,11 @@
 
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-4">
-            <div class="card-aptk acc-card">
+            <a href="{{ route('orders.index') }}" class="card-aptk acc-card" style="display:block; text-decoration:none;">
                 <span class="eyebrow">Pedidos</span>
                 <p class="acc-num">{{ auth()->user()->orders()->count() }}</p>
-                <p class="acc-cap">pedidos realizados</p>
-            </div>
+                <p class="acc-cap">pedidos realizados · ver todos →</p>
+            </a>
         </div>
         <div class="col-12 col-md-4">
             <div class="card-aptk acc-card">
@@ -42,6 +42,7 @@
         <p style="color: var(--color-text-muted); margin: 0 0 20px;">Explore o catálogo, monte seu rótulo personalizado ou entre para o clube.</p>
         <div class="d-flex flex-wrap gap-2">
             <a href="{{ route('home') }}" class="btn-aptk">Ir para a loja</a>
+            <a href="{{ route('orders.index') }}" class="btn-aptk btn-aptk--outline">Meus pedidos</a>
             <a href="{{ route('profile.edit') }}" class="btn-aptk btn-aptk--outline">Editar perfil</a>
         </div>
     </div>

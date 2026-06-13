@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\StockController;
 use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Support\Facades\Route;
 
@@ -29,5 +31,13 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/produtos/{product}/editar', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/produtos/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/produtos/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+    // Clientes
+    Route::get('/clientes', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('/clientes/{user}', [CustomerController::class, 'show'])->name('customers.show');
+
+    // Estoque
+    Route::get('/estoque', [StockController::class, 'index'])->name('stock.index');
+    Route::patch('/estoque/{product}', [StockController::class, 'update'])->name('stock.update');
 
 });

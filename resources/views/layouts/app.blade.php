@@ -43,6 +43,7 @@
             <a href="{{ route('home') }}" class="brand"><span class="brand-mark"></span>APTK</a>
             <div class="nav-links">
                 <a href="{{ route('home') }}">Loja</a>
+                <a href="{{ route('orders.index') }}">Meus pedidos</a>
                 <a href="{{ route('dashboard') }}">Minha conta</a>
             </div>
             <div class="user-menu dropdown">
@@ -51,6 +52,7 @@
                     {{ auth()->user()->name }}
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{{ route('orders.index') }}">Meus pedidos</a></li>
                     <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Meu perfil</a></li>
                     <li>
                         <form method="POST" action="{{ route('logout') }}">

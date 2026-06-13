@@ -9,8 +9,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Usuário admin para testar o painel.
-        // (Senha em texto puro — o cast 'hashed' do model criptografa sozinho.)
+        // Usuário admin para o painel (senha em texto puro — o cast 'hashed' criptografa).
         User::updateOrCreate(
             ['email' => 'admin@aptk.test'],
             [
@@ -21,7 +20,9 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
-            ProductSeeder::class,
+            ProductSeeder::class,   // categorias + produtos
+            CustomerSeeder::class,  // clientes de demonstração
+            OrderSeeder::class,     // pedidos variados (depende dos dois acima)
         ]);
     }
 }
