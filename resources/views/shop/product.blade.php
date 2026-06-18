@@ -6,7 +6,7 @@
 <style>
     .pdp { padding-block: 48px; }
     .pdp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
-    .pdp-gallery .main-img { aspect-ratio: 1 / 1; }
+    .pdp-gallery .main-img { aspect-ratio: 1 / 1; object-fit: contain; background: #0D0A06; padding: 22px; }
     .pdp-thumbs { display: flex; gap: 12px; margin-top: 14px; }
     .pdp-thumbs .thumb { width: 72px; height: 72px; flex-shrink: 0; aspect-ratio: 1 / 1; }
     .pdp-breadcrumb { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 24px; }
@@ -52,7 +52,7 @@
                         <div class="pdp-thumbs">
                             @foreach ($product->images as $img)
                                 <img src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}" alt=""
-                                     class="thumb" style="object-fit:cover; border:1px solid var(--color-border); border-radius:var(--radius-sm);">
+                                     class="thumb" style="object-fit:contain; background:#0D0A06; border:1px solid var(--color-border); border-radius:var(--radius-sm);">
                             @endforeach
                         </div>
                     @endif
@@ -130,7 +130,12 @@
                         <div class="col-12 col-md-4">
                             <a href="{{ route('product', $rel->slug) }}" class="card-aptk"
                                style="display:flex; flex-direction:column; padding:0; overflow:hidden; text-decoration:none;">
-                                <div class="placeholder" style="aspect-ratio:1/1; border:none; border-bottom:1px solid var(--color-border); border-radius:0;"><span>{{ $rel->name }}</span></div>
+                                @if ($rel->primaryImage)
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($rel->primaryImage->path) }}" alt="{{ $rel->name }}"
+                                         style="aspect-ratio:1/1; width:100%; object-fit:contain; background:#0D0A06; border:none; border-bottom:1px solid var(--color-border); border-radius:0; padding:16px;">
+                                @else
+                                    <div class="placeholder" style="aspect-ratio:1/1; border:none; border-bottom:1px solid var(--color-border); border-radius:0;"><span>{{ $rel->name }}</span></div>
+                                @endif
                                 <div style="padding:18px;">
                                     <p style="font-family:var(--font-script); font-size:var(--text-xl); color:var(--color-primary); margin:0 0 8px;">{{ $rel->name }}</p>
                                     <span style="font-family:var(--font-mono); color:var(--color-text);">R$ {{ number_format($rel->price, 2, ',', '.') }}</span>

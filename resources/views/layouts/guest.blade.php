@@ -5,17 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acesso · APTK Spirits</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    {{-- Tipografia oficial APTK (auto-hospedada em aptk-tokens.css) --}}
+    <link rel="preload" href="{{ asset('fonts/PPRader-Bold.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ asset('fonts/PPRader-Regular.woff2') }}" as="font" type="font/woff2" crossorigin>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    @include('partials.theme-init')
     <link href="{{ asset('css/aptk.css') }}" rel="stylesheet">
 
     <style>
         .auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
         .auth-card { width: 100%; max-width: 420px; background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 40px 32px; box-shadow: var(--shadow-card); }
-        .auth-brand { display: flex; align-items: center; gap: 10px; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: var(--text-2xl); letter-spacing: 0.18em; color: var(--color-text); margin-bottom: 4px; }
-        .auth-brand .brand-mark { width: 10px; height: 10px; background: var(--color-primary); border-radius: 2px; transform: rotate(45deg); }
+        .auth-logo { display: flex; justify-content: center; font-size: 22px; text-decoration: none; }
+        .auth-logo .aptk-logo { color: var(--color-text); }
+        .auth-kicker { display: block; text-align: center; margin: 14px 0 26px; }
         .auth-sub { text-align: center; color: var(--color-text-muted); font-size: var(--text-sm); margin-bottom: 26px; }
         .auth-card label { display: block; font-size: var(--text-sm); color: var(--color-text); margin-bottom: 6px; font-weight: 500; }
         .auth-card .form-control { background: var(--color-bg-elevated); border: 1px solid var(--color-border); color: var(--color-text); border-radius: var(--radius-md); padding: 11px 14px; }
@@ -32,10 +35,14 @@
 <body>
     <div class="auth-wrap">
         <div class="auth-card">
-            <a href="{{ url('/') }}" class="auth-brand"><span class="brand-mark"></span>APTK</a>
+            <a href="{{ url('/') }}" class="auth-logo" aria-label="APTK Spirits — início">
+                <x-brand.logo :tag="true" />
+            </a>
+            <span class="eyebrow auth-kicker">Alquimia de histórias</span>
             {{ $slot }}
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    @include('partials.theme-toggle')
 </body>
 </html>

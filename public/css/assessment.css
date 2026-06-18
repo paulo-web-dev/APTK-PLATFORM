@@ -1,0 +1,88 @@
+/* === DISC.ONE — Assessment (form + questions) styles === */
+
+.asmt { min-height: 100vh; display: flex; flex-direction: column; background: radial-gradient(1100px 540px at 50% -10%, rgba(0,163,255,0.08), transparent 60%), var(--bg-0); }
+
+/* Top bar with progress */
+.asmt-top { position: sticky; top: 0; z-index: 20; background: rgba(8,12,22,0.8); backdrop-filter: blur(16px); border-bottom: 1px solid var(--line-1); }
+.asmt-top-inner { max-width: 760px; margin: 0 auto; padding: 16px 28px 14px; display: flex; align-items: center; gap: 16px; }
+.asmt-top .step-label { font-family: var(--font-mono); font-size: 12px; color: var(--fg-3); white-space: nowrap; }
+.asmt-top .step-label b { color: var(--brand-300); }
+.asmt-progress { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.asmt-progress i { display: block; height: 100%; background: var(--grad-brand); border-radius: 3px; transition: width 420ms var(--ease-out); box-shadow: 0 0 16px -2px rgba(0,163,255,0.6); }
+.asmt-pct { font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--brand-300); white-space: nowrap; }
+.asmt-exit { width: 36px; height: 36px; border-radius: 10px; background: var(--bg-2); border: 1px solid var(--line-2); color: var(--fg-3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--dur) var(--ease-out); }
+.asmt-exit:hover { color: #fff; border-color: var(--line-3); }
+.asmt-exit .ico { width: 16px; height: 16px; }
+.asmt-save { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fg-4); }
+.asmt-save .ico { width: 14px; height: 14px; color: var(--success); }
+
+/* Body */
+.asmt-body { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 48px 28px 120px; }
+.asmt-stage { width: 100%; max-width: 720px; }
+
+/* Question header */
+.q-head { margin-bottom: 28px; }
+.q-head .eyebrow { color: var(--brand-300); }
+.q-head h2 { font-size: 30px; line-height: 1.18; letter-spacing: -0.015em; margin: 12px 0 6px; }
+.q-head p { color: var(--fg-3); font-size: 15px; }
+.q-legend { display: flex; gap: 18px; margin-top: 16px; flex-wrap: wrap; }
+.q-legend span { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--fg-3); }
+.q-legend .mk { width: 24px; height: 24px; border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+.q-legend .mk .ico { width: 14px; height: 14px; stroke-width: 2.5; }
+
+/* Statement rows */
+.stmt-list { display: flex; flex-direction: column; gap: 12px; }
+.stmt {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 18px; background: var(--bg-2); border: 1px solid var(--line-2);
+  border-radius: var(--r-md); transition: all var(--dur) var(--ease-out);
+}
+.stmt:hover { border-color: var(--line-3); background: var(--bg-3); }
+.stmt.is-most { border-color: rgba(43,217,161,0.5); box-shadow: 0 0 22px -8px rgba(43,217,161,0.45); background: linear-gradient(90deg, rgba(43,217,161,0.08), transparent); }
+.stmt.is-least { border-color: rgba(255,84,112,0.45); box-shadow: 0 0 22px -8px rgba(255,84,112,0.35); background: linear-gradient(90deg, rgba(255,84,112,0.07), transparent); }
+.stmt .txt { flex: 1; font-size: 16px; color: var(--fg-1); font-weight: 500; }
+.stmt-acts { display: flex; gap: 8px; flex: none; }
+.mk-btn {
+  width: 46px; height: 46px; border-radius: var(--r-sm); cursor: pointer;
+  border: 1.5px solid var(--line-2); background: var(--bg-1);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  color: var(--fg-4); transition: all var(--dur-fast) var(--ease-out);
+}
+.mk-btn .ico { width: 18px; height: 18px; stroke-width: 2.5; }
+.mk-btn .lbl { font-size: 8px; font-weight: 700; letter-spacing: 0.06em; }
+.mk-btn.most:hover { color: var(--disc-s); border-color: var(--disc-s); }
+.mk-btn.least:hover { color: var(--disc-d); border-color: var(--disc-d); }
+.mk-btn.most.on { background: var(--disc-s); border-color: var(--disc-s); color: #06231a; box-shadow: 0 0 20px -4px rgba(43,217,161,0.6); }
+.mk-btn.least.on { background: var(--disc-d); border-color: var(--disc-d); color: #2b0710; box-shadow: 0 0 20px -4px rgba(255,84,112,0.55); }
+
+/* Footer nav */
+.asmt-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; background: linear-gradient(0deg, var(--bg-0) 40%, transparent); padding: 22px 28px 26px; }
+.asmt-nav-inner { max-width: 720px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.asmt-nav .hint { font-size: 13px; color: var(--fg-4); }
+.asmt-nav .hint b { color: var(--brand-300); }
+
+/* Personal data form */
+.pd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 13px; font-weight: 600; color: var(--fg-2); display: flex; align-items: center; gap: 7px; }
+.field label .ico { width: 15px; height: 15px; color: var(--brand-300); }
+.field label .req { color: var(--disc-d); }
+.field .input-wrap { position: relative; }
+.field input {
+  width: 100%; padding: 14px 16px; font-size: 15px; font-family: inherit;
+  background: var(--bg-2); border: 1px solid var(--line-2); border-radius: var(--r-md);
+  color: var(--fg-1); outline: none; transition: all var(--dur) var(--ease-out);
+}
+.field input::placeholder { color: var(--fg-4); }
+.field input:focus { border-color: var(--brand-500); box-shadow: 0 0 0 3px rgba(0,163,255,0.16); background: var(--bg-3); }
+.field input.err { border-color: var(--disc-d); }
+.field .err-msg { font-size: 12px; color: var(--disc-d); }
+.pd-secure { display: flex; align-items: center; gap: 10px; margin-top: 22px; padding: 14px 16px; background: rgba(43,217,161,0.06); border: 1px solid rgba(43,217,161,0.2); border-radius: var(--r-md); font-size: 13px; color: var(--fg-3); }
+.pd-secure .ico { width: 18px; height: 18px; color: var(--success); flex: none; }
+
+@media (max-width: 620px) {
+  .pd-grid { grid-template-columns: 1fr; }
+  .q-head h2 { font-size: 24px; }
+  .stmt .txt { font-size: 15px; }
+}

@@ -5,6 +5,7 @@ use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\HomeController;
 use App\Http\Controllers\Shop\OrderController;
+use App\Http\Controllers\Shop\PageController;
 use App\Http\Controllers\Shop\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,13 @@ Route::get('/carrinho', [CartController::class, 'index'])->name('cart.index');
 Route::post('/carrinho/adicionar', [CartController::class, 'add'])->name('cart.add');
 Route::patch('/carrinho/atualizar', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/carrinho/remover', [CartController::class, 'remove'])->name('cart.remove');
+
+/*
+|--------------------------------------------------------------------------
+| Newsletter (formulário do rodapé) → PageController@newsletter
+|--------------------------------------------------------------------------
+*/
+Route::post('/newsletter', [PageController::class, 'newsletter'])->name('newsletter');
 
 /*
 |--------------------------------------------------------------------------
@@ -51,5 +59,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/meus-pedidos', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/meus-pedidos/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Páginas institucionais "em breve" → PageController@show
+|--------------------------------------------------------------------------
+| Slugs fixos (gate também no controller via abort_unless). Fica por último
+| para não capturar nenhuma rota literal acima.
+*/
+Route::get('/{slug}', [PageController::class, 'show'])
+    ->where('slug', 'customizacao|clube|assinantes|parceiros|eventos|franquias|marcas|sobre')
+    ->name('pages.show');
 
 require __DIR__.'/auth.php';

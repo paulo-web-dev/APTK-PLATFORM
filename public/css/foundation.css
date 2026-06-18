@@ -1,0 +1,194 @@
+/* =============================================================
+   DISC.ONE — Foundation
+   Built on the Unyflex Digital design system (dark navy + cyan),
+   extended with the 4 classic DISC factor colors.
+   ============================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ---------- Brand color ramp (cyan-blue) ---------- */
+  --brand-50:  #E6F7FF;
+  --brand-100: #BCE9FF;
+  --brand-200: #80D6FF;
+  --brand-300: #3DC0FF;
+  --brand-400: #16AEFF;
+  --brand-500: #00A3FF;
+  --brand-600: #0089E0;
+  --brand-700: #006FB8;
+  --brand-800: #004F85;
+  --brand-900: #002C4D;
+
+  /* ---------- Neutrals (deep navy / charcoal) ---------- */
+  --bg-0:   #05080F;
+  --bg-1:   #0A0F1C;
+  --bg-2:   #0F1726;
+  --bg-3:   #16203A;
+  --bg-4:   #1E2B4A;
+  --line-1: rgba(255,255,255,0.06);
+  --line-2: rgba(255,255,255,0.10);
+  --line-3: rgba(0,163,255,0.35);
+
+  /* ---------- Foreground ---------- */
+  --fg-1: #FFFFFF;
+  --fg-2: #DCE3F0;
+  --fg-3: #97A3B8;
+  --fg-4: #5C6885;
+  --fg-on-brand: #061224;
+
+  /* ---------- Semantic ---------- */
+  --success: #2BD9A1;
+  --warning: #FFB547;
+  --danger:  #FF5C7A;
+  --info:    var(--brand-500);
+
+  /* ---------- DISC factor colors ---------- */
+  --disc-d: #FF5470;   /* Dominância — vermelho/coral */
+  --disc-d-soft: rgba(255,84,112,0.14);
+  --disc-i: #FFB547;   /* Influência — âmbar/dourado */
+  --disc-i-soft: rgba(255,181,71,0.14);
+  --disc-s: #2BD9A1;   /* Estabilidade — verde */
+  --disc-s-soft: rgba(43,217,161,0.14);
+  --disc-c: #6E8BFF;   /* Conformidade — azul-índigo */
+  --disc-c-soft: rgba(110,139,255,0.14);
+
+  /* ---------- Effects ---------- */
+  --glow-brand: 0 0 0 1px rgba(0,163,255,0.40), 0 8px 28px -8px rgba(0,163,255,0.55), 0 0 32px -4px rgba(0,163,255,0.25);
+  --glow-soft:  0 0 24px -6px rgba(0,163,255,0.45);
+  --shadow-sm:  0 1px 2px rgba(0,0,0,0.35);
+  --shadow-md:  0 6px 20px -6px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.35);
+  --shadow-lg:  0 24px 60px -20px rgba(0,0,0,0.70), 0 4px 8px rgba(0,0,0,0.40);
+  --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.05);
+
+  --grad-brand: linear-gradient(135deg, #00C2FF 0%, #0072FF 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(0,194,255,0.18) 0%, rgba(0,114,255,0.06) 100%);
+  --grad-surface:  linear-gradient(180deg, #0F1726 0%, #0A0F1C 100%);
+  --grad-vignette: radial-gradient(120% 90% at 50% -10%, rgba(0,163,255,0.18) 0%, rgba(5,8,15,0) 60%);
+
+  /* ---------- Radii ---------- */
+  --r-xs: 6px;  --r-sm: 10px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
+
+  /* ---------- Spacing scale (4px base) ---------- */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-7: 32px; --s-8: 40px; --s-9: 56px; --s-10: 72px;
+
+  /* ---------- Type families ---------- */
+  --font-display: 'Sora', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  /* ---------- Motion ---------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms; --dur: 220ms; --dur-slow: 380ms;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg-0);
+  color: var(--fg-2);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1,h2,h3,h4,h5 { font-family: var(--font-display); color: var(--fg-1); margin: 0; }
+h1 { font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-weight: 700; letter-spacing: -0.015em; }
+h3 { font-weight: 600; letter-spacing: -0.01em; }
+p { margin: 0; }
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+img { display: block; max-width: 100%; }
+::selection { background: var(--brand-500); color: var(--fg-on-brand); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(0,163,255,0.18); border-radius: 5px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,163,255,0.35); }
+::-webkit-scrollbar-track { background: transparent; }
+
+#root { min-height: 100vh; }
+
+/* ---------- Shared utilities ---------- */
+.eyebrow {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--brand-300);
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.mono { font-family: var(--font-mono); }
+.ico { stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  font-family: var(--font-body); font-weight: 600; font-size: 15px;
+  border-radius: var(--r-md); padding: 13px 22px; border: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  transition: all var(--dur) var(--ease-out); white-space: nowrap;
+}
+.btn:active { transform: scale(0.98); }
+.btn .ico { width: 18px; height: 18px; }
+.btn-primary {
+  background: var(--grad-brand); color: var(--fg-on-brand);
+  box-shadow: 0 0 0 1px rgba(0,163,255,0.30), 0 8px 24px -10px rgba(0,163,255,0.55);
+}
+.btn-primary:hover { box-shadow: var(--glow-brand); transform: translateY(-1px); }
+.btn-primary .ico { stroke-width: 2.25; }
+.btn-secondary { background: var(--bg-3); color: #fff; border: 1px solid var(--line-2); }
+.btn-secondary:hover { background: var(--bg-4); border-color: var(--line-3); }
+.btn-ghost { background: transparent; color: var(--fg-2); border: 1px solid var(--line-2); }
+.btn-ghost:hover { color: #fff; border-color: var(--line-3); }
+.btn-lg { font-size: 17px; padding: 16px 30px; border-radius: var(--r-lg); }
+.btn-block { width: 100%; }
+
+/* ---------- Brand mark ---------- */
+.brand-lockup { display: inline-flex; align-items: center; gap: 11px; }
+.brand-mark {
+  width: 38px; height: 38px; border-radius: 50%; background: #000;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  box-shadow: 0 0 18px -4px rgba(0,163,255,0.5), 0 0 0 1px rgba(0,163,255,0.30);
+  flex: none;
+}
+.brand-mark img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.brand-word { font-family: var(--font-display); font-weight: 800; color: #fff; font-size: 17px; letter-spacing: 0.01em; }
+.brand-word b { color: var(--brand-400); font-weight: 800; }
+
+/* ---------- Pills / chips ---------- */
+.pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  padding: 6px 13px; border-radius: var(--r-pill);
+  background: rgba(0,163,255,0.10); border: 1px solid rgba(0,163,255,0.28); color: var(--brand-200);
+}
+.pill .ico { width: 14px; height: 14px; }
+
+/* ---------- Card ---------- */
+.card {
+  background: var(--bg-2); border: 1px solid var(--line-2);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-md), var(--shadow-inset);
+}
+
+/* ---------- DISC swatch helpers ---------- */
+.disc-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot-d { background: var(--disc-d); }
+.dot-i { background: var(--disc-i); }
+.dot-s { background: var(--disc-s); }
+.dot-c { background: var(--disc-c); }
+
+/* ---------- Animations ---------- */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulseGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(0,163,255,0.0); } 50% { box-shadow: 0 0 30px -4px rgba(0,163,255,0.5); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes barGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+.animate-fadeUp { animation: fadeUp var(--dur-slow) var(--ease-out) both; }
+.animate-fadeIn { animation: fadeIn var(--dur-slow) var(--ease-out) both; }
+.animate-scaleIn { animation: scaleIn var(--dur-slow) var(--ease-out) both; }
+
+/* ---------- Page transition wrapper ---------- */
+.route-fade { animation: fadeIn 320ms var(--ease-out) both; }

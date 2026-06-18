@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>@yield('admin_title', 'Painel') · APTK Admin</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  {{-- Tipografia oficial APTK (PP Rader, auto-hospedada em aptk-tokens.css) --}}
+  <link rel="preload" href="{{ asset('fonts/PPRader-Bold.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{{ asset('fonts/PPRader-Regular.woff2') }}" as="font" type="font/woff2" crossorigin>
+
+  {{-- Fonte única de tokens (paleta + tipografia + escala + tema). O admin usa o tema escuro da marca via data-theme="dark" no <html>. --}}
+  <link href="{{ asset('css/aptk-tokens.css') }}" rel="stylesheet">
   <style>
   /* ===================================================================
      APTK ADMIN — IDENTIDADE
@@ -14,33 +17,9 @@
      BLOCO B (admin)               → vira o CSS do layout admin
      =================================================================== */
 
-  /* ---------- BLOCO A — TOKENS (reuso do aptk.css) ---------- */
-  :root {
-    --color-bg:           #0D0D0D;
-    --color-bg-card:      #161616;
-    --color-bg-elevated:  #1F1F1F;
-    --color-border:       #2A2A2A;
-    --color-primary:      #D4A017;
-    --color-primary-hover:#E8B820;
-    --color-primary-muted:#8B6914;
-    --color-text:         #F0EAD6;
-    --color-text-muted:   #9A9082;
-    --color-text-inverse: #0D0D0D;
-    --color-success:      #4CAF7D;
-    --color-warning:      #D4A017;
-    --color-danger:       #E05252;
-    --color-info:         #5B8FD4;
-    --font-display:  'Playfair Display', Georgia, serif;
-    --font-body:     'Inter', system-ui, sans-serif;
-    --font-mono:     'JetBrains Mono', monospace;
-    --text-xs:0.75rem; --text-sm:0.875rem; --text-base:1rem; --text-lg:1.125rem;
-    --text-xl:1.25rem; --text-2xl:1.5rem; --text-3xl:1.875rem;
-    --radius-sm:4px; --radius-md:8px; --radius-lg:12px;
-    --shadow-card: 0 4px 24px rgba(0,0,0,0.6);
-    --gold-faint: rgba(212,160,23,0.08);
-    --sidebar-w: 240px;
-    --topbar-h: 68px;
-  }
+  /* ---------- TOKENS — agora vêm de aptk-tokens.css (fonte única de cor,
+     tipografia e escala). O admin herda a paleta da marca e usa o tema escuro
+     (Cuba Libre + Scotch) via data-theme="dark" no <html>. ---------- */
 
   *, *::before, *::after { box-sizing: border-box; }
   body {

@@ -1,27 +1,33 @@
 @extends('layouts.public')
 
-@section('title', 'APTK Spirits — Destilados autorais em pequenos lotes')
+@section('title', 'APTK Spirits — Drinks & histórias pra contar')
 
 @push('styles')
 <style>
-  /* ---- Home: hero ---- */
-  .hero { position: relative; min-height: calc(90vh - var(--header-h)); display: flex; align-items: center; overflow: hidden; }
+  /* ---- Home: hero (split: texto + foto) ---- */
+  .hero { position: relative; min-height: calc(92vh - var(--header-h)); display: flex; align-items: center; overflow: hidden; }
   .hero::before { content: ""; position: absolute; top: -10%; right: -5%; width: 620px; height: 620px; background: radial-gradient(circle, var(--gold-faint) 0%, transparent 65%); pointer-events: none; }
-  .hero-inner { max-width: 760px; position: relative; z-index: 1; padding-block: 48px; }
+  .hero-inner { width: 100%; position: relative; z-index: 1; padding-block: 56px; display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; }
+  .hero-copy { max-width: 620px; }
   .hero .script-line { font-family: var(--font-script); font-size: clamp(1.6rem, 4vw, var(--text-3xl)); color: var(--color-primary); margin-bottom: 12px; }
-  .hero h1 { font-size: clamp(2.5rem, 7vw, 4.25rem); letter-spacing: -0.01em; margin-bottom: 24px; }
+  .hero h1 { font-size: clamp(2.5rem, 6vw, 4rem); letter-spacing: -0.01em; margin-bottom: 24px; }
   .hero h1 em { font-style: italic; color: var(--color-text); }
-  .hero p { font-size: clamp(var(--text-base), 2vw, var(--text-xl)); color: var(--color-text-muted); max-width: 560px; margin: 0 0 36px; }
+  .hero p { font-size: clamp(var(--text-base), 2vw, var(--text-xl)); color: var(--color-text-muted); max-width: 540px; margin: 0 0 36px; }
   .hero-ctas { display: flex; flex-wrap: wrap; gap: 14px; }
   .hero-meta { margin-top: 48px; display: flex; gap: 40px; flex-wrap: wrap; }
   .hero-meta div { display: flex; flex-direction: column; gap: 2px; }
   .hero-meta .num { font-family: var(--font-mono); font-size: var(--text-2xl); color: var(--color-primary); }
   .hero-meta .lbl { font-size: var(--text-xs); color: var(--color-text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
 
+  .hero-media { position: relative; }
+  .hero-media img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: center top; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); }
+  .hero-media .photo-tag { position: absolute; left: 16px; bottom: 16px; background: color-mix(in srgb, var(--color-ink) 70%, transparent); color: var(--color-cream); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.14em; text-transform: uppercase; padding: 7px 12px; border-radius: var(--radius-sm); backdrop-filter: blur(4px); }
+
   /* ---- Home: categorias ---- */
   .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .category-card { padding: 28px 24px; display: flex; flex-direction: column; min-height: 200px; text-decoration: none; }
-  .category-card .cat-img { height: 96px; margin-bottom: 20px; }
+  .category-card { padding: 0; display: flex; flex-direction: column; min-height: 200px; text-decoration: none; overflow: hidden; }
+  .category-card .cat-img { display: block; width: 100%; height: 180px; object-fit: cover; }
+  .category-card .cat-body { padding: 22px 24px 26px; display: flex; flex-direction: column; flex: 1; }
   .category-card h3 { font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: 6px; transition: color .2s ease; }
   .category-card:hover h3 { color: var(--color-primary); }
   .category-card p { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0; }
@@ -29,7 +35,7 @@
 
   /* ---- Home: produto em destaque ---- */
   .featured-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 56px; align-items: center; }
-  .featured-img { aspect-ratio: 4 / 5; }
+  .featured-img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: center; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); }
   .featured-body .badge-aptk { margin-bottom: 18px; }
   .featured-body .product-name { font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 16px; }
   .featured-body .sub { font-family: var(--font-display); font-style: italic; font-size: var(--text-xl); color: var(--color-text); margin: 0 0 18px; }
@@ -40,6 +46,16 @@
   .featured-specs .v { font-family: var(--font-mono); color: var(--color-text); font-size: var(--text-base); }
   .featured-buy { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
   .featured-buy .price-tag { font-size: var(--text-2xl); }
+
+  /* ---- Home: faixa da loja física (escura, full-bleed) ---- */
+  .loja-band { position: relative; overflow: hidden; border-block: 1px solid var(--color-border); }
+  .loja-band .loja-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .loja-band .loja-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--color-ink) 88%, transparent) 0%, color-mix(in srgb, var(--color-ink) 62%, transparent) 55%, color-mix(in srgb, var(--color-ink) 26%, transparent) 100%); }
+  .loja-band .container-aptk { position: relative; z-index: 1; }
+  .loja-band .loja-copy { max-width: 540px; }
+  .loja-band .eyebrow { margin-bottom: 16px; }
+  .loja-band h2 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3rem); color: var(--color-cream); margin: 0 0 16px; }
+  .loja-band p { color: color-mix(in srgb, var(--color-cream) 82%, transparent); font-size: var(--text-lg); line-height: 1.7; margin: 0 0 28px; }
 
   /* ---- Home: marcas ---- */
   .brand-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
@@ -65,16 +81,19 @@
 
   /* ---- Home: animação de entrada do hero ---- */
   @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-  .hero-inner > * { animation: riseIn .7s ease both; }
-  .hero-inner > *:nth-child(2) { animation-delay: .08s; }
-  .hero-inner > *:nth-child(3) { animation-delay: .16s; }
-  .hero-inner > *:nth-child(4) { animation-delay: .24s; }
-  .hero-inner > *:nth-child(5) { animation-delay: .32s; }
+  .hero-copy > *, .hero-media { animation: riseIn .7s ease both; }
+  .hero-copy > *:nth-child(2) { animation-delay: .08s; }
+  .hero-copy > *:nth-child(3) { animation-delay: .16s; }
+  .hero-copy > *:nth-child(4) { animation-delay: .24s; }
+  .hero-media { animation-delay: .18s; }
 
   /* ---- Home: responsivo ---- */
   @media (max-width: 980px) {
+    .hero { min-height: auto; }
+    .hero-inner { grid-template-columns: 1fr; gap: 36px; }
+    .hero-media { max-width: 440px; }
     .featured-grid { grid-template-columns: 1fr; gap: 32px; }
-    .featured-img { aspect-ratio: 16 / 10; }
+    .featured-img { aspect-ratio: 16 / 11; }
     .plan-grid { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 820px) {
@@ -86,6 +105,7 @@
     .category-grid { grid-template-columns: 1fr; }
     .plan-grid { grid-template-columns: 1fr; }
     .hero-ctas .btn-aptk { width: 100%; }
+    .hero-media { max-width: none; }
   }
 </style>
 @endpush
@@ -96,17 +116,23 @@
   <section class="hero">
     <div class="container-aptk">
       <div class="hero-inner">
-        <p class="script-line">Da destilaria para a sua mesa</p>
-        <h1>Destilados autorais,<br>feitos em <em>pequenos lotes</em>.</h1>
-        <p>Gin, vodka, whisky e drinks prontos da APTK. Edições limitadas, rótulos personalizados e um clube para quem leva a bebida a sério.</p>
-        <div class="hero-ctas">
-          <a href="#" class="btn-aptk">Comprar agora</a>
-          <a href="#" class="btn-aptk btn-aptk--outline">Conhecer o clube</a>
+        <div class="hero-copy">
+          <p class="script-line">Drinks &amp; histórias pra contar</p>
+          <h1>Drinks autorais,<br>feitos em <em>pequenos lotes</em>.</h1>
+          <p>Gin, vodka, whisky e drinks engarrafados da APTK. Edições limitadas, rótulos personalizados e um clube para quem leva a bebida a sério.</p>
+          <div class="hero-ctas">
+            <a href="{{ route('catalog') }}" class="btn-aptk">Comprar agora</a>
+            <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--outline">Conhecer o clube</a>
+          </div>
+          <div class="hero-meta">
+            <div><span class="num">3</span><span class="lbl">Marcas na holding</span></div>
+            <div><span class="num">100%</span><span class="lbl">Produção artesanal</span></div>
+            <div><span class="num">24h</span><span class="lbl">Entrega via iFood Turbo</span></div>
+          </div>
         </div>
-        <div class="hero-meta">
-          <div><span class="num">3</span><span class="lbl">Marcas na holding</span></div>
-          <div><span class="num">100%</span><span class="lbl">Produção artesanal</span></div>
-          <div><span class="num">24h</span><span class="lbl">Entrega via iFood Turbo</span></div>
+        <div class="hero-media">
+          <img src="{{ asset('img/aptk/hero-bartender.jpg') }}" alt="Bartender da APTK preparando um Negroni no balcão" fetchpriority="high">
+          <span class="photo-tag">No balcão APTK</span>
         </div>
       </div>
     </div>
@@ -121,41 +147,53 @@
         <p>Do drink pronto para servir aos lotes limitados que saem só uma vez.</p>
       </div>
       <div class="category-grid">
-        <a href="#" class="card-aptk category-card">
-          <div class="placeholder cat-img"><span>Drinks</span></div>
-          <h3>Drinks prontos</h3>
-          <p>Negroni, gin tônica e clássicos, prontos para servir.</p>
-          <span class="cat-link">Ver categoria →</span>
+        <a href="{{ route('catalog') }}" class="card-aptk category-card">
+          <img src="{{ asset('img/aptk/cat-dry-martini.jpg') }}" class="cat-img" alt="Dry Martini servido" loading="lazy">
+          <div class="cat-body">
+            <h3>Drinks prontos</h3>
+            <p>Negroni, dry martini e clássicos, prontos para servir.</p>
+            <span class="cat-link">Ver categoria →</span>
+          </div>
         </a>
-        <a href="#" class="card-aptk category-card">
-          <div class="placeholder cat-img"><span>Destilados</span></div>
-          <h3>Gin, Vodka & Whisky</h3>
-          <p>Nossas bases autorais para criar em casa.</p>
-          <span class="cat-link">Ver categoria →</span>
+        <a href="{{ route('catalog') }}" class="card-aptk category-card">
+          <img src="{{ asset('img/aptk/cat-fitzgerald.jpg') }}" class="cat-img" alt="Garrafa de gin Fitzgerald da APTK" loading="lazy">
+          <div class="cat-body">
+            <h3>Gin, Vodka &amp; Whisky</h3>
+            <p>Nossas bases autorais para criar em casa.</p>
+            <span class="cat-link">Ver categoria →</span>
+          </div>
         </a>
-        <a href="#" class="card-aptk category-card">
-          <div class="placeholder cat-img"><span>Kits</span></div>
-          <h3>Kits & presentes</h3>
-          <p>Combos curados com embalagem especial.</p>
-          <span class="cat-link">Ver categoria →</span>
+        <a href="{{ route('catalog') }}" class="card-aptk category-card">
+          <img src="{{ asset('img/aptk/cat-evento.jpg') }}" class="cat-img" alt="Mesa posta com drinks em um evento APTK" loading="lazy">
+          <div class="cat-body">
+            <h3>Kits &amp; presentes</h3>
+            <p>Combos curados com embalagem especial.</p>
+            <span class="cat-link">Ver categoria →</span>
+          </div>
         </a>
-        <a href="#" class="card-aptk category-card">
-          <div class="placeholder cat-img"><span>Limitadas</span></div>
-          <h3>Small batches</h3>
-          <p>Edições limitadas e lotes que não se repetem.</p>
-          <span class="cat-link">Ver categoria →</span>
+        <a href="{{ route('catalog') }}" class="card-aptk category-card">
+          <img src="{{ asset('img/aptk/cat-cosmopolitan.jpg') }}" class="cat-img" alt="Drink autoral servido ao lado da garrafa" loading="lazy">
+          <div class="cat-body">
+            <h3>Small batches</h3>
+            <p>Edições limitadas e lotes que não se repetem.</p>
+            <span class="cat-link">Ver categoria →</span>
+          </div>
         </a>
-        <a href="#" class="card-aptk category-card">
-          <div class="placeholder cat-img"><span>Marcas</span></div>
-          <h3>BARIN · Ice4Pros</h3>
-          <p>As marcas da holding, num só lugar.</p>
-          <span class="cat-link">Ver categoria →</span>
+        <a href="{{ route('catalog') }}" class="card-aptk category-card">
+          <img src="{{ asset('img/aptk/cat-pessoas.jpg') }}" class="cat-img" alt="Pessoas brindando com drinks da APTK" loading="lazy">
+          <div class="cat-body">
+            <h3>BARIN · Ice4Pros</h3>
+            <p>As marcas da holding, num só lugar.</p>
+            <span class="cat-link">Ver categoria →</span>
+          </div>
         </a>
-        <a href="#" class="card-aptk category-card">
-          <div class="placeholder cat-img"><span>Acessórios</span></div>
-          <h3>Acessórios & corporativo</h3>
-          <p>Coqueteleira, copos e linha para empresas.</p>
-          <span class="cat-link">Ver categoria →</span>
+        <a href="{{ route('catalog') }}" class="card-aptk category-card">
+          <img src="{{ asset('img/aptk/cat-loja.jpg') }}" class="cat-img" alt="Balcão da loja física da APTK" loading="lazy">
+          <div class="cat-body">
+            <h3>Acessórios &amp; corporativo</h3>
+            <p>Coqueteleira, copos e linha para empresas.</p>
+            <span class="cat-link">Ver categoria →</span>
+          </div>
         </a>
       </div>
     </div>
@@ -165,7 +203,7 @@
   <section class="section" style="padding-top:0;">
     <div class="container-aptk">
       <div class="featured-grid">
-        <div class="placeholder featured-img"><span>Garrafa 750ml</span></div>
+        <img src="{{ asset('img/aptk/featured-negroni.jpg') }}" class="featured-img" alt="Negroni Clássico da APTK servido com laranja" loading="lazy">
         <div class="featured-body">
           <span class="badge-aptk">Edição limitada</span>
           <p class="product-name">Negroni Clássico</p>
@@ -178,9 +216,23 @@
           </div>
           <div class="featured-buy">
             <span class="price-tag">R$ 189,<small>90</small></span>
-            <a href="#" class="btn-aptk">Adicionar ao carrinho</a>
+            <a href="{{ route('catalog') }}" class="btn-aptk">Comprar na loja</a>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  {{-- FAIXA DA LOJA FÍSICA --}}
+  <section class="section loja-band on-dark">
+    <img src="{{ asset('img/aptk/loja-aptk.jpg') }}" class="loja-bg" alt="Loja física da APTK Spirits no shopping" loading="lazy">
+    <div class="loja-overlay"></div>
+    <div class="container-aptk">
+      <div class="loja-copy">
+        <span class="eyebrow">Loja física</span>
+        <h2>Onde a alquimia acontece</h2>
+        <p>Visite o balcão APTK: drinks engarrafados, edições limitadas e a curadoria completa da casa — para levar para casa ou viver ali mesmo.</p>
+        <a href="{{ route('pages.show', 'sobre') }}" class="btn-aptk">Conhecer a APTK</a>
       </div>
     </div>
   </section>
@@ -198,14 +250,14 @@
           <span class="brand-tag">Bebidas artesanais</span>
           <h3>BARIN</h3>
           <p>A linha artesanal da holding, com receitas próprias e identidade de bar.</p>
-          <a href="#" class="btn-aptk btn-aptk--outline">Ver a loja BARIN</a>
+          <a href="{{ route('catalog') }}" class="btn-aptk btn-aptk--outline">Ver a loja BARIN</a>
         </div>
         <div class="card-aptk brand-card">
           <div class="placeholder brand-logo"><span>ICE4PROS</span></div>
           <span class="brand-tag">B2B · Gelo e insumos para o trade</span>
           <h3>Ice4Pros</h3>
           <p>Capacidade produtiva e qualidade certificada para bares, eventos e distribuidores.</p>
-          <a href="#" class="btn-aptk btn-aptk--outline">Pedir orçamento</a>
+          <a href="{{ route('pages.show', 'marcas') }}" class="btn-aptk btn-aptk--outline">Pedir orçamento</a>
         </div>
       </div>
     </div>
@@ -225,7 +277,7 @@
           <p class="plan-kicker">Entrada no universo APTK</p>
           <p class="plan-price">R$ 89<small>/mês</small></p>
           <p class="plan-cycle">cobrança mensal</p>
-          <a href="#" class="btn-aptk btn-aptk--outline btn-aptk--block">Assinar</a>
+          <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--outline btn-aptk--block">Assinar</a>
         </div>
         <div class="plan-card is-featured">
           <span class="plan-badge">Mais assinado</span>
@@ -233,28 +285,28 @@
           <p class="plan-kicker">Curadoria mensal</p>
           <p class="plan-price">R$ 149<small>/mês</small></p>
           <p class="plan-cycle">cobrança mensal</p>
-          <a href="#" class="btn-aptk btn-aptk--block">Assinar agora</a>
+          <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--block">Assinar agora</a>
         </div>
         <div class="plan-card">
           <p class="plan-name">Premium</p>
           <p class="plan-kicker">Acesso especial</p>
           <p class="plan-price">R$ 249<small>/mês</small></p>
           <p class="plan-cycle">cobrança mensal</p>
-          <a href="#" class="btn-aptk btn-aptk--outline btn-aptk--block">Assinar</a>
+          <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--outline btn-aptk--block">Assinar</a>
         </div>
         <div class="plan-card">
           <p class="plan-name">Small Batch</p>
           <p class="plan-kicker">Edições artesanais</p>
           <p class="plan-price">R$ 329<small>/mês</small></p>
           <p class="plan-cycle">cobrança mensal</p>
-          <a href="#" class="btn-aptk btn-aptk--outline btn-aptk--block">Assinar</a>
+          <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--outline btn-aptk--block">Assinar</a>
         </div>
         <div class="plan-card">
           <p class="plan-name">Corporativo</p>
           <p class="plan-kicker">Empresas e equipes</p>
           <p class="plan-price">Sob<small> consulta</small></p>
           <p class="plan-cycle">faturamento PJ</p>
-          <a href="#" class="btn-aptk btn-aptk--outline btn-aptk--block">Falar com time</a>
+          <a href="{{ route('pages.show', 'eventos') }}" class="btn-aptk btn-aptk--outline btn-aptk--block">Falar com time</a>
         </div>
       </div>
     </div>
