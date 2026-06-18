@@ -41,6 +41,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
     /* ---------------- Papéis (role) ---------------- */
 
     public function isAdmin(): bool

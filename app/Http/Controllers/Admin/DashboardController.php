@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Lead;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Subscription;
 use App\Models\User;
 use Illuminate\View\View;
 
@@ -31,15 +33,25 @@ class DashboardController extends Controller
             ->where('created_at', '>=', $now->copy()->startOfWeek())
             ->count();
 
+        // Clube & marketing
+        $activeSubs = Subscription::where('status', 'active')->count();
+        $mrr        = (float) Subscription::where('status', 'active')->sum('price');
+        $newLeads   = Lead::where('status', 'new')->count();
+        $totalLeads = Lead::count();
+
         $recentOrders = Order::with('user')
             ->withCount('items')
             ->latest()
             ->limit(8)
             ->get();
 
+        $recentLeads = Lead::latest()->limit(6)->get();
+
         return view('admin.dashboard', compact(
             'ordersThisMonth', 'revenueThisMonth', 'avgTicket', 'totalOrders',
-            'activeProds', 'totalProds', 'customers', 'newThisWeek', 'recentOrders'
+            'activeProds', 'totalProds', 'customers', 'newThisWeek',
+            'activeSubs', 'mrr', 'newLeads', 'totalLeads',
+            'recentOrders', 'recentLeads'
         ));
     }
 }

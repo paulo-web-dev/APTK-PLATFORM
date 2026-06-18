@@ -8,7 +8,10 @@
     .pdp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
     .pdp-gallery .main-img { aspect-ratio: 1 / 1; object-fit: contain; background: #0D0A06; padding: 22px; }
     .pdp-thumbs { display: flex; gap: 12px; margin-top: 14px; }
-    .pdp-thumbs .thumb { width: 72px; height: 72px; flex-shrink: 0; aspect-ratio: 1 / 1; }
+    .pdp-thumbs .thumb { width: 72px; height: 72px; flex-shrink: 0; padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #0D0A06; cursor: pointer; overflow: hidden; transition: border-color .2s ease; }
+    .pdp-thumbs .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .pdp-thumbs .thumb:hover { border-color: var(--color-primary-muted); }
+    .pdp-thumbs .thumb.is-active { border-color: var(--color-primary); }
     .pdp-breadcrumb { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 24px; }
     .pdp-breadcrumb a { color: var(--color-text-muted); }
     .pdp-breadcrumb a:hover { color: var(--color-primary); }
@@ -22,6 +25,8 @@
     .pdp-specs div { display: flex; flex-direction: column; gap: 4px; }
     .pdp-specs .k { font-size: var(--text-xs); color: var(--color-text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
     .pdp-specs .v { font-family: var(--font-mono); color: var(--color-text); }
+    .pdp-specs .v.sizes { display: flex; gap: 6px; flex-wrap: wrap; }
+    .size-chip { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 3px 8px; }
     .pdp-buy { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
     .stock-ok { color: var(--color-success); }
     .stock-out { color: var(--color-danger); }
@@ -45,14 +50,18 @@
             {{-- Galeria --}}
             <div class="pdp-gallery">
                 @if ($product->images->isNotEmpty())
-                    <img src="{{ \Illuminate\Support\Facades\Storage::url($product->images->first()->path) }}"
+                    <img id="pdpMain"
+                         src="{{ \Illuminate\Support\Facades\Storage::url($product->images->first()->path) }}"
                          alt="{{ $product->name }}" class="main-img"
                          style="width:100%; border:1px solid var(--color-border); border-radius:var(--radius-md);">
                     @if ($product->images->count() > 1)
                         <div class="pdp-thumbs">
                             @foreach ($product->images as $img)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}" alt=""
-                                     class="thumb" style="object-fit:contain; background:#0D0A06; border:1px solid var(--color-border); border-radius:var(--radius-sm);">
+                                <button type="button" class="thumb {{ $loop->first ? 'is-active' : '' }}"
+                                        data-src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}"
+                                        aria-label="Ver imagem {{ $loop->iteration }}">
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}" alt="">
+                                </button>
                             @endforeach
                         </div>
                     @endif
@@ -90,6 +99,15 @@
                 @endif
 
                 <div class="pdp-specs">
+                    @if ($product->base)
+                        <div><span class="k">Base</span><span class="v">{{ $product->base }}</span></div>
+                    @endif
+                    @if ($product->abv)
+                        <div><span class="k">Teor</span><span class="v">{{ $product->abv }}% vol.</span></div>
+                    @endif
+                    @if (! empty($product->sizes))
+                        <div><span class="k">Volumes</span><span class="v sizes">@foreach ($product->sizes as $sz)<span class="size-chip">{{ $sz }}</span>@endforeach</span></div>
+                    @endif
                     @if ($product->sku)
                         <div><span class="k">SKU</span><span class="v">{{ $product->sku }}</span></div>
                     @endif
@@ -150,3 +168,22 @@
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+  (function () {
+    var main = document.getElementById('pdpMain');
+    if (!main) return;
+    var thumbs = document.querySelectorAll('.pdp-thumbs .thumb');
+    thumbs.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var src = btn.getAttribute('data-src');
+        if (!src) return;
+        main.src = src;
+        thumbs.forEach(function (b) { b.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+      });
+    });
+  })();
+</script>
+@endpush

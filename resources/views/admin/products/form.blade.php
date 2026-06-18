@@ -49,6 +49,25 @@
                 </div>
 
                 <div class="panel">
+                    <div class="panel-head">Ficha técnica</div>
+                    <div class="panel-body">
+                        <div class="field">
+                            <label>Base</label>
+                            <input type="text" name="base" class="admin-input" style="width:100%;" value="{{ old('base', $product->base) }}" placeholder="APTK Gin">
+                        </div>
+                        <div class="field">
+                            <label>Teor alcoólico (% vol.)</label>
+                            <input type="number" min="0" max="100" name="abv" class="admin-input" style="width:100%;" value="{{ old('abv', $product->abv) }}">
+                        </div>
+                        <div class="field" style="margin-bottom:0;">
+                            <label>Volumes</label>
+                            <input type="text" name="sizes" class="admin-input" style="width:100%;" value="{{ old('sizes', is_array($product->sizes) ? implode(', ', $product->sizes) : '') }}" placeholder="100 ml, 375 ml, 750 ml">
+                            <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:6px;">Separe por vírgula. Aparecem como chips na página do produto.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
                     <div class="panel-head">Imagem</div>
                     <div class="panel-body">
                         @if ($product->primaryImage)

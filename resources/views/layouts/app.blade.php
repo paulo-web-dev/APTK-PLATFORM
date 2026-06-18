@@ -77,6 +77,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{{ route('orders.index') }}">Meus pedidos</a></li>
+                        <li><a class="dropdown-item" href="{{ route('subscription.index') }}">Minha assinatura</a></li>
                         <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Meu perfil</a></li>
                         @if (auth()->user()->isAdmin())
                             <li><hr class="dropdown-divider"></li>

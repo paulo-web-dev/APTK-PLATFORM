@@ -7,6 +7,7 @@ use App\Http\Controllers\Shop\HomeController;
 use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\PageController;
 use App\Http\Controllers\Shop\ProductController;
+use App\Http\Controllers\Shop\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -58,6 +59,14 @@ Route::middleware('auth')->group(function () {
     // Meus pedidos (histórico do cliente)
     Route::get('/meus-pedidos', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/meus-pedidos/{order}', [OrderController::class, 'show'])->name('orders.show');
+
+    // Clube — assinatura
+    Route::get('/clube/assinar/{plan}', [SubscriptionController::class, 'checkout'])->name('subscription.checkout');
+    Route::post('/clube/assinar/{plan}', [SubscriptionController::class, 'store'])->name('subscription.store');
+    Route::get('/minha-assinatura', [SubscriptionController::class, 'index'])->name('subscription.index');
+    Route::post('/minha-assinatura/{subscription}/pausar', [SubscriptionController::class, 'pause'])->name('subscription.pause');
+    Route::post('/minha-assinatura/{subscription}/retomar', [SubscriptionController::class, 'resume'])->name('subscription.resume');
+    Route::post('/minha-assinatura/{subscription}/cancelar', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
 });
 
 /*

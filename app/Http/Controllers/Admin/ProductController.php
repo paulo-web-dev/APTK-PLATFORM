@@ -106,6 +106,9 @@ class ProductController extends Controller
             'sku'               => ['nullable', 'string', 'max:255'],
             'stock_qty'         => ['required', 'integer', 'min:0'],
             'weight'            => ['nullable', 'numeric', 'min:0'],
+            'base'              => ['nullable', 'string', 'max:255'],
+            'abv'               => ['nullable', 'integer', 'min:0', 'max:100'],
+            'sizes'             => ['nullable', 'string', 'max:255'],
             'short_description' => ['nullable', 'string', 'max:255'],
             'description'       => ['nullable', 'string'],
             'image'             => ['nullable', 'image', 'max:4096'], // KB ~ 4MB
@@ -114,7 +117,21 @@ class ProductController extends Controller
         // O arquivo é tratado à parte (handleImage), não é coluna do produto.
         unset($data['image']);
 
+        // Volumes: texto separado por vírgula → array (coluna json).
+        $data['sizes'] = $this->parseSizes($data['sizes'] ?? null);
+
         return $data;
+    }
+
+    private function parseSizes(?string $raw): ?array
+    {
+        if (! $raw) {
+            return null;
+        }
+
+        $parts = array_values(array_filter(array_map('trim', explode(',', $raw))));
+
+        return $parts ?: null;
     }
 
     private function uniqueSlug(string $name): string

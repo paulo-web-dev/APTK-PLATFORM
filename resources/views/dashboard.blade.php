@@ -43,6 +43,7 @@
         <div class="d-flex flex-wrap gap-2">
             <a href="{{ route('home') }}" class="btn-aptk">Ir para a loja</a>
             <a href="{{ route('orders.index') }}" class="btn-aptk btn-aptk--outline">Meus pedidos</a>
+            <a href="{{ route('subscription.index') }}" class="btn-aptk btn-aptk--outline">Minha assinatura</a>
             <a href="{{ route('profile.edit') }}" class="btn-aptk btn-aptk--outline">Editar perfil</a>
         </div>
     </div>

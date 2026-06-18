@@ -20,9 +20,10 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
-            ProductSeeder::class,   // categorias + produtos
-            CustomerSeeder::class,  // clientes de demonstração
-            OrderSeeder::class,     // pedidos variados (depende dos dois acima)
+            ProductSeeder::class,           // categorias + produtos
+            SubscriptionPlanSeeder::class,  // planos do Clube
+            CustomerSeeder::class,          // clientes de demonstração
+            OrderSeeder::class,             // pedidos variados (depende dos dois acima)
         ]);
     }
 }

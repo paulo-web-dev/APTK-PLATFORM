@@ -31,7 +31,7 @@ class ProductSeeder extends Seeder
         foreach ($categories as $i => $c) {
             $catId[$c['slug']] = ProductCategory::updateOrCreate(
                 ['slug' => $c['slug']],
-                ['name' => $c['name'], 'description' => $c['description'], 'image' => "categories/{$c['slug']}.jpg", 'active' => true, 'sort_order' => $i],
+                ['name' => $c['name'], 'description' => $c['description'], 'image' => "products/section-{$c['slug']}.jpg", 'active' => true, 'sort_order' => $i],
             )->id;
         }
 
@@ -44,7 +44,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'negroni-classico', 'name' => 'Negroni Clássico', 'cat' => 'classicos',
                 'short' => 'O amargo-doce do clássico italiano, no ponto, engarrafado pela APTK.',
                 'tipo' => 'Coquetel composto', 'base' => 'APTK Gin', 'ingredientes' => 'gin, amaro e vermute rosso',
-                'abv' => '27% vol.', 'tamanhos' => '100 ml, 375 ml e 750 ml',
+                'abv' => 27, 'sizes' => ['100 ml', '375 ml', '750 ml'],
                 'servico' => 'copo baixo com gelo, 90 ml, finalizado com zest de Laranja Bahia',
                 'price' => 189.90, 'sku' => 'NEG-750', 'weight' => 1.2, 'featured' => true,
             ],
@@ -52,7 +52,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'fitzgerald', 'name' => 'Fitzgerald', 'cat' => 'classicos',
                 'short' => 'Gin, limão e bitters — o sour cítrico que abre a noite.',
                 'tipo' => 'Coquetel alcoólico', 'base' => 'APTK Gin', 'ingredientes' => 'gin, limão, bitters e açúcar',
-                'abv' => '30% vol.', 'tamanhos' => '100 ml, 375 ml e 750 ml',
+                'abv' => 30, 'sizes' => ['100 ml', '375 ml', '750 ml'],
                 'servico' => 'copo baixo com gelo, 90 ml, com zest de Limão Siciliano',
                 'price' => 179.90, 'sku' => 'FITZ-750', 'weight' => 1.2, 'featured' => true,
             ],
@@ -60,7 +60,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'cosmopolitan', 'name' => 'Cosmopolitan', 'cat' => 'classicos',
                 'short' => 'Vodka, cranberry e cítricos: o ícone novaiorquino, pronto para servir.',
                 'tipo' => 'Coquetel alcoólico', 'base' => 'Vodka VDK', 'ingredientes' => 'vodka, limão, cranberry e laranja',
-                'abv' => '30% vol.', 'tamanhos' => '100 ml, 375 ml e 750 ml',
+                'abv' => 30, 'sizes' => ['100 ml', '375 ml', '750 ml'],
                 'servico' => 'taça, 90 ml, com zest de limão',
                 'price' => 169.90, 'sku' => 'COSMO-750', 'weight' => 1.2, 'featured' => true,
             ],
@@ -68,7 +68,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'moscow-mule', 'name' => 'Moscow Mule', 'cat' => 'classicos',
                 'short' => 'Vodka e especiarias com a alma do gengibre, na caneca de cobre.',
                 'tipo' => 'Coquetel alcoólico', 'base' => 'Vodka VDK', 'ingredientes' => 'vodka, mix de cítricos, açúcar e especiarias',
-                'abv' => '30% vol.', 'tamanhos' => '100 ml, 375 ml e 750 ml',
+                'abv' => 30, 'sizes' => ['100 ml', '375 ml', '750 ml'],
                 'servico' => 'caneca de cobre, 70 ml, com espuma de gengibre',
                 'price' => 169.90, 'sku' => 'MULE-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -76,7 +76,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'limoncello', 'name' => 'Limoncello', 'cat' => 'classicos',
                 'short' => 'Licor de limão siciliano, fresco e intenso, para o fim da refeição.',
                 'tipo' => 'Licor fino de limão', 'base' => 'álcool de cereais', 'ingredientes' => 'álcool destilado, limão siciliano, água e açúcar',
-                'abv' => '25% vol.', 'tamanhos' => '100 ml, 375 ml e 750 ml',
+                'abv' => 25, 'sizes' => ['100 ml', '375 ml', '750 ml'],
                 'servico' => 'taça coupe, 80 ml',
                 'price' => 149.90, 'sku' => 'LIMON-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -86,7 +86,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'caju-amigo', 'name' => 'Caju Amigo', 'cat' => 'autorais',
                 'short' => 'Caju, limão e vodka — o Brasil no copo, leve e refrescante.',
                 'tipo' => 'Bebida alcoólica mista', 'base' => 'Vodka VDK', 'ingredientes' => 'vodka, limão, caju e açúcar',
-                'abv' => '10% vol.', 'tamanhos' => '100 ml, 375 ml e 750 ml',
+                'abv' => 10, 'sizes' => ['100 ml', '375 ml', '750 ml'],
                 'servico' => 'copo longo com muito gelo, 80 ml',
                 'price' => 139.90, 'sku' => 'CAJU-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -94,7 +94,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'penicillin', 'name' => 'Penicillin', 'cat' => 'autorais',
                 'short' => 'Bourbon, mel e gengibre defumado: o moderno que já virou clássico.',
                 'tipo' => 'Coquetel alcoólico', 'base' => 'Buffalo Trace', 'ingredientes' => 'bourbon, limão, mel e gengibre',
-                'abv' => '17% vol.', 'tamanhos' => '375 ml',
+                'abv' => 17, 'sizes' => ['375 ml'],
                 'servico' => 'copo baixo com muito gelo, 80 ml',
                 'price' => 199.90, 'sku' => 'PENI-375', 'weight' => 0.8, 'featured' => true,
             ],
@@ -102,7 +102,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'sur-lorange', 'name' => "Sur L'Orange", 'cat' => 'autorais',
                 'short' => 'Cachaça envelhecida, laranja e amêndoas — releitura autoral da casa.',
                 'tipo' => 'Coquetel alcoólico', 'base' => 'cachaça envelhecida', 'ingredientes' => 'cachaça, laranja e amêndoas',
-                'abv' => '30% vol.', 'tamanhos' => '100 ml, 375 ml e 750 ml',
+                'abv' => 30, 'sizes' => ['100 ml', '375 ml', '750 ml'],
                 'servico' => null,
                 'price' => 209.90, 'sku' => 'SURL-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -110,7 +110,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'squadra-amendoas', 'name' => 'Squadra Amêndoas', 'cat' => 'autorais',
                 'short' => 'Licor fino de amêndoas, aveludado e aromático.',
                 'tipo' => 'Licor fino de amêndoas', 'base' => null, 'ingredientes' => null,
-                'abv' => '25% vol.', 'tamanhos' => '375 ml e 750 ml',
+                'abv' => 25, 'sizes' => ['375 ml', '750 ml'],
                 'servico' => null,
                 'price' => 159.90, 'sku' => 'SQAM-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -118,7 +118,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'squadra-coco', 'name' => 'Squadra Coco', 'cat' => 'autorais',
                 'short' => 'Licor fino de coco, cremoso e tropical.',
                 'tipo' => 'Licor fino de coco', 'base' => null, 'ingredientes' => null,
-                'abv' => '17% vol.', 'tamanhos' => '375 ml e 750 ml',
+                'abv' => 17, 'sizes' => ['375 ml', '750 ml'],
                 'servico' => null,
                 'price' => 149.90, 'sku' => 'SQCO-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -128,7 +128,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'cachaca-prata', 'name' => 'Cachaça Prata', 'cat' => 'bases',
                 'short' => 'Cachaça fresca de alambique, do caldo de cana ao copo.',
                 'tipo' => 'Cachaça', 'base' => null, 'ingredientes' => 'mosto fermentado do caldo de cana de açúcar',
-                'abv' => '40% vol.', 'tamanhos' => '750 ml',
+                'abv' => 40, 'sizes' => ['750 ml'],
                 'servico' => null,
                 'price' => 129.90, 'sku' => 'CACP-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -136,7 +136,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'cachaca-ouro', 'name' => 'Cachaça Ouro', 'cat' => 'bases',
                 'short' => 'Cachaça descansada em barris de carvalho, redonda e dourada.',
                 'tipo' => 'Cachaça envelhecida', 'base' => null, 'ingredientes' => 'mosto fermentado, armazenado em barris de carvalho',
-                'abv' => '40% vol.', 'tamanhos' => '750 ml',
+                'abv' => 40, 'sizes' => ['750 ml'],
                 'servico' => null,
                 'price' => 159.90, 'sku' => 'CACO-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -144,7 +144,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'neutral-gin', 'name' => 'Neutral Gin', 'cat' => 'bases',
                 'short' => 'Gin autoral com menta, limão, alcaçuz e lavanda.',
                 'tipo' => 'Gin', 'base' => null, 'ingredientes' => 'menta, limão, alcaçuz e lavanda',
-                'abv' => '42% vol.', 'tamanhos' => '750 ml',
+                'abv' => 42, 'sizes' => ['750 ml'],
                 'servico' => null,
                 'price' => 219.90, 'sku' => 'NEUT-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -152,7 +152,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'vodka-vdk', 'name' => 'Vodka VDK', 'cat' => 'bases',
                 'short' => 'Vodka de origem agrícola, limpa e versátil — a base da casa.',
                 'tipo' => 'Vodka', 'base' => null, 'ingredientes' => 'álcool etílico potável de origem agrícola e água',
-                'abv' => '40% vol.', 'tamanhos' => '750 ml',
+                'abv' => 40, 'sizes' => ['750 ml'],
                 'servico' => null,
                 'price' => 169.90, 'sku' => 'VDK-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -165,6 +165,9 @@ class ProductSeeder extends Seeder
                     'category_id'       => $catId[$data['cat']],
                     'name'              => $data['name'],
                     'short_description' => $data['short'],
+                    'base'              => $data['base'],
+                    'abv'               => $data['abv'],
+                    'sizes'             => $data['sizes'],
                     'description'       => $this->buildDescription($data),
                     'price'             => $data['price'],
                     'sku'               => $data['sku'],
@@ -189,25 +192,17 @@ class ProductSeeder extends Seeder
         }
     }
 
-    /** Monta a descrição editorial a partir dos campos do catálogo. */
+    /** Descrição editorial: tipo + ingredientes + serviço (base, teor e tamanhos viram specs). */
     private function buildDescription(array $d): string
     {
-        $parts = [];
-
-        $abre = $d['tipo'];
-        if (! empty($d['base'])) {
-            $abre .= " sobre base de {$d['base']}";
-        }
-        $parts[] = $abre . '.';
+        $parts = [$d['tipo'].'.'];
 
         if (! empty($d['ingredientes'])) {
-            $parts[] = 'Ingredientes: ' . $d['ingredientes'] . '.';
+            $parts[] = 'Ingredientes: '.$d['ingredientes'].'.';
         }
-        $parts[] = 'Teor alcoólico ' . $d['abv'] . '.';
         if (! empty($d['servico'])) {
-            $parts[] = 'Serviço perfeito: ' . $d['servico'] . '.';
+            $parts[] = 'Serviço perfeito: '.$d['servico'].'.';
         }
-        $parts[] = 'Disponível em ' . $d['tamanhos'] . '.';
 
         return implode(' ', $parts);
     }

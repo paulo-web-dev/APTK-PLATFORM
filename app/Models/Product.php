@@ -15,6 +15,9 @@ class Product extends Model
         'slug',
         'description',
         'short_description',
+        'base',
+        'abv',
+        'sizes',
         'price',
         'compare_price',
         'sku',
@@ -29,6 +32,8 @@ class Product extends Model
         'compare_price' => 'decimal:2',
         'weight'        => 'decimal:3',
         'stock_qty'     => 'integer',
+        'abv'           => 'integer',
+        'sizes'         => 'array',
         'active'        => 'boolean',
         'featured'      => 'boolean',
     ];
