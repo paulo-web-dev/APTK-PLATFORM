@@ -39,7 +39,7 @@
             <h3>Itens</h3>
             @foreach ($order->items as $item)
                 <div class="ok-row">
-                    <span><span class="q">{{ $item->qty }}×</span> {{ $item->product_name }}</span>
+                    <span><span class="q">{{ $item->qty }}×</span> {{ $item->product_name }}@if ($item->size) <small style="color:var(--color-text-muted);">({{ $item->size }})</small>@endif</span>
                     <span>R$ {{ number_format($item->total_price, 2, ',', '.') }}</span>
                 </div>
             @endforeach

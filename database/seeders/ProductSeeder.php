@@ -25,13 +25,23 @@ class ProductSeeder extends Seeder
             ['slug' => 'classicos', 'name' => 'Clássicos', 'description' => 'Os grandes coquetéis de sempre, no ponto e engarrafados pela APTK — prontos para servir.'],
             ['slug' => 'autorais',  'name' => 'Autorais',  'description' => 'Criações e releituras com assinatura APTK: o nosso jeito inquieto de contar histórias.'],
             ['slug' => 'bases',     'name' => 'Bases',     'description' => 'Destilados com excelência de produção APTK, para criar na sua própria coquetelaria.'],
+            // Leva 01: áreas de marca na página Produtos. Capa (image) e
+            // produtos são cadastrados pelo admin — ficam vazias até lá.
+            ['slug' => 'barin',     'name' => 'Barin',     'description' => 'A linha artesanal da holding, com receitas próprias e identidade de bar.', 'image' => null],
+            ['slug' => 'ice4pros',  'name' => 'Ice4Pros',  'description' => 'Gelo, insumos e linha para empresas — o B2B da holding.', 'image' => null],
         ];
 
         $catId = [];
         foreach ($categories as $i => $c) {
             $catId[$c['slug']] = ProductCategory::updateOrCreate(
                 ['slug' => $c['slug']],
-                ['name' => $c['name'], 'description' => $c['description'], 'image' => "products/section-{$c['slug']}.jpg", 'active' => true, 'sort_order' => $i],
+                [
+                    'name'        => $c['name'],
+                    'description' => $c['description'],
+                    'image'       => array_key_exists('image', $c) ? $c['image'] : "products/section-{$c['slug']}.jpg",
+                    'active'      => true,
+                    'sort_order'  => $i,
+                ],
             )->id;
         }
 
@@ -168,6 +178,7 @@ class ProductSeeder extends Seeder
                     'base'              => $data['base'],
                     'abv'               => $data['abv'],
                     'sizes'             => $data['sizes'],
+                    'size_prices'       => $this->deriveSizePrices($data['sizes'], (float) $data['price']),
                     'description'       => $this->buildDescription($data),
                     'price'             => $data['price'],
                     'sku'               => $data['sku'],
@@ -190,6 +201,27 @@ class ProductSeeder extends Seeder
                 ['alt' => "{$data['name']} — serviço perfeito", 'sort_order' => 1, 'is_primary' => false],
             );
         }
+    }
+
+    /**
+     * Preços por volume SUGERIDOS a partir do preço da 750 ml
+     * (100 ml ≈ 35% · 375 ml ≈ 65% · 750 ml = 100%).
+     * São ponto de partida — ajustar produto a produto no admin.
+     */
+    private function deriveSizePrices(array $sizes, float $price): ?array
+    {
+        if (count($sizes) < 2) {
+            return null; // volume único usa o price base
+        }
+
+        $ratio = ['100 ml' => 0.35, '375 ml' => 0.65, '750 ml' => 1.0];
+
+        $out = [];
+        foreach ($sizes as $size) {
+            $out[$size] = round($price * ($ratio[$size] ?? 1.0), 2);
+        }
+
+        return $out;
     }
 
     /** Descrição editorial: tipo + ingredientes + serviço (base, teor e tamanhos viram specs). */

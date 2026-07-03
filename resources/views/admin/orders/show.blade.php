@@ -34,7 +34,7 @@
                     <tbody>
                         @foreach ($order->items as $it)
                             <tr>
-                                <td data-label="Produto">{{ $it->product_name }}</td>
+                                <td data-label="Produto">{{ $it->product_name }}@if ($it->size) <span class="td-muted">· {{ $it->size }}</span>@endif</td>
                                 <td class="td-muted" data-label="SKU">{{ $it->product_sku ?? '—' }}</td>
                                 <td class="td-num" data-label="Qtd">{{ $it->qty }}</td>
                                 <td class="td-num" data-label="Unit.">R$ {{ number_format($it->unit_price, 2, ',', '.') }}</td>

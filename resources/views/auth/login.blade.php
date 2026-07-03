@@ -1,5 +1,12 @@
 <x-guest-layout>
     <p class="auth-sub">Acesse sua conta</p>
+    {{-- Leva 01: acesso para clientes PF e login via CNPJ para empresas com
+         área homologada. Por decisão do projeto, nesta etapa é só TEXTO —
+         a autenticação segue por e-mail e senha (CPF/CNPJ: 2ª etapa). --}}
+    <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin:-6px 0 18px; line-height:1.6;">
+        Clientes PF: entre com o e-mail e senha do seu cadastro.<br>
+        Empresas (CNPJ) com área homologada: use o e-mail cadastrado pelo nosso comercial.
+    </p>
 
     @if (session('status'))
         <div class="auth-status">{{ session('status') }}</div>

@@ -41,9 +41,23 @@
   .pg-closing p { color: var(--color-text-muted); font-size: var(--text-lg); margin: 0 0 30px; max-width: 520px; }
   .pg-closing .cta-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
 
+  /* ---- Cases / projetos feitos (carrossel — usado na Collab) ---- */
+  .cases-band { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
+  .cases-track { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .case-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
+  .case-card .case-img, .case-card .case-ph { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border-bottom: 1px solid var(--color-border); }
+  .case-card .case-ph { display: grid; place-items: center; background: repeating-linear-gradient(45deg, var(--color-bg-card), var(--color-bg-card) 12px, var(--color-bg) 12px, var(--color-bg) 24px); color: var(--color-text-muted); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; padding: 8px; }
+  .case-card .case-body { padding: 18px 20px 22px; }
+  .case-card h3 { font-family: var(--font-display); font-size: var(--text-lg); margin: 0 0 6px; }
+  .case-card p { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0; line-height: 1.6; }
+  .cases-band .carousel-indicators { position: static; margin: 26px 0 0; }
+  .cases-band .carousel-indicators [data-bs-target] { width: 34px; height: 3px; border-radius: 2px; background: var(--color-border); border: none; opacity: 1; }
+  .cases-band .carousel-indicators .active { background: var(--color-primary); }
+  @media (max-width: 900px) { .cases-track { grid-template-columns: repeat(2, 1fr); } }
   @media (max-width: 520px) {
     .pg-hero .container-aptk { padding-block: 52px 40px; }
     .pg-hero .btn-aptk, .pg-closing .cta-row .btn-aptk { width: 100%; }
+    .cases-track { grid-template-columns: 1fr; }
   }
 </style>
 @endpush
@@ -83,6 +97,56 @@
       </div>
     </div>
   </section>
+
+  {{-- CASES / PROJETOS FEITOS (carrossel) — só quando a página define 'cases'.
+       Fotos dos produtos ainda virão do cliente: 'image' => null renderiza
+       placeholder marcado; trocar por 'image' => 'img/aptk/case-x.jpg'. --}}
+  @if (! empty($page['cases']))
+  <section class="section cases-band">
+    <div class="container-aptk">
+      <div class="section-head">
+        <span class="eyebrow">{{ $page['cases_eyebrow'] ?? 'Projetos feitos' }}</span>
+        <h2 class="section-title">{{ $page['cases_title'] ?? 'Quem já criou com a gente' }}</h2>
+        @if (! empty($page['cases_lead']))
+          <p>{{ $page['cases_lead'] }}</p>
+        @endif
+      </div>
+
+      @php $caseSlides = collect($page['cases'])->chunk(4); @endphp
+      <div id="casesCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="7000">
+        <div class="carousel-inner">
+          @foreach ($caseSlides as $i => $slide)
+            <div class="carousel-item {{ $i === 0 ? 'active' : '' }}">
+              <div class="cases-track">
+                @foreach ($slide as $case)
+                  <div class="case-card">
+                    @if (! empty($case['image']))
+                      <img class="case-img" src="{{ asset($case['image']) }}" alt="{{ $case['h'] }}" loading="lazy">
+                    @else
+                      <div class="case-ph"><span>Foto do produto<br>em breve</span></div>
+                    @endif
+                    <div class="case-body">
+                      <h3>{{ $case['h'] }}</h3>
+                      <p>{{ $case['p'] }}</p>
+                    </div>
+                  </div>
+                @endforeach
+              </div>
+            </div>
+          @endforeach
+        </div>
+        @if ($caseSlides->count() > 1)
+          <div class="carousel-indicators">
+            @foreach ($caseSlides as $i => $slide)
+              <button type="button" data-bs-target="#casesCarousel" data-bs-slide-to="{{ $i }}"
+                      class="{{ $i === 0 ? 'active' : '' }}" aria-label="Slide {{ $i + 1 }}"></button>
+            @endforeach
+          </div>
+        @endif
+      </div>
+    </div>
+  </section>
+  @endif
 
   {{-- FECHAMENTO --}}
   <section class="section section--dark pg-closing">

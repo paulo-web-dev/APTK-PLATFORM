@@ -1,6 +1,6 @@
 @extends('layouts.public')
 
-@section('title', 'Loja · APTK Spirits')
+@section('title', 'Produtos · APTK Spirits')
 
 @push('styles')
 <style>
@@ -33,29 +33,31 @@
 
 @section('content')
 
-@if ($activeCategory && $activeCategory->image)
+@php
+    /* Capa da listagem (leva 01): a aba "Todos" também tem capa, como as
+       categorias. Sem categoria ativa (ou categoria ainda sem imagem),
+       entra a capa padrão — imagem PROVISÓRIA, trocar quando o cliente enviar. */
+    $coverImage = ($activeCategory && $activeCategory->image)
+        ? \Illuminate\Support\Facades\Storage::url($activeCategory->image)
+        : asset('img/aptk/loja-aptk.jpg');
+    $coverTitle = $activeCategory?->name ?? 'Todos';
+    $coverText  = $activeCategory?->description
+        ?? 'Descubra nossa linha de coquetéis engarrafados e bases perfeitas para criar drinks inesquecíveis.';
+@endphp
 <section class="cat-cover on-dark">
-    <img class="cat-cover-bg" src="{{ \Illuminate\Support\Facades\Storage::url($activeCategory->image) }}" alt="{{ $activeCategory->name }}">
+    <img class="cat-cover-bg" src="{{ $coverImage }}" alt="{{ $coverTitle }}">
     <div class="cat-cover-overlay"></div>
     <div class="container-aptk cat-cover-inner">
-        <span class="eyebrow">Catálogo</span>
-        <h1>{{ $activeCategory->name }}</h1>
-        @if ($activeCategory->description)
-            <p>{{ $activeCategory->description }}</p>
+        <span class="eyebrow">Carta de Coquetéis</span>
+        <h1>{{ $coverTitle }}</h1>
+        @if ($coverText)
+            <p>{{ $coverText }}</p>
         @endif
     </div>
 </section>
-@endif
 
-<section class="section" style="padding-top: {{ ($activeCategory && $activeCategory->image) ? '40px' : '0' }};">
+<section class="section" style="padding-top: 40px;">
     <div class="container-aptk">
-
-        @unless ($activeCategory && $activeCategory->image)
-        <div class="catalog-head">
-            <span class="eyebrow">Catálogo</span>
-            <h1 class="section-title">{{ $activeCategory?->name ?? 'Toda a loja' }}</h1>
-        </div>
-        @endunless
 
         <div class="cat-filter">
             <a href="{{ route('catalog') }}" class="cat-pill {{ ! $activeCategory ? 'is-active' : '' }}">Todos</a>

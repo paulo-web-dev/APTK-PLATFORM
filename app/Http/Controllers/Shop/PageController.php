@@ -14,8 +14,9 @@ class PageController extends Controller
     public function show(string $slug): View
     {
         // Páginas com layout próprio.
-        if ($slug === 'sobre') {
-            return view('shop.sobre');
+        if ($slug === 'quem-somos') {
+            // Quem Somos = antiga "Sobre" + bloco das marcas (antiga "Marcas").
+            return view('shop.quem-somos');
         }
 
         if ($slug === 'clube') {
@@ -56,44 +57,45 @@ class PageController extends Controller
     /**
      * Conteúdo das páginas institucionais, renderizado por shop/page.blade.php.
      * Estrutura: hero (eyebrow/title/lead/image/cta) + features + fechamento.
+     * Páginas podem ter 'cases' (carrossel de projetos — usado na Collab).
      * Textos e CTAs são editáveis — ajustar conforme o comercial.
      */
     private function institutionalPages(): array
     {
         return [
-            'customizacao' => [
-                'eyebrow'  => 'Rótulo personalizado',
-                'title'    => 'Sua marca na nossa garrafa',
-                'lead'     => 'Presentes corporativos, casamentos, aniversários ou a sua própria marca: personalizamos o rótulo e a curadoria do drink, do lote pequeno ao grande volume.',
-                'image'    => null,
-                'hero_cta' => ['label' => 'Pedir orçamento', 'href' => $this->mailto('Customização de rótulo — APTK')],
-                'features_eyebrow' => 'Como funciona',
-                'features_title'   => 'Do conceito à garrafa',
-                'features' => [
-                    ['n' => '01', 'h' => 'Escolha o drink', 'p' => 'Comece por um clássico ou um autoral da casa como base.'],
-                    ['n' => '02', 'h' => 'Crie o rótulo', 'p' => 'A gente desenha — ou aplica a sua arte — dentro da identidade APTK.'],
-                    ['n' => '03', 'h' => 'Defina o lote', 'p' => 'De poucas garrafas a grandes volumes, com prazo combinado.'],
-                    ['n' => '04', 'h' => 'Receba pronto', 'p' => 'Engarrafado, rotulado e embalado para presentear ou vender.'],
-                ],
-                'closing_title' => 'Tem uma ideia de rótulo?',
-                'closing_text'  => 'Conte a ocasião e o volume — devolvemos com proposta e prazo.',
-                'closing_cta'   => ['label' => 'Pedir orçamento', 'href' => $this->mailto('Customização de rótulo — APTK')],
-                'closing_cta2'  => ['label' => 'Ver os drinks', 'href' => route('catalog')],
-            ],
-
-            'parceiros' => [
+            /*
+             | COLLAB (antiga "Parceiros") — leva 01:
+             |  - CTA do hero: "Falar com o comercial" (o texto do hero será
+             |    alterado pelo cliente depois — manter editável).
+             |  - Diferenciais sem o card "Abastecimento".
+             |  - Carrossel de projetos feitos (fotos virão — placeholders
+             |    marcados; trocar 'image' => null pelos paths quando chegarem).
+             */
+            'collabs' => [
                 'eyebrow'  => 'Para o trade',
                 'title'    => 'APTK no seu bar, restaurante ou loja',
                 'lead'     => 'Bares, restaurantes, distribuidores e varejo: leve a coquetelaria engarrafada da APTK para o seu negócio, com condições de revenda e abastecimento recorrente.',
                 'image'    => 'img/aptk/parceiros-hero.jpg',
-                'hero_cta' => ['label' => 'Quero ser parceiro', 'href' => $this->mailto('Quero ser parceiro — APTK')],
-                'features_eyebrow' => 'O que oferecemos',
+                'hero_cta' => ['label' => 'Falar com o comercial', 'href' => $this->mailto('Collab / parceria comercial — APTK')],
+                'features_eyebrow' => 'Nossos diferenciais',
                 'features_title'   => 'Parceria do balcão ao estoque',
                 'features' => [
-                    ['n' => 'Revenda',       'h' => 'Linha completa', 'p' => 'Drinks prontos e bases autorais para compor o seu mix.'],
-                    ['n' => 'Logística',     'h' => 'Abastecimento', 'p' => 'Pedidos recorrentes com previsibilidade e entrega combinada.'],
-                    ['n' => 'Marca',         'h' => 'Treinamento', 'p' => 'Apoio de marca e know-how de coquetelaria para a sua equipe.'],
-                    ['n' => 'B2B',           'h' => 'Ice4Pros', 'p' => 'Gelo e insumos para o trade, dentro da própria holding.'],
+                    ['n' => 'Revenda', 'h' => 'Linha completa', 'p' => 'Drinks prontos e bases autorais para compor o seu mix.'],
+                    ['n' => 'Marca',   'h' => 'Treinamento', 'p' => 'Apoio de marca e know-how de coquetelaria para a sua equipe.'],
+                    ['n' => 'B2B',     'h' => 'Ice4Pros', 'p' => 'Gelo e insumos para o trade, dentro da própria holding.'],
+                ],
+                'cases_eyebrow' => 'Projetos feitos',
+                'cases_title'   => 'Quem já criou com a gente',
+                'cases_lead'    => 'Muito além de gelo e bebida: produtos assinados em parceria com casas e marcas que a gente admira.',
+                'cases' => [
+                    ['h' => 'Gelo Carimbado',  'p' => 'Presença APTK em diversos estabelecimentos.', 'image' => null],
+                    ['h' => 'Braz Pizzaria',   'p' => 'Limoncello Braz, criado para a casa.', 'image' => null],
+                    ['h' => 'Gurumê',          'p' => 'Gin Gurumê, assinatura exclusiva.', 'image' => null],
+                    ['h' => 'Hotel Emiliano',  'p' => 'Drink Cubo, servido no hotel.', 'image' => null],
+                    ['h' => 'Cacau Show',      'p' => 'Licor de Chocolate e Whisky com Cacau.', 'image' => null],
+                    ['h' => 'Guilhotina',      'p' => 'Vodka e Gin personalizados para o bar.', 'image' => null],
+                    ['h' => 'Astor',           'p' => 'Vermute personalizado da casa.', 'image' => null],
+                    ['h' => 'Hotéis & casas',  'p' => 'Hotel Unique, Hotel Pullman, Pirajá e outros.', 'image' => null],
                 ],
                 'closing_title' => 'Vamos fechar parceria?',
                 'closing_text'  => 'Conte o seu formato de negócio e a gente monta a melhor condição.',
@@ -138,26 +140,7 @@ class PageController extends Controller
                 'closing_title' => 'Tem um evento chegando?',
                 'closing_text'  => 'Conte a data, o local e o número de convidados — montamos a proposta.',
                 'closing_cta'   => ['label' => 'Solicitar proposta', 'href' => $this->mailto('Evento — solicitar proposta — APTK')],
-                'closing_cta2'  => ['label' => 'Ver o catálogo', 'href' => route('catalog')],
-            ],
-
-            'marcas' => [
-                'eyebrow'  => 'A holding',
-                'title'    => 'Uma casa, três marcas',
-                'lead'     => 'A APTK Spirits reúne a coquetelaria autoral, a linha artesanal BARIN e a operação B2B da Ice4Pros — cada uma com o seu papel, o mesmo padrão.',
-                'image'    => null,
-                'hero_cta' => ['label' => 'Ver a loja', 'href' => route('catalog')],
-                'features_eyebrow' => 'As marcas',
-                'features_title'   => 'Cada uma no seu mundo',
-                'features' => [
-                    ['n' => 'Coquetelaria', 'h' => 'APTK Spirits', 'p' => 'Alta coquetelaria engarrafada, drinks prontos e bases autorais.'],
-                    ['n' => 'Artesanal',    'h' => 'BARIN', 'p' => 'A linha artesanal da casa, com receitas próprias e alma de bar.'],
-                    ['n' => 'B2B',          'h' => 'Ice4Pros', 'p' => 'Gelo e insumos para o trade, com capacidade e qualidade.'],
-                ],
-                'closing_title' => 'Negócios com a holding',
-                'closing_text'  => 'Revenda, B2B e parcerias — fale com o nosso comercial.',
-                'closing_cta'   => ['label' => 'Falar com o comercial', 'href' => $this->mailto('Marcas / negócios — APTK')],
-                'closing_cta2'  => ['label' => 'Conhecer a APTK', 'href' => route('pages.show', 'sobre')],
+                'closing_cta2'  => ['label' => 'Ver a carta', 'href' => route('catalog')],
             ],
 
             'assinantes' => [

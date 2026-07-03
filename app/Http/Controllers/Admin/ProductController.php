@@ -109,6 +109,7 @@ class ProductController extends Controller
             'base'              => ['nullable', 'string', 'max:255'],
             'abv'               => ['nullable', 'integer', 'min:0', 'max:100'],
             'sizes'             => ['nullable', 'string', 'max:255'],
+            'size_prices'       => ['nullable', 'string', 'max:255'],
             'short_description' => ['nullable', 'string', 'max:255'],
             'description'       => ['nullable', 'string'],
             'image'             => ['nullable', 'image', 'max:4096'], // KB ~ 4MB
@@ -120,7 +121,48 @@ class ProductController extends Controller
         // Volumes: texto separado por vírgula → array (coluna json).
         $data['sizes'] = $this->parseSizes($data['sizes'] ?? null);
 
+        // Preços por volume: casam por posição com os volumes acima.
+        $data['size_prices'] = $this->parseSizePrices($data['sizes'], $data['size_prices'] ?? null);
+
         return $data;
+    }
+
+    /**
+     * "65,90, 109,90, 189,90" + ['100 ml','375 ml','750 ml']
+     *   → {"100 ml":65.90, "375 ml":109.90, "750 ml":189.90}
+     * Aceita vírgula OU ponto como decimal; itens separados por vírgula
+     * entre espaços ou ponto-e-vírgula. Quantidade diferente de volumes → null
+     * (o produto passa a usar só o preço base).
+     */
+    private function parseSizePrices(?array $sizes, ?string $raw): ?array
+    {
+        if (! $sizes || ! $raw) {
+            return null;
+        }
+
+        // separa por ";" ou por "," que NÃO seja decimal (vírgula entre dígitos)
+        $parts = preg_split('/;|,(?!\d)/', $raw);
+        $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
+
+        if (count($parts) !== count($sizes)) {
+            return null;
+        }
+
+        $out = [];
+        foreach ($sizes as $i => $size) {
+            $clean = preg_replace('/[^\d.,]/', '', $parts[$i]);
+            if (str_contains($clean, ',')) {
+                // formato BR: "1.189,90" → ponto = milhar, vírgula = decimal
+                $clean = str_replace(',', '.', str_replace('.', '', $clean));
+            }
+            $value = (float) $clean;
+            if ($value <= 0) {
+                return null;
+            }
+            $out[$size] = round($value, 2);
+        }
+
+        return $out;
     }
 
     private function parseSizes(?string $raw): ?array

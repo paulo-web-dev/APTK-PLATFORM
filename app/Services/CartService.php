@@ -10,10 +10,15 @@ class CartService
 {
     protected const KEY = 'cart';
 
-    /** Estrutura crua na sessão: [product_id => qty] */
+    /*
+     | Estrutura na sessão (v2, com volume):
+     |   [ "12:750 ml" => ['product_id' => 12, 'size' => '750 ml', 'qty' => 2], ... ]
+     | O identificador de linha é "productId:size" ("12:" quando sem volume).
+     | Carrinhos antigos ([product_id => qty]) são migrados on-the-fly.
+     */
     protected function raw(): array
     {
-        return Session::get(self::KEY, []);
+        return $this->migrate(Session::get(self::KEY, []));
     }
 
     protected function save(array $items): void
@@ -21,30 +26,69 @@ class CartService
         Session::put(self::KEY, $items);
     }
 
-    public function add(int $productId, int $qty = 1): void
+    /** Migra o formato antigo [product_id => qty] para o formato com volume. */
+    protected function migrate(array $items): array
+    {
+        $out = [];
+
+        foreach ($items as $key => $value) {
+            if (is_array($value) && isset($value['product_id'])) {
+                $out[$key] = $value; // já está no formato novo
+                continue;
+            }
+
+            // formato antigo: chave = product_id, valor = qty (sem volume)
+            $out[$this->lineKey((int) $key, null)] = [
+                'product_id' => (int) $key,
+                'size'       => null,
+                'qty'        => (int) $value,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** Identificador único da linha do carrinho (produto + volume). */
+    public function lineKey(int $productId, ?string $size): string
+    {
+        return $productId.':'.($size ?? '');
+    }
+
+    public function add(int $productId, int $qty = 1, ?string $size = null): void
     {
         $items = $this->raw();
-        $items[$productId] = ($items[$productId] ?? 0) + max(1, $qty);
+        $key   = $this->lineKey($productId, $size);
+
+        $items[$key] = [
+            'product_id' => $productId,
+            'size'       => $size,
+            'qty'        => ($items[$key]['qty'] ?? 0) + max(1, $qty),
+        ];
+
         $this->save($items);
     }
 
-    public function update(int $productId, int $qty): void
+    public function update(string $key, int $qty): void
     {
         $items = $this->raw();
 
+        if (! isset($items[$key])) {
+            return;
+        }
+
         if ($qty <= 0) {
-            unset($items[$productId]);
+            unset($items[$key]);
         } else {
-            $items[$productId] = $qty;
+            $items[$key]['qty'] = $qty;
         }
 
         $this->save($items);
     }
 
-    public function remove(int $productId): void
+    public function remove(string $key): void
     {
         $items = $this->raw();
-        unset($items[$productId]);
+        unset($items[$key]);
         $this->save($items);
     }
 
@@ -53,10 +97,10 @@ class CartService
         Session::forget(self::KEY);
     }
 
-    /** Soma das quantidades (pro selo do header) */
+    /** Soma das quantidades (pro selo do header). */
     public function count(): int
     {
-        return array_sum($this->raw());
+        return array_sum(array_column($this->raw(), 'qty'));
     }
 
     public function isEmpty(): bool
@@ -65,8 +109,9 @@ class CartService
     }
 
     /**
-     * Itens enriquecidos: faz UMA query e devolve uma coleção de objetos
-     * com product, qty e subtotal de linha. Produtos inexistentes são ignorados.
+     * Itens enriquecidos: UMA query e uma coleção de objetos com
+     * key, product, size, qty, unit_price (do volume) e subtotal.
+     * Produtos inexistentes são ignorados.
      */
     public function items(): Collection
     {
@@ -76,13 +121,30 @@ class CartService
             return collect();
         }
 
-        return Product::whereIn('id', array_keys($raw))
+        $products = Product::whereIn('id', array_unique(array_column($raw, 'product_id')))
             ->get()
-            ->map(fn (Product $product) => (object) [
-                'product'  => $product,
-                'qty'      => $raw[$product->id],
-                'subtotal' => $product->price * $raw[$product->id],
-            ])
+            ->keyBy('id');
+
+        return collect($raw)
+            ->map(function (array $line, string $key) use ($products) {
+                $product = $products->get($line['product_id']);
+
+                if (! $product) {
+                    return null;
+                }
+
+                $unit = $product->priceForSize($line['size']);
+
+                return (object) [
+                    'key'        => $key,
+                    'product'    => $product,
+                    'size'       => $line['size'],
+                    'qty'        => $line['qty'],
+                    'unit_price' => $unit,
+                    'subtotal'   => $unit * $line['qty'],
+                ];
+            })
+            ->filter()
             ->values();
     }
 

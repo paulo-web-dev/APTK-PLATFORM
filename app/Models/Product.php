@@ -18,6 +18,7 @@ class Product extends Model
         'base',
         'abv',
         'sizes',
+        'size_prices',
         'price',
         'compare_price',
         'sku',
@@ -34,6 +35,7 @@ class Product extends Model
         'stock_qty'     => 'integer',
         'abv'           => 'integer',
         'sizes'         => 'array',
+        'size_prices'   => 'array',
         'active'        => 'boolean',
         'featured'      => 'boolean',
     ];
@@ -51,5 +53,55 @@ class Product extends Model
     public function primaryImage(): HasOne
     {
         return $this->hasOne(ProductImage::class)->where('is_primary', true);
+    }
+
+    /* -----------------------------------------------------------------
+     | Preço por volume
+     | `sizes` define quais volumes existem; `size_prices` define o
+     | preço de cada um. Volume sem preço próprio cai no `price` base.
+     ------------------------------------------------------------------ */
+
+    /** O produto tem mais de um volume à venda? */
+    public function hasSizes(): bool
+    {
+        return is_array($this->sizes) && count($this->sizes) > 0;
+    }
+
+    /** Preço de um volume específico (ou o preço base). */
+    public function priceForSize(?string $size): float
+    {
+        if ($size !== null && is_array($this->size_prices) && isset($this->size_prices[$size])) {
+            return (float) $this->size_prices[$size];
+        }
+
+        return (float) $this->price;
+    }
+
+    /**
+     * Opções de compra: [volume => preço], na ordem de `sizes`.
+     * Sem volumes cadastrados, devolve [null => preço base].
+     */
+    public function sizeOptions(): array
+    {
+        if (! $this->hasSizes()) {
+            return [];
+        }
+
+        $options = [];
+        foreach ($this->sizes as $size) {
+            $options[$size] = $this->priceForSize($size);
+        }
+
+        return $options;
+    }
+
+    /** Volume padrão pré-selecionado (o maior — normalmente o preço "cheio"). */
+    public function defaultSize(): ?string
+    {
+        if (! $this->hasSizes()) {
+            return null;
+        }
+
+        return $this->sizes[count($this->sizes) - 1];
     }
 }

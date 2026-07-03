@@ -26,7 +26,10 @@
     .pdp-specs .k { font-size: var(--text-xs); color: var(--color-text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
     .pdp-specs .v { font-family: var(--font-mono); color: var(--color-text); }
     .pdp-specs .v.sizes { display: flex; gap: 6px; flex-wrap: wrap; }
-    .size-chip { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 3px 8px; }
+    /* Seletor de volume (leva 01): cliente escolhe o ML e o preço muda. */
+    .size-chip-btn { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.06em; color: var(--color-text-muted); background: transparent; border: 1px solid var(--color-border); border-radius: 100px; padding: 7px 14px; cursor: pointer; transition: color .2s ease, border-color .2s ease, background-color .2s ease; }
+    .size-chip-btn:hover { color: var(--color-text); border-color: var(--color-primary-muted); }
+    .size-chip-btn.is-active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-text-inverse); }
     .pdp-buy { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
     .stock-ok { color: var(--color-success); }
     .stock-out { color: var(--color-danger); }
@@ -88,7 +91,7 @@
                 @endif
 
                 <div class="pdp-price-row">
-                    <span class="pdp-price">R$ {{ number_format($product->price, 2, ',', '.') }}</span>
+                    <span class="pdp-price" id="pdpPrice">R$ {{ number_format($product->priceForSize($product->defaultSize()), 2, ',', '.') }}</span>
                     @if ($product->compare_price && $product->compare_price > $product->price)
                         <span class="pdp-compare">R$ {{ number_format($product->compare_price, 2, ',', '.') }}</span>
                     @endif
@@ -105,8 +108,18 @@
                     @if ($product->abv)
                         <div><span class="k">Teor</span><span class="v">{{ $product->abv }}% vol.</span></div>
                     @endif
-                    @if (! empty($product->sizes))
-                        <div><span class="k">Volumes</span><span class="v sizes">@foreach ($product->sizes as $sz)<span class="size-chip">{{ $sz }}</span>@endforeach</span></div>
+                    @if ($product->hasSizes())
+                        <div>
+                            <span class="k">Volume</span>
+                            <span class="v sizes" id="pdpSizePicker">
+                                @foreach ($product->sizeOptions() as $sz => $szPrice)
+                                    <button type="button"
+                                            class="size-chip-btn {{ $sz === $product->defaultSize() ? 'is-active' : '' }}"
+                                            data-size="{{ $sz }}"
+                                            data-price="{{ number_format($szPrice, 2, ',', '.') }}">{{ $sz }}</button>
+                                @endforeach
+                            </span>
+                        </div>
                     @endif
                     @if ($product->sku)
                         <div><span class="k">SKU</span><span class="v">{{ $product->sku }}</span></div>
@@ -128,6 +141,7 @@
                         <form action="{{ route('cart.add') }}" method="POST" style="display:inline;">
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
+                            <input type="hidden" name="size" id="pdpSizeInput" value="{{ $product->defaultSize() }}">
                             <button type="submit" class="btn-aptk">Adicionar ao carrinho</button>
                         </form>
                     @else
@@ -182,6 +196,22 @@
         main.src = src;
         thumbs.forEach(function (b) { b.classList.remove('is-active'); });
         btn.classList.add('is-active');
+      });
+    });
+  })();
+
+  // Seletor de volume: atualiza preço exibido + input enviado ao carrinho.
+  (function () {
+    var picker = document.getElementById('pdpSizePicker');
+    if (!picker) return;
+    var priceEl = document.getElementById('pdpPrice');
+    var sizeInput = document.getElementById('pdpSizeInput');
+    picker.querySelectorAll('.size-chip-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        picker.querySelectorAll('.size-chip-btn').forEach(function (b) { b.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+        if (priceEl) priceEl.textContent = 'R$ ' + btn.getAttribute('data-price');
+        if (sizeInput) sizeInput.value = btn.getAttribute('data-size');
       });
     });
   })();

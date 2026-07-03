@@ -132,7 +132,7 @@
                     <h3>Seu pedido</h3>
                     @foreach ($items as $row)
                         <div class="sum-item">
-                            <span><span class="q">{{ $row->qty }}×</span> {{ $row->product->name }}</span>
+                            <span><span class="q">{{ $row->qty }}×</span> {{ $row->product->name }}@if ($row->size) <small style="color:var(--color-text-muted);">({{ $row->size }})</small>@endif</span>
                             <span>R$ {{ number_format($row->subtotal, 2, ',', '.') }}</span>
                         </div>
                     @endforeach

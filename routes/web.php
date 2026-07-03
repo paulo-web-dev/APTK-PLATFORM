@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CheckoutController;
+use App\Http\Controllers\Shop\CustomController;
 use App\Http\Controllers\Shop\HomeController;
 use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\PageController;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 | Loja pública
 |--------------------------------------------------------------------------
+| "Produtos" no menu → rota /loja mantida (decisão leva 01 do feedback).
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/loja', [ProductController::class, 'index'])->name('catalog');
@@ -21,7 +23,15 @@ Route::get('/produto/{slug}', [ProductController::class, 'show'])->name('product
 
 /*
 |--------------------------------------------------------------------------
-| Carrinho (sessão)
+| Custom (antiga Customização) — página + pedido do Custom Simples
+|--------------------------------------------------------------------------
+*/
+Route::get('/custom', [CustomController::class, 'show'])->name('custom');
+Route::post('/custom/pedido', [CustomController::class, 'store'])->name('custom.store');
+
+/*
+|--------------------------------------------------------------------------
+| Carrinho (sessão) — linhas identificadas por produto + volume ("key")
 |--------------------------------------------------------------------------
 */
 Route::get('/carrinho', [CartController::class, 'index'])->name('cart.index');
@@ -71,13 +81,23 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Páginas institucionais "em breve" → PageController@show
+| Redirects da leva 01 (URLs antigas → novas, preservando SEO/links)
+|--------------------------------------------------------------------------
+*/
+Route::redirect('/customizacao', '/custom', 301);
+Route::redirect('/parceiros', '/collabs', 301);
+Route::redirect('/sobre', '/quem-somos', 301);
+Route::redirect('/marcas', '/quem-somos', 301);
+
+/*
+|--------------------------------------------------------------------------
+| Páginas institucionais → PageController@show
 |--------------------------------------------------------------------------
 | Slugs fixos (gate também no controller via abort_unless). Fica por último
 | para não capturar nenhuma rota literal acima.
 */
 Route::get('/{slug}', [PageController::class, 'show'])
-    ->where('slug', 'customizacao|clube|assinantes|parceiros|eventos|franquias|marcas|sobre')
+    ->where('slug', 'clube|assinantes|collabs|eventos|franquias|quem-somos')
     ->name('pages.show');
 
 require __DIR__.'/auth.php';

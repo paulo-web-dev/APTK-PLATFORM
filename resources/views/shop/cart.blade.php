@@ -60,13 +60,14 @@
 
                             <div class="cart-info">
                                 <a href="{{ route('product', $row->product->slug) }}" class="cart-name">{{ $row->product->name }}</a>
-                                <span class="cart-unit">R$ {{ number_format($row->product->price, 2, ',', '.') }} / un</span>
+                                <span class="cart-unit">@if ($row->size){{ $row->size }} · @endif R$ {{ number_format($row->unit_price, 2, ',', '.') }} / un</span>
                             </div>
 
+                            {{-- Linhas do carrinho identificadas por produto + volume (key). --}}
                             <form action="{{ route('cart.update') }}" method="POST" class="cart-qty">
                                 @csrf
                                 @method('PATCH')
-                                <input type="hidden" name="product_id" value="{{ $row->product->id }}">
+                                <input type="hidden" name="key" value="{{ $row->key }}">
                                 <input type="number" name="qty" value="{{ $row->qty }}" min="0" class="qty-input">
                                 <button type="submit" class="qty-btn">Atualizar</button>
                             </form>
@@ -76,7 +77,7 @@
                             <form action="{{ route('cart.remove') }}" method="POST">
                                 @csrf
                                 @method('DELETE')
-                                <input type="hidden" name="product_id" value="{{ $row->product->id }}">
+                                <input type="hidden" name="key" value="{{ $row->key }}">
                                 <button type="submit" class="remove-btn" aria-label="Remover">&times;</button>
                             </form>
                         </div>

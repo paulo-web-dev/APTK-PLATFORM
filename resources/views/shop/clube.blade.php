@@ -1,7 +1,7 @@
 @extends('layouts.public')
 
 @section('title', 'Clube APTK — Assinatura de drinks · APTK Spirits')
-@section('meta_description', 'O clube de assinatura da APTK: receba drinks prontos e bases autorais em casa, todo mês. Cinco planos, do Descoberta ao Small Batch.')
+@section('meta_description', 'O clube de assinatura da APTK: receba drinks prontos e bases autorais em casa, todo mês. Cinco planos, do Admirador ao Aged.')
 
 @section('hide_feature_band', '1')
 
@@ -103,7 +103,7 @@
         <div class="how-step">
           <span class="how-num">01</span>
           <h3>Escolha o plano</h3>
-          <p>Do Descoberta ao Small Batch, tem um ritmo pra cada sede.</p>
+          <p>Do Admirador ao Aged, tem um ritmo pra cada sede.</p>
         </div>
         <div class="how-step">
           <span class="how-num">02</span>
@@ -197,7 +197,7 @@
       <p>Escolha um plano e comece a receber a APTK em casa. Qualquer dúvida, a gente responde rápido.</p>
       <div class="cta-row">
         <a href="mailto:rafael@aptkspirits.com?subject=Clube%20APTK%20%E2%80%94%20Quero%20assinar" class="btn-aptk">Quero assinar</a>
-        <a href="{{ route('catalog') }}" class="btn-aptk btn-aptk--outline">Ver o catálogo</a>
+        <a href="{{ route('catalog') }}" class="btn-aptk btn-aptk--outline">Ver a carta</a>
       </div>
     </div>
   </section>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Services\CartService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,9 +28,19 @@ class CartController extends Controller
         $data = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'qty'        => ['nullable', 'integer', 'min:1'],
+            'size'       => ['nullable', 'string', 'max:30'],
         ]);
 
-        $this->cart->add($data['product_id'], $data['qty'] ?? 1);
+        // O volume precisa existir no cadastro do produto (evita preço forjado).
+        $size = $data['size'] ?? null;
+        if ($size !== null) {
+            $product = Product::findOrFail($data['product_id']);
+            if (! is_array($product->sizes) || ! in_array($size, $product->sizes, true)) {
+                $size = null;
+            }
+        }
+
+        $this->cart->add($data['product_id'], $data['qty'] ?? 1, $size);
 
         return redirect()
             ->route('cart.index')
@@ -39,11 +50,11 @@ class CartController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'product_id' => ['required', 'integer'],
-            'qty'        => ['required', 'integer', 'min:0'],
+            'key' => ['required', 'string', 'max:60'],
+            'qty' => ['required', 'integer', 'min:0'],
         ]);
 
-        $this->cart->update($data['product_id'], $data['qty']);
+        $this->cart->update($data['key'], $data['qty']);
 
         return redirect()->route('cart.index');
     }
@@ -51,10 +62,10 @@ class CartController extends Controller
     public function remove(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'product_id' => ['required', 'integer'],
+            'key' => ['required', 'string', 'max:60'],
         ]);
 
-        $this->cart->remove($data['product_id']);
+        $this->cart->remove($data['key']);
 
         return redirect()->route('cart.index');
     }

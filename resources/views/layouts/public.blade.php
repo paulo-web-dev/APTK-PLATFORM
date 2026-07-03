@@ -2,16 +2,15 @@
     /* Carrinho ao vivo no header — uma query só, via CartService da loja. */
     $aptkCartCount = app(\App\Services\CartService::class)->count();
 
-    /* Itens institucionais da nav → rota pages.show (PageController). slug => rótulo */
+    /* Menu leva 01: Quem Somos · Produtos · Custom · Clube · Eventos · Franquias · Collabs.
+       Itens institucionais → rota pages.show (slug => rótulo).
+       Custom tem rota própria (route('custom')) e Assinantes saiu da nav
+       (a página /assinantes continua existindo para links diretos). */
     $aptkNav = [
-        'customizacao' => 'Customização',
-        'clube'        => 'Clube',
-        'assinantes'   => 'Assinantes',
-        'parceiros'    => 'Parceiros',
-        'eventos'      => 'Eventos',
-        'franquias'    => 'Franquias',
-        'marcas'       => 'Marcas',
-        'sobre'        => 'Sobre',
+        'clube'     => 'Clube',
+        'eventos'   => 'Eventos',
+        'franquias' => 'Franquias',
+        'collabs'   => 'Collabs',
     ];
     $aptkLojaAtiva = request()->routeIs('catalog') || request()->routeIs('product');
 @endphp
@@ -147,12 +146,14 @@
   <header class="site-header">
     <div class="container-aptk">
       <a href="{{ route('home') }}" class="site-logo" aria-label="APTK Spirits — início">
-        <x-brand.logo :tag="true" />
+        <x-brand.logo />
       </a>
 
       <nav class="site-nav" aria-label="Principal">
         <ul class="list-clean">
-          <li><a href="{{ route('catalog') }}" @class(['is-active' => $aptkLojaAtiva])>Loja</a></li>
+          <li><a href="{{ route('pages.show', 'quem-somos') }}" @class(['is-active' => request()->is('quem-somos')])>Quem Somos</a></li>
+          <li><a href="{{ route('catalog') }}" @class(['is-active' => $aptkLojaAtiva])>Produtos</a></li>
+          <li><a href="{{ route('custom') }}" @class(['is-active' => request()->is('custom')])>Custom</a></li>
           @foreach ($aptkNav as $slug => $label)
             <li><a href="{{ route('pages.show', $slug) }}" @class(['is-active' => request()->is($slug)])>{{ $label }}</a></li>
           @endforeach
@@ -239,7 +240,7 @@
       <div class="footer-grid">
         <div class="footer-brand">
           <a href="{{ route('home') }}" class="footer-logo" aria-label="APTK Spirits — início">
-            <x-brand.logo :tag="true" />
+            <x-brand.logo />
           </a>
           <p>Drinks &amp; histórias pra contar. Destilados e drinks autorais da APTK, ao lado das marcas BARIN e Ice4Pros.</p>
           <div class="footer-social">
@@ -262,18 +263,18 @@
             <li><a href="{{ route('catalog') }}">Bases &amp; destilados</a></li>
             <li><a href="{{ route('catalog') }}">Kits &amp; presentes</a></li>
             <li><a href="{{ route('catalog') }}">Edições especiais</a></li>
-            <li><a href="{{ route('pages.show', 'customizacao') }}">Personalizar rótulo</a></li>
+            <li><a href="{{ route('custom') }}">Personalizar rótulo</a></li>
           </ul>
         </div>
 
         <div class="footer-col">
           <h4>Negócios</h4>
           <ul class="list-clean">
-            <li><a href="{{ route('pages.show', 'parceiros') }}">Portal de parceiros</a></li>
+            <li><a href="{{ route('pages.show', 'collabs') }}">Collabs</a></li>
             <li><a href="{{ route('pages.show', 'franquias') }}">Seja franqueado</a></li>
             <li><a href="{{ route('pages.show', 'eventos') }}">Eventos &amp; corporativo</a></li>
-            <li><a href="{{ route('pages.show', 'marcas') }}">Ice4Pros B2B</a></li>
-            <li><a href="{{ route('pages.show', 'sobre') }}">Sobre a APTK</a></li>
+            <li><a href="{{ route('catalog', ['categoria' => 'ice4pros']) }}">Ice4Pros B2B</a></li>
+            <li><a href="{{ route('pages.show', 'quem-somos') }}">Quem Somos</a></li>
           </ul>
         </div>
 

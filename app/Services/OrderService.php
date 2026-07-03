@@ -89,8 +89,9 @@ class OrderService
                     'product_id'   => $row->product->id,
                     'product_name' => $row->product->name,
                     'product_sku'  => $row->product->sku,
+                    'size'         => $row->size,
                     'qty'          => $row->qty,
-                    'unit_price'   => $row->product->price,
+                    'unit_price'   => $row->unit_price,
                     'total_price'  => $row->subtotal,
                 ]);
 
