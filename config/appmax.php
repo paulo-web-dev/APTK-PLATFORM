@@ -17,6 +17,27 @@
 
 return [
 
+    // ---- Fluxo de aplicativo (API v4 / OAuth2) ----
+    // Credenciais do APLICATIVO (painel do desenvolvedor). Usadas no fluxo
+    // de instalação; as credenciais do MERCHANT (que transacionam) chegam
+    // pelo health check e ficam na tabela settings (grupo "appmax"),
+    // com fallback opcional nas envs abaixo.
+    'client_id'     => env('APPMAX_CLIENT_ID'),
+    'client_secret' => env('APPMAX_CLIENT_SECRET'),
+
+    'merchant_client_id'     => env('APPMAX_MERCHANT_CLIENT_ID'),
+    'merchant_client_secret' => env('APPMAX_MERCHANT_CLIENT_SECRET'),
+
+    'auth_urls' => [
+        'production' => 'https://auth.appmax.com.br/oauth2/token',
+        'sandbox'    => 'https://auth.sandboxappmax.com.br/oauth2/token',
+    ],
+    'api_urls' => [
+        'production' => 'https://api.appmax.com.br',
+        'sandbox'    => 'https://api.sandboxappmax.com.br',
+    ],
+
+    // ---- Fluxo antigo (API v3, token único) — mantido como fallback ----
     'token' => env('APPMAX_TOKEN'),
 
     // sandbox | production

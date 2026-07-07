@@ -109,16 +109,11 @@ Route::match(['GET', 'POST'], '/appmax/callback', function (\Illuminate\Http\Req
     )->header('Content-Type', 'text/html; charset=utf-8');
 })->name('appmax.callback');
 
-// Health check exigido no cadastro do aplicativo Appmax ("URL de validação").
-// Responde 200 pra Appmax confirmar que a instalação está no ar.
-Route::get('/appmax/health', function () {
-    return response()->json([
-        'ok'          => true,
-        'app'         => 'APTK Spirits Platform',
-        'environment' => config('appmax.environment'),
-        'time'        => now()->toIso8601String(),
-    ]);
-})->name('appmax.health');
+// URL de validação do app Appmax (doc 2.3): GET = status manual;
+// POST = health check da instalação, que ENTREGA as credenciais do merchant
+// e exige resposta {"external_id": uuid-v4-novo} — ver AppmaxInstallController.
+Route::match(['GET', 'POST'], '/appmax/health', [\App\Http\Controllers\Webhooks\AppmaxInstallController::class, 'health'])
+    ->name('appmax.health');
 
 /*
 |--------------------------------------------------------------------------

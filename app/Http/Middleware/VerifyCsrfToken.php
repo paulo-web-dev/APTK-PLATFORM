@@ -14,6 +14,7 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'webhooks/appmax/*', // POST server-to-server da Appmax (validado por token na URL)
         'appmax/callback',   // callback da autorização de instalação do app
+        'appmax/health',     // health check POST da instalação (entrega credenciais do merchant)
         //
     ];
 }
