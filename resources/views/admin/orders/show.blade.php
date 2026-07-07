@@ -22,6 +22,9 @@
     @if (session('status'))
         <div class="alert-ok">{{ session('status') }}</div>
     @endif
+    @if (session('error'))
+        <div class="alert-ok" style="color:var(--color-danger); border-left-color:var(--color-danger);">{{ session('error') }}</div>
+    @endif
 
     <div class="order-grid">
         <div>
@@ -54,6 +57,33 @@
         </div>
 
         <div>
+            @if ($order->appmax_order_id)
+            <div class="panel">
+                <div class="panel-head">Pagamento · Appmax</div>
+                <div class="panel-body">
+                    <div class="kv"><span class="k">Pedido Appmax</span><span class="v">#{{ $order->appmax_order_id }}</span></div>
+                    @if ($order->appmax_pay_reference)
+                        <div class="kv"><span class="k">Referência</span><span class="v">{{ $order->appmax_pay_reference }}</span></div>
+                    @endif
+                    <div class="kv"><span class="k">Status pgto.</span><span class="v">{{ ['pending' => 'Aguardando', 'paid' => 'Pago', 'failed' => 'Recusado', 'expired' => 'Expirado', 'refunded' => 'Estornado', 'chargeback' => 'Chargeback'][$order->payment_status] ?? ucfirst($order->payment_status) }}</span></div>
+                    @if ($order->paid_at)
+                        <div class="kv"><span class="k">Pago em</span><span class="v">{{ $order->paid_at->format('d/m/Y H:i') }}</span></div>
+                    @endif
+                    @if (($order->payment_details['type'] ?? null) === 'cartao')
+                        <div class="kv"><span class="k">Parcelas</span><span class="v">{{ $order->payment_details['installments'] ?? 1 }}×</span></div>
+                    @endif
+
+                    @if ($order->isPaid())
+                        <form action="{{ route('admin.orders.refund', $order) }}" method="POST" style="margin-top:14px;"
+                              onsubmit="return confirm('Estornar o valor TOTAL deste pedido na Appmax?');">
+                            @csrf
+                            <button type="submit" class="btn-aptk btn-aptk--outline" style="width:100%; color:var(--color-danger); border-color:var(--color-danger);">Estornar via Appmax</button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+            @endif
+
             <div class="panel">
                 <div class="panel-head">Resumo</div>
                 <div class="panel-body">

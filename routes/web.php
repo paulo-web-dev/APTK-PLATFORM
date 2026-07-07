@@ -9,6 +9,7 @@ use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\PageController;
 use App\Http\Controllers\Shop\ProductController;
 use App\Http\Controllers\Shop\SubscriptionController;
+use App\Http\Controllers\Webhooks\AppmaxWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -65,6 +66,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/pedido/{order}/confirmado', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/pedido/{order}/status-pagamento', [CheckoutController::class, 'paymentStatus'])->name('checkout.payment-status');
 
     // Meus pedidos (histórico do cliente)
     Route::get('/meus-pedidos', [OrderController::class, 'index'])->name('orders.index');
@@ -78,6 +80,45 @@ Route::middleware('auth')->group(function () {
     Route::post('/minha-assinatura/{subscription}/retomar', [SubscriptionController::class, 'resume'])->name('subscription.resume');
     Route::post('/minha-assinatura/{subscription}/cancelar', [SubscriptionController::class, 'cancel'])->name('subscription.cancel');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Webhook Appmax (sem CSRF — exceção em VerifyCsrfToken)
+|--------------------------------------------------------------------------
+| Cadastrar no painel: https://SEU-DOMINIO/webhooks/appmax/{APPMAX_WEBHOOK_TOKEN}
+*/
+Route::post('/webhooks/appmax/{token}', [AppmaxWebhookController::class, 'handle'])
+    ->name('webhooks.appmax');
+
+// Callback da autorização da instalação do app Appmax (doc 2.2/2.3).
+// CAPTURA GENÉRICA: registra tudo o que a Appmax enviar (query + corpo) em
+// storage/logs/laravel.log com o prefixo "Appmax callback" — as credenciais
+// do merchant chegam por aqui. Será substituída pelo handler definitivo
+// quando o formato (doc 2.3) for confirmado.
+Route::match(['GET', 'POST'], '/appmax/callback', function (\Illuminate\Http\Request $request) {
+    \Illuminate\Support\Facades\Log::info('Appmax callback recebido', [
+        'method' => $request->method(),
+        'query'  => $request->query(),
+        'body'   => $request->all(),
+    ]);
+
+    return response(
+        '<h2 style="font-family:sans-serif;">APTK ✓ Autorização recebida.</h2>'.
+        '<p style="font-family:sans-serif;">Os dados foram registrados no servidor. Pode fechar esta janela.</p>',
+        200,
+    )->header('Content-Type', 'text/html; charset=utf-8');
+})->name('appmax.callback');
+
+// Health check exigido no cadastro do aplicativo Appmax ("URL de validação").
+// Responde 200 pra Appmax confirmar que a instalação está no ar.
+Route::get('/appmax/health', function () {
+    return response()->json([
+        'ok'          => true,
+        'app'         => 'APTK Spirits Platform',
+        'environment' => config('appmax.environment'),
+        'time'        => now()->toIso8601String(),
+    ]);
+})->name('appmax.health');
 
 /*
 |--------------------------------------------------------------------------

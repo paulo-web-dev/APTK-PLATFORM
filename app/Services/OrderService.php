@@ -106,4 +106,40 @@ class OrderService
             return $order;
         });
     }
+
+    /**
+     * Cancela um pedido e devolve o estoque dos itens.
+     * Usado quando o cartão é recusado no checkout e quando um Pix/boleto
+     * expira (webhook Appmax). Idempotente: não devolve estoque duas vezes.
+     */
+    public function cancelAndRestoreStock(Order $order, string $paymentStatus = 'failed'): void
+    {
+        if ($order->status === 'cancelled') {
+            return;
+        }
+
+        DB::transaction(function () use ($order, $paymentStatus) {
+            foreach ($order->items as $item) {
+                if ($item->product) {
+                    $item->product->increment('stock_qty', (int) $item->qty);
+                }
+            }
+
+            $order->update([
+                'status'         => 'cancelled',
+                'payment_status' => $paymentStatus,
+            ]);
+        });
+    }
+
+    /**
+     * Devolve os itens de um pedido ao carrinho da sessão (produto + volume),
+     * para o cliente tentar pagar de novo sem remontar a sacola.
+     */
+    public function restoreCartFromOrder(Order $order): void
+    {
+        foreach ($order->items as $item) {
+            $this->cart->add((int) $item->product_id, (int) $item->qty, $item->size);
+        }
+    }
 }

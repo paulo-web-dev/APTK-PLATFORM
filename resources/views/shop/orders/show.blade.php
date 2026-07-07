@@ -27,6 +27,13 @@
     <x-slot name="header">
         <a href="{{ route('orders.index') }}" class="od-back">← Meus pedidos</a>
         <h1 style="margin-top:10px;">Pedido APTK-{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</h1>
+
+        @if ($order->isAwaitingPayment() && in_array($order->payment_method, ['pix', 'boleto']) && $order->status !== 'cancelled')
+            <div style="border:1px solid var(--color-primary-muted); border-radius:var(--radius-md); padding:14px 18px; margin-bottom:22px; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+                <span style="font-family:var(--font-mono); font-size:var(--text-sm); color:var(--color-text);">Este pedido aguarda pagamento.</span>
+                <a href="{{ route('checkout.success', $order) }}" class="btn-aptk">{{ $order->payment_method === 'pix' ? 'Pagar com Pix' : 'Ver boleto' }}</a>
+            </div>
+        @endif
         <p class="acc-sub">{{ $order->created_at->format('d/m/Y \à\s H:i') }} · @include('shop.partials.order-status', ['status' => $order->status])</p>
     </x-slot>
 

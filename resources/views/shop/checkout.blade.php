@@ -31,6 +31,10 @@
         .cko-summary { position: static; }
         .grid-2, .grid-3 { grid-template-columns: 1fr; }
     }
+    .pay-error { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-danger); border: 1px solid var(--color-border); border-left: 3px solid var(--color-danger); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 24px; }
+    .card-fields { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--color-border); }
+    .card-fields select { width: 100%; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); padding: 11px 12px; font-family: var(--font-body); }
+    .pay-hint { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 6px; }
 </style>
 @endpush
 
@@ -40,6 +44,10 @@
 
         <span class="eyebrow">Checkout</span>
         <h1 class="section-title" style="margin-bottom:32px;">Finalizar compra</h1>
+        @if (session('payment_error'))
+            <div class="pay-error">{{ session('payment_error') }}</div>
+        @endif
+
 
         <form action="{{ route('checkout.store') }}" method="POST">
             @csrf
@@ -54,6 +62,19 @@
                             <label for="name">Nome do destinatário</label>
                             <input type="text" id="name" name="name" value="{{ old('name', auth()->user()->name) }}">
                             @error('name') <span class="err">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="field">
+                                <label for="cpf">CPF (titular do pagamento)</label>
+                                <input type="text" id="cpf" name="cpf" value="{{ old('cpf') }}" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
+                                @error('cpf') <span class="err">{{ $message }}</span> @enderror
+                            </div>
+                            <div class="field">
+                                <label for="phone">Telefone / WhatsApp</label>
+                                <input type="tel" id="phone" name="phone" value="{{ old('phone') }}" placeholder="(11) 90000-0000" maxlength="20">
+                                @error('phone') <span class="err">{{ $message }}</span> @enderror
+                            </div>
                         </div>
 
                         <div class="grid-2">
@@ -119,6 +140,46 @@
                         </div>
                         @error('payment_method') <span class="err" style="margin-top:10px;">{{ $message }}</span> @enderror
 
+                        {{-- Dados do cartão — só aparecem com "Cartão de crédito" marcado. --}}
+                        <div id="cardFields" class="card-fields" hidden>
+                            <div class="grid-2">
+                                <div class="field">
+                                    <label for="card_number">Número do cartão</label>
+                                    <input type="text" id="card_number" name="card_number" value="{{ old('card_number') }}" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19" autocomplete="cc-number">
+                                    @error('card_number') <span class="err">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="field">
+                                    <label for="card_name">Nome impresso no cartão</label>
+                                    <input type="text" id="card_name" name="card_name" value="{{ old('card_name') }}" autocomplete="cc-name" style="text-transform:uppercase;">
+                                    @error('card_name') <span class="err">{{ $message }}</span> @enderror
+                                </div>
+                            </div>
+                            <div class="grid-3">
+                                <div class="field">
+                                    <label for="card_expiry">Validade (MM/AA)</label>
+                                    <input type="text" id="card_expiry" name="card_expiry" value="{{ old('card_expiry') }}" placeholder="09/28" inputmode="numeric" maxlength="5" autocomplete="cc-exp">
+                                    @error('card_expiry') <span class="err">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="field">
+                                    <label for="card_cvv">CVV</label>
+                                    <input type="text" id="card_cvv" name="card_cvv" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc">
+                                    @error('card_cvv') <span class="err">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="field">
+                                    <label for="installments">Parcelas</label>
+                                    <select id="installments" name="installments">
+                                        @for ($i = 1; $i <= $maxInstallments; $i++)
+                                            <option value="{{ $i }}" {{ (int) old('installments', 1) === $i ? 'selected' : '' }}>
+                                                {{ $i }}× de R$ {{ number_format($total / $i, 2, ',', '.') }}{{ $i === 1 ? ' à vista' : '' }}
+                                            </option>
+                                        @endfor
+                                    </select>
+                                    @error('installments') <span class="err">{{ $message }}</span> @enderror
+                                    <span class="pay-hint">Juros do parcelamento conforme condições no fechamento.</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="field" style="margin-top:20px;">
                             <label for="notes">Observações (opcional)</label>
                             <textarea id="notes" name="notes" rows="3">{{ old('notes') }}</textarea>
@@ -147,3 +208,38 @@
     </div>
 </section>
 @endsection
+
+@push('scripts')
+<script>
+  // Checkout: alterna os campos do cartão + máscaras leves de CPF/validade/número.
+  (function () {
+    var radios = document.querySelectorAll('input[name="payment_method"]');
+    var cardBox = document.getElementById('cardFields');
+    function toggleCard() {
+      var m = document.querySelector('input[name="payment_method"]:checked');
+      var isCard = m && m.value === 'cartao';
+      if (cardBox) cardBox.hidden = !isCard;
+      ['card_number', 'card_name', 'card_expiry', 'card_cvv'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.required = isCard;
+      });
+    }
+    radios.forEach(function (r) { r.addEventListener('change', toggleCard); });
+    toggleCard();
+
+    function mask(el, fn) { if (el) el.addEventListener('input', function () { el.value = fn(el.value); }); }
+    mask(document.getElementById('cpf'), function (v) {
+      v = v.replace(/\D/g, '').slice(0, 11);
+      return v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    });
+    mask(document.getElementById('card_number'), function (v) {
+      return v.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 ');
+    });
+    mask(document.getElementById('card_expiry'), function (v) {
+      v = v.replace(/\D/g, '').slice(0, 4);
+      return v.length > 2 ? v.slice(0, 2) + '/' + v.slice(2) : v;
+    });
+    mask(document.getElementById('card_cvv'), function (v) { return v.replace(/\D/g, '').slice(0, 4); });
+  })();
+</script>
+@endpush
