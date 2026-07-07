@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\AppmaxService;
 use App\Services\CartService;
+use App\Models\Setting;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -41,9 +42,11 @@ class CheckoutController extends Controller
         }
 
         return view('shop.checkout', [
-            'items'           => $this->cart->items(),
-            'total'           => $this->cart->total(),
-            'maxInstallments' => (int) config('appmax.max_installments', 12),
+            'items'             => $this->cart->items(),
+            'total'             => $this->cart->total(),
+            'maxInstallments'   => (int) config('appmax.max_installments', 12),
+            // external_id da instalação — referenciado pela doc de tokenização (5.2.3).
+            'appmaxExternalId'  => Setting::get('appmax_install_external_id'),
         ]);
     }
 
@@ -60,9 +63,16 @@ class CheckoutController extends Controller
 
         try {
             // 2) Cliente e pedido na Appmax.
+            // IP: o coletado pelo Appmax JS (doc 3.1) tem prioridade; se o
+            // script falhou/foi bloqueado, cai no IP do request.
+            $clientIp = $request->input('appmax_ip');
+            if (! filter_var($clientIp, FILTER_VALIDATE_IP)) {
+                $clientIp = (string) $request->ip();
+            }
+
             $appmaxCustomerId = $this->appmax->createCustomer(
                 array_merge($data, ['email' => $request->user()->email]),
-                (string) $request->ip(),
+                $clientIp,
             );
 
             $order->update(['appmax_customer_id' => $appmaxCustomerId]);
@@ -131,12 +141,27 @@ class CheckoutController extends Controller
     {
         [$month, $year] = $this->parseExpiry($data['card_expiry']);
 
+        $request = request();
+
+        // Token gerado pelo Appmax JS no navegador (doc 5.2.3). O nome exato
+        // do campo injetado não está documentado — testamos os candidatos e
+        // logamos as chaves recebidas (NUNCA valores) pra confirmar no sandbox.
+        $token = collect(['token', 'appmax_token', 'card_token', 'payment_token'])
+            ->map(fn ($k) => $request->input($k))
+            ->first(fn ($v) => filled($v));
+
+        \Illuminate\Support\Facades\Log::info('Appmax JS: campos do POST de cartão', [
+            'keys'      => array_keys($request->except(['card_number', 'card_cvv', 'card_name', 'card_expiry', '_token'])),
+            'tem_token' => filled($token),
+        ]);
+
         $charge = $this->appmax->payWithCreditCard($order, [
-            'number'          => $data['card_number'],
+            'token'           => $token,
+            'number'          => $data['card_number'] ?? '',
             'name'            => $data['card_name'],
             'month'           => $month,
             'year'            => $year,
-            'cvv'             => $data['card_cvv'],
+            'cvv'             => $data['card_cvv'] ?? '',
             'document_number' => $data['cpf'],
             'installments'    => (int) $data['installments'],
         ]);
@@ -204,11 +229,17 @@ class CheckoutController extends Controller
         ];
 
         if ($request->input('payment_method') === 'cartao') {
+            // Se o Appmax JS tokenizou no navegador, os dados brutos do cartão
+            // podem nem chegar (é o comportamento desejado) — só exigimos os
+            // campos crus quando NÃO houver token.
+            $hasToken = collect(['token', 'appmax_token', 'card_token', 'payment_token'])
+                ->contains(fn ($k) => filled($request->input($k)));
+
             $rules += [
-                'card_number'  => ['required', 'string', 'regex:/^[\d\s]{16,19}$/'],
+                'card_number'  => [$hasToken ? 'nullable' : 'required', 'string', 'regex:/^[\d\s]{16,19}$/'],
                 'card_name'    => ['required', 'string', 'max:100'],
                 'card_expiry'  => ['required', 'string', 'regex:/^(0[1-9]|1[0-2])\/?\d{2}$/'],
-                'card_cvv'     => ['required', 'string', 'regex:/^\d{3,4}$/'],
+                'card_cvv'     => [$hasToken ? 'nullable' : 'required', 'string', 'regex:/^\d{3,4}$/'],
                 'installments' => ['required', 'integer', 'min:1', 'max:'.config('appmax.max_installments', 12)],
             ];
         }

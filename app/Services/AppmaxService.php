@@ -285,13 +285,20 @@ class AppmaxService
      */
     public function payWithCreditCard(Order $order, array $card): array
     {
+        // Com tokenização Appmax JS (obrigatória p/ homologação sem PCI),
+        // o front envia 'token' e os dados brutos do cartão nem chegam aqui.
+        $cardData = filled($card['token'] ?? null)
+            ? ['token' => $card['token']]
+            : [
+                'number' => $this->digits($card['number']),
+                'cvv'    => (string) $card['cvv'],
+            ];
+
         $data = $this->post('/v1/payments/credit-card', [
             'order_id'     => $order->appmax_order_id,
             'customer_id'  => $order->appmax_customer_id,
             'payment_data' => [
-                'credit_card' => [
-                    'number'                 => $this->digits($card['number']),
-                    'cvv'                    => (string) $card['cvv'],
+                'credit_card' => $cardData + [
                     // Doc 5.2: mês sem zero à esquerda, ano com 2 dígitos ("25").
                     'expiration_month'       => (string) ((int) $card['month']),
                     'expiration_year'        => str_pad((string) (((int) $card['year']) % 100), 2, '0', STR_PAD_LEFT),
@@ -328,18 +335,23 @@ class AppmaxService
     }
 
     /* -----------------------------------------------------------------
-     | Estorno
-     | ⚠️ A página "6. Criar um Estorno" da doc v4 ainda não foi conferida.
-     | O endpoint abaixo segue o padrão /v1/*; se divergir, o admin recebe
-     | a mensagem de erro da API e ajustamos em 1 linha.
+     | Estorno  —  POST /v1/orders/refund-request  (doc 6)
+     | type: "total" | "partial" (value em centavos, obrigatório se partial).
+     | 201 → {data:{message:"Refund request accepted"}}
      ------------------------------------------------------------------ */
 
-    public function refund(Order $order): bool
+    public function refund(Order $order, string $type = 'total', ?float $value = null): bool
     {
-        $this->post('/v1/refunds', [
-            'order_id'    => $order->appmax_order_id,
-            'refund_type' => 'total',
-        ], 'Não foi possível processar o estorno na Appmax.');
+        $payload = [
+            'order_id' => $order->appmax_order_id,
+            'type'     => $type,
+        ];
+
+        if ($type === 'partial') {
+            $payload['value'] = $this->toCents($value ?? 0);
+        }
+
+        $this->post('/v1/orders/refund-request', $payload, 'Não foi possível processar o estorno na Appmax.');
 
         return true;
     }

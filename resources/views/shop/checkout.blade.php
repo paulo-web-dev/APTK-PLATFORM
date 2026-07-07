@@ -49,8 +49,11 @@
         @endif
 
 
-        <form action="{{ route('checkout.store') }}" method="POST">
+        <form data-appmax-checkout data-appmax-external-id="{{ $appmaxExternalId ?? '' }}" action="{{ route('checkout.store') }}" method="POST">
             @csrf
+            {{-- IP coletado pelo Appmax JS (obrigatório p/ homologação — doc 3.1).
+                 Preenchido pelo AppmaxScripts.init; fallback: IP do request no servidor. --}}
+            <input type="hidden" name="appmax_ip" id="appmax_ip" value="">
             <div class="cko-layout">
 
                 {{-- Coluna esquerda: dados --}}
@@ -145,12 +148,12 @@
                             <div class="grid-2">
                                 <div class="field">
                                     <label for="card_number">Número do cartão</label>
-                                    <input type="text" id="card_number" name="card_number" value="{{ old('card_number') }}" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19" autocomplete="cc-number">
+                                    <input type="text" id="card_number" name="card_number" appmax-form-element="number" value="{{ old('card_number') }}" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19" autocomplete="cc-number">
                                     @error('card_number') <span class="err">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="field">
                                     <label for="card_name">Nome impresso no cartão</label>
-                                    <input type="text" id="card_name" name="card_name" value="{{ old('card_name') }}" autocomplete="cc-name" style="text-transform:uppercase;">
+                                    <input type="text" id="card_name" name="card_name" appmax-form-element="holder_name" value="{{ old('card_name') }}" autocomplete="cc-name" style="text-transform:uppercase;">
                                     @error('card_name') <span class="err">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -158,11 +161,14 @@
                                 <div class="field">
                                     <label for="card_expiry">Validade (MM/AA)</label>
                                     <input type="text" id="card_expiry" name="card_expiry" value="{{ old('card_expiry') }}" placeholder="09/28" inputmode="numeric" maxlength="5" autocomplete="cc-exp">
+                                    {{-- Doc 5.2.3 espera mês/ano separados — sincronizados via JS a partir do MM/AA. --}}
+                                    <input type="hidden" id="appmax_exp_month" appmax-form-element="expiration_month" value="">
+                                    <input type="hidden" id="appmax_exp_year" appmax-form-element="expiration_year" value="">
                                     @error('card_expiry') <span class="err">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="field">
                                     <label for="card_cvv">CVV</label>
-                                    <input type="text" id="card_cvv" name="card_cvv" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc">
+                                    <input type="text" id="card_cvv" name="card_cvv" appmax-form-element="cvv" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc">
                                     @error('card_cvv') <span class="err">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="field">
@@ -210,6 +216,30 @@
 @endsection
 
 @push('scripts')
+{{-- Appmax JS (obrigatório — doc 1.3): coleta de IP + tokenização do cartão.
+     Os dados do cartão são tokenizados no NAVEGADOR; o servidor recebe o
+     token no lugar dos dados reais (conformidade PCI DSS). --}}
+<script src="https://scripts.appmax.com.br/appmax.min.js"></script>
+<script>
+  // Inicializa o AppmaxScripts: o callback de sucesso entrega o IP coletado.
+  (function () {
+    function boot() {
+      if (!window.AppmaxScripts) { console.error('AppmaxScripts não carregado.'); return; }
+      window.AppmaxScripts.init(
+        function (data) {
+          var ip = document.getElementById('appmax_ip');
+          if (ip && data && data.ip) ip.value = data.ip;
+        },
+        function (err) { console.error('Appmax JS:', err); }
+      );
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
+    }
+  })();
+</script>
 <script>
   // Checkout: alterna os campos do cartão + máscaras leves de CPF/validade/número.
   (function () {
@@ -237,7 +267,13 @@
     });
     mask(document.getElementById('card_expiry'), function (v) {
       v = v.replace(/\D/g, '').slice(0, 4);
-      return v.length > 2 ? v.slice(0, 2) + '/' + v.slice(2) : v;
+      var out = v.length > 2 ? v.slice(0, 2) + '/' + v.slice(2) : v;
+      // Espelha nos campos separados que o Appmax JS lê (expiration_month/year).
+      var mo = document.getElementById('appmax_exp_month');
+      var yr = document.getElementById('appmax_exp_year');
+      if (mo) mo.value = v.slice(0, 2);
+      if (yr) yr.value = v.slice(2, 4);
+      return out;
     });
     mask(document.getElementById('card_cvv'), function (v) { return v.replace(/\D/g, '').slice(0, 4); });
   })();
