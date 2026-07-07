@@ -23,23 +23,22 @@
   .model-card .m-text { color: #111; line-height: 1.15; }
   .model-card .m-font { position: absolute; bottom: 0; left: 0; right: 0; background: #111; color: var(--color-primary); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 6px 8px; }
   .model-card .m-kind { position: absolute; left: -28px; top: 50%; transform: rotate(-90deg) translateX(50%); transform-origin: center; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-text-muted); }
-  /* Fontes de exemplo. PP Rader é a oficial (auto-hospedada);
-     Amithen e Blackword AINDA NÃO estão no projeto — abaixo, fallbacks
-     script aproximados. Trocar pelos @font-face quando os WOFF2 chegarem. */
+  /* Fontes de exemplo. PP Rader e Amithen são reais (auto-hospedadas);
+     Blackword AINDA NÃO chegou — fallback script até o arquivo vir. */
   .m-text--rader { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.3rem, 2.4vw, 1.8rem); }
-  .m-text--amithen { font-family: var(--font-script), 'Segoe Script', cursive; font-size: clamp(1.2rem, 2.2vw, 1.6rem); }
+  .m-text--amithen { font-family: var(--font-amithen); font-size: clamp(1.4rem, 2.4vw, 1.9rem); }
   .m-text--blackword { font-family: var(--font-script), 'Brush Script MT', cursive; font-size: clamp(1.5rem, 2.8vw, 2rem); font-style: italic; }
   .model-card--full { background: var(--color-ink); border-color: var(--color-primary-muted); }
   .model-card--full .m-text { color: var(--color-primary); font-family: var(--font-display); font-weight: 700; font-size: clamp(1.1rem, 2vw, 1.5rem); letter-spacing: 0.04em; }
   .model-card--full .m-font { background: var(--color-primary); color: var(--color-text-inverse); }
 
-  /* ---- Custom: como funciona (3 passos — leva 01 removeu "Defina o lote") ---- */
-  .how-band { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
-  .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-  .step-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 28px 24px; }
-  .step-card .s-num { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-primary); }
-  .step-card h3 { font-family: var(--font-display); font-size: var(--text-xl); margin: 12px 0 8px; }
-  .step-card p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.6; margin: 0; }
+  /* ---- Custom: como funciona COMPACTO no hero (leva 02) — o cliente
+     cai direto no customizar/comprar, sem faixa dedicada. ---- */
+  .steps-inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 26px 0 0; padding-top: 22px; border-top: 1px solid var(--color-border); }
+  .steps-inline .si { display: inline-flex; align-items: baseline; gap: 8px; }
+  .steps-inline .si-num { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; color: var(--color-primary); }
+  .steps-inline .si-txt { font-size: var(--text-sm); color: var(--color-text-muted); }
+  .steps-inline .si-sep { color: var(--color-primary); font-family: var(--font-mono); }
 
   /* ---- Custom Simples: formulário ---- */
   .cst-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
@@ -50,6 +49,13 @@
   .cst-form input:focus, .cst-form select:focus { outline: none; border-color: var(--color-primary); }
   .cst-form .f-hint { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 6px; }
   .cst-form .f-err { font-size: var(--text-xs); color: var(--color-danger); margin-top: 6px; }
+  /* Preview do rótulo: a mensagem digitada aparece na fonte escolhida. */
+  .label-preview { background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-md); min-height: 92px; display: grid; place-items: center; text-align: center; padding: 18px 16px; margin-top: 10px; }
+  .label-preview .lp-text { color: #111; line-height: 1.2; word-break: break-word; }
+  .label-preview .lp-text.f-pprader { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.2rem, 3vw, 1.6rem); }
+  .label-preview .lp-text.f-amithen { font-family: var(--font-amithen); font-size: clamp(1.3rem, 3vw, 1.8rem); }
+  .label-preview .lp-text.f-blackword { font-family: var(--font-script), 'Brush Script MT', cursive; font-style: italic; font-size: clamp(1.4rem, 3.2vw, 2rem); }
+  .label-preview .lp-empty { color: var(--color-text-muted); font-size: var(--text-xs); font-family: var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
   .cst-ok { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-success); border: 1px solid var(--color-border); border-left: 3px solid var(--color-success); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 24px; }
   .cst-side h2 { font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0 0 14px; }
   .cst-side p { color: var(--color-text-muted); line-height: 1.7; margin: 0 0 18px; max-width: 460px; }
@@ -78,6 +84,15 @@
         <h1>Sua marca na nossa garrafa</h1>
         <p class="lead">Presentes corporativos, casamentos, aniversários ou a sua própria marca: personalizamos o rótulo e a curadoria do drink, do lote pequeno ao grande volume.</p>
         <a href="#pedido" class="btn-aptk">Pedir orçamento</a>
+
+        {{-- Como funciona (compacto — leva 02): direto no primeiro bloco. --}}
+        <div class="steps-inline" aria-label="Como funciona">
+          <span class="si"><span class="si-num">01</span><span class="si-txt">Escolha o drink</span></span>
+          <span class="si-sep">→</span>
+          <span class="si"><span class="si-num">02</span><span class="si-txt">Crie o rótulo</span></span>
+          <span class="si-sep">→</span>
+          <span class="si"><span class="si-num">03</span><span class="si-txt">Receba pronto</span></span>
+        </div>
       </div>
 
       <div>
@@ -110,32 +125,8 @@
     </div>
   </section>
 
-  {{-- COMO FUNCIONA — 3 passos (leva 01: "Defina o lote" removido) --}}
-  <section class="section how-band">
-    <div class="container-aptk">
-      <div class="section-head">
-        <span class="eyebrow">Como funciona</span>
-        <h2 class="section-title">Do conceito à garrafa</h2>
-      </div>
-      <div class="steps-grid">
-        <div class="step-card">
-          <span class="s-num">01</span>
-          <h3>Escolha o drink</h3>
-          <p>Comece por um clássico ou um autoral da casa como base.</p>
-        </div>
-        <div class="step-card">
-          <span class="s-num">02</span>
-          <h3>Crie o rótulo</h3>
-          <p>A gente desenha — ou aplica a sua arte — dentro da identidade APTK.</p>
-        </div>
-        <div class="step-card">
-          <span class="s-num">03</span>
-          <h3>Receba pronto</h3>
-          <p>Engarrafado, rotulado e embalado para presentear ou vender.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+  {{-- Faixa "Do conceito à garrafa" REMOVIDA (leva 02): passos agora
+       compactos no hero; o formulário vem direto na sequência. --}}
 
   {{-- CUSTOM SIMPLES — formulário do pedido --}}
   <section class="section" id="pedido">
@@ -199,6 +190,11 @@
               <input id="cst-mensagem" type="text" name="mensagem" value="{{ old('mensagem') }}" required maxlength="120" placeholder="Ex.: Bia & Eduardo — 20 de setembro">
               <p class="f-hint">Até 8 palavras — é o texto que vai impresso no rótulo.</p>
               @error('mensagem') <p class="f-err">{{ $message }}</p> @enderror
+              {{-- Preview: a mensagem aparece na fonte escolhida (leva 02). --}}
+              <div class="label-preview" id="labelPreview" aria-live="polite">
+                <span class="lp-empty" id="lpEmpty">Prévia do rótulo</span>
+                <span class="lp-text f-pprader" id="lpText" hidden></span>
+              </div>
             </div>
             <button type="submit" class="btn-aptk btn-aptk--block">Comprar</button>
             <p class="f-hint" style="text-align:center; margin-top:10px;">A APTK recebe a sua customização e retorna com proposta e prazo.</p>
@@ -224,3 +220,30 @@
   </section>
 
 @endsection
+
+@push('scripts')
+<script>
+  // Preview do rótulo: mensagem digitada + fonte escolhida (leva 02).
+  (function () {
+    var fonte = document.getElementById('cst-fonte');
+    var msg = document.getElementById('cst-mensagem');
+    var lpText = document.getElementById('lpText');
+    var lpEmpty = document.getElementById('lpEmpty');
+    if (!fonte || !msg || !lpText) return;
+
+    var fontClass = { 'PP Rader': 'f-pprader', 'Amithen': 'f-amithen', 'Blackword': 'f-blackword' };
+
+    function render() {
+      var t = msg.value.trim();
+      lpText.className = 'lp-text ' + (fontClass[fonte.value] || 'f-pprader');
+      lpText.textContent = t;
+      lpText.hidden = !t;
+      lpEmpty.hidden = !!t;
+    }
+
+    fonte.addEventListener('change', render);
+    msg.addEventListener('input', render);
+    render();
+  })();
+</script>
+@endpush

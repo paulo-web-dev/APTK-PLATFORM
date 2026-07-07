@@ -61,14 +61,14 @@
                         </div>
                         <div class="field">
                             <label>Volumes</label>
-                            <input type="text" name="sizes" class="admin-input" style="width:100%;" value="{{ old('sizes', is_array($product->sizes) ? implode(', ', $product->sizes) : '') }}" placeholder="100 ml, 375 ml, 750 ml">
+                            <input type="text" name="sizes" class="admin-input" style="width:100%;" value="{{ old('sizes', is_array($product->sizes) ? implode(', ', $product->sizes) : '') }}" placeholder="375 ml, 750 ml">
                             <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:6px;">Separe por vírgula. Viram o seletor de volume na loja.</p>
                         </div>
                         <div class="field" style="margin-bottom:0;">
                             <label>Preços por volume (R$)</label>
                             <input type="text" name="size_prices" class="admin-input" style="width:100%;"
                                    value="{{ old('size_prices', is_array($product->size_prices) ? implode('; ', array_map(fn ($v) => number_format((float) $v, 2, ',', '.'), $product->size_prices)) : '') }}"
-                                   placeholder="65,90; 109,90; 189,90">
+                                   placeholder="109,90; 189,90">
                             <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:6px;">Na mesma ordem dos volumes, separados por ponto-e-vírgula. Vazio = todos os volumes usam o preço base.</p>
                         </div>
                     </div>

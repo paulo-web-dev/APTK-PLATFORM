@@ -26,6 +26,15 @@
   .pg-hero--band .eyebrow::before { background: var(--color-cream); }
   .pg-hero--band p.lead { color: color-mix(in srgb, var(--color-cream) 84%, transparent); }
 
+  /* Hero com vídeo vertical (leva 02 — Collab/Ice4Pros): texto à esquerda,
+     vídeo retrato 9:16 à direita, altura limitada pra não dominar a dobra. */
+  .pg-hero--split { border-bottom: 1px solid var(--color-border); }
+  .pg-hero--split .container-aptk { display: grid; grid-template-columns: 1.15fr .85fr; gap: clamp(32px, 5vw, 64px); align-items: center; padding-block: 56px 48px; }
+  .hero-vvideo { position: relative; justify-self: center; width: min(100%, 340px); }
+  .hero-vvideo video { display: block; width: 100%; aspect-ratio: 9 / 16; max-height: 560px; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); background: #0D0A06; }
+  .hero-vvideo .photo-tag { position: absolute; left: 12px; bottom: 12px; background: color-mix(in srgb, var(--color-ink) 70%, transparent); color: var(--color-cream); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 6px 10px; border-radius: var(--radius-sm); backdrop-filter: blur(4px); }
+  @media (max-width: 860px) { .pg-hero--split .container-aptk { grid-template-columns: 1fr; } .hero-vvideo { justify-self: start; } }
+
   /* ---- Blocos / features ---- */
   .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px; }
   .pg-feature { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 28px 24px; }
@@ -64,7 +73,31 @@
 
 @section('content')
 
-  {{-- HERO --}}
+  {{-- HERO — três variantes: com vídeo vertical ('video'), com imagem de
+       fundo ('image') ou simples. --}}
+  @if (! empty($page['video']))
+  <section class="pg-hero pg-hero--split">
+    <div class="container-aptk">
+      <div>
+        <span class="eyebrow">{{ $page['eyebrow'] }}</span>
+        <h1>{{ $page['title'] }}</h1>
+        <p class="lead">{{ $page['lead'] }}</p>
+        @if (! empty($page['hero_cta']))
+          <a href="{{ $page['hero_cta']['href'] }}" class="btn-aptk">{{ $page['hero_cta']['label'] }}</a>
+        @endif
+      </div>
+      <div class="hero-vvideo">
+        <video autoplay muted loop playsinline
+               @if (! empty($page['image'])) poster="{{ asset($page['image']) }}" @endif>
+          <source src="{{ asset($page['video']) }}" type="video/mp4">
+        </video>
+        @if (! empty($page['video_tag']))
+          <span class="photo-tag">{{ $page['video_tag'] }}</span>
+        @endif
+      </div>
+    </div>
+  </section>
+  @else
   <section class="pg-hero @if ($page['image']) pg-hero--band @endif">
     @if ($page['image'])
       <img src="{{ asset($page['image']) }}" alt="">
@@ -78,6 +111,7 @@
       @endif
     </div>
   </section>
+  @endif
 
   {{-- BLOCOS --}}
   <section class="section">

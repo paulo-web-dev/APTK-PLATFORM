@@ -19,7 +19,7 @@
   .hero-meta .lbl { font-size: var(--text-xs); color: color-mix(in srgb, var(--color-cream) 65%, transparent); letter-spacing: 0.1em; text-transform: uppercase; }
 
   /* Vídeo do hero (Ale envasando). Formato retangular 16:10.
-     Arquivo esperado: public/video/hero-envase.mp4 — enquanto não chega,
+     Arquivo esperado: public/video/hero-negroni.mp4 — enquanto não chega,
      o poster + marcação seguram o lugar. */
   .hero-media { position: relative; }
   .hero-media video,
@@ -149,13 +149,13 @@
           </div>
         </div>
         <div class="hero-media">
-          {{-- Vídeo do Ale envasando um coquetel.
-               Soltar o arquivo em public/video/hero-envase.mp4 e ele entra
-               no lugar do poster automaticamente. --}}
+          {{-- Vídeo do Negroni (leva 02). Soltar o arquivo
+               "APTK - NEGRONI.mp4" renomeado para
+               public/video/hero-negroni.mp4 e ele entra no lugar do poster. --}}
           <video autoplay muted loop playsinline poster="{{ asset('img/aptk/hero-bartender.jpg') }}">
-            <source src="{{ asset('video/hero-envase.mp4') }}" type="video/mp4">
+            <source src="{{ asset('video/hero-negroni.mp4') }}" type="video/mp4">
           </video>
-          <span class="photo-tag">Vídeo — envase no balcão APTK</span>
+          <span class="photo-tag">Negroni — no balcão APTK</span>
         </div>
       </div>
     </div>

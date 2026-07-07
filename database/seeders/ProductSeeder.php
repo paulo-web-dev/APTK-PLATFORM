@@ -54,7 +54,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'negroni-classico', 'name' => 'Negroni Clássico', 'cat' => 'classicos',
                 'short' => 'O amargo-doce do clássico italiano, no ponto, engarrafado pela APTK.',
                 'tipo' => 'Coquetel composto', 'base' => 'APTK Gin', 'ingredientes' => 'gin, amaro e vermute rosso',
-                'abv' => 27, 'sizes' => ['100 ml', '375 ml', '750 ml'],
+                'abv' => 27, 'sizes' => ['375 ml', '750 ml'],
                 'servico' => 'copo baixo com gelo, 90 ml, finalizado com zest de Laranja Bahia',
                 'price' => 189.90, 'sku' => 'NEG-750', 'weight' => 1.2, 'featured' => true,
             ],
@@ -62,7 +62,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'fitzgerald', 'name' => 'Fitzgerald', 'cat' => 'classicos',
                 'short' => 'Gin, limão e bitters — o sour cítrico que abre a noite.',
                 'tipo' => 'Coquetel alcoólico', 'base' => 'APTK Gin', 'ingredientes' => 'gin, limão, bitters e açúcar',
-                'abv' => 30, 'sizes' => ['100 ml', '375 ml', '750 ml'],
+                'abv' => 30, 'sizes' => ['375 ml', '750 ml'],
                 'servico' => 'copo baixo com gelo, 90 ml, com zest de Limão Siciliano',
                 'price' => 179.90, 'sku' => 'FITZ-750', 'weight' => 1.2, 'featured' => true,
             ],
@@ -70,7 +70,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'cosmopolitan', 'name' => 'Cosmopolitan', 'cat' => 'classicos',
                 'short' => 'Vodka, cranberry e cítricos: o ícone novaiorquino, pronto para servir.',
                 'tipo' => 'Coquetel alcoólico', 'base' => 'Vodka VDK', 'ingredientes' => 'vodka, limão, cranberry e laranja',
-                'abv' => 30, 'sizes' => ['100 ml', '375 ml', '750 ml'],
+                'abv' => 30, 'sizes' => ['375 ml', '750 ml'],
                 'servico' => 'taça, 90 ml, com zest de limão',
                 'price' => 169.90, 'sku' => 'COSMO-750', 'weight' => 1.2, 'featured' => true,
             ],
@@ -78,7 +78,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'moscow-mule', 'name' => 'Moscow Mule', 'cat' => 'classicos',
                 'short' => 'Vodka e especiarias com a alma do gengibre, na caneca de cobre.',
                 'tipo' => 'Coquetel alcoólico', 'base' => 'Vodka VDK', 'ingredientes' => 'vodka, mix de cítricos, açúcar e especiarias',
-                'abv' => 30, 'sizes' => ['100 ml', '375 ml', '750 ml'],
+                'abv' => 30, 'sizes' => ['375 ml', '750 ml'],
                 'servico' => 'caneca de cobre, 70 ml, com espuma de gengibre',
                 'price' => 169.90, 'sku' => 'MULE-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -86,7 +86,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'limoncello', 'name' => 'Limoncello', 'cat' => 'classicos',
                 'short' => 'Licor de limão siciliano, fresco e intenso, para o fim da refeição.',
                 'tipo' => 'Licor fino de limão', 'base' => 'álcool de cereais', 'ingredientes' => 'álcool destilado, limão siciliano, água e açúcar',
-                'abv' => 25, 'sizes' => ['100 ml', '375 ml', '750 ml'],
+                'abv' => 25, 'sizes' => ['375 ml', '750 ml'],
                 'servico' => 'taça coupe, 80 ml',
                 'price' => 149.90, 'sku' => 'LIMON-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -96,7 +96,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'caju-amigo', 'name' => 'Caju Amigo', 'cat' => 'autorais',
                 'short' => 'Caju, limão e vodka — o Brasil no copo, leve e refrescante.',
                 'tipo' => 'Bebida alcoólica mista', 'base' => 'Vodka VDK', 'ingredientes' => 'vodka, limão, caju e açúcar',
-                'abv' => 10, 'sizes' => ['100 ml', '375 ml', '750 ml'],
+                'abv' => 10, 'sizes' => ['375 ml', '750 ml'],
                 'servico' => 'copo longo com muito gelo, 80 ml',
                 'price' => 139.90, 'sku' => 'CAJU-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -112,7 +112,7 @@ class ProductSeeder extends Seeder
                 'slug' => 'sur-lorange', 'name' => "Sur L'Orange", 'cat' => 'autorais',
                 'short' => 'Cachaça envelhecida, laranja e amêndoas — releitura autoral da casa.',
                 'tipo' => 'Coquetel alcoólico', 'base' => 'cachaça envelhecida', 'ingredientes' => 'cachaça, laranja e amêndoas',
-                'abv' => 30, 'sizes' => ['100 ml', '375 ml', '750 ml'],
+                'abv' => 30, 'sizes' => ['375 ml', '750 ml'],
                 'servico' => null,
                 'price' => 209.90, 'sku' => 'SURL-750', 'weight' => 1.2, 'featured' => false,
             ],
@@ -205,7 +205,7 @@ class ProductSeeder extends Seeder
 
     /**
      * Preços por volume SUGERIDOS a partir do preço da 750 ml
-     * (100 ml ≈ 35% · 375 ml ≈ 65% · 750 ml = 100%).
+     * (375 ml ≈ 65% · 750 ml = 100%). Leva 02: só 375/750 à venda.
      * São ponto de partida — ajustar produto a produto no admin.
      */
     private function deriveSizePrices(array $sizes, float $price): ?array
@@ -214,7 +214,7 @@ class ProductSeeder extends Seeder
             return null; // volume único usa o price base
         }
 
-        $ratio = ['100 ml' => 0.35, '375 ml' => 0.65, '750 ml' => 1.0];
+        $ratio = ['375 ml' => 0.65, '750 ml' => 1.0];
 
         $out = [];
         foreach ($sizes as $size) {

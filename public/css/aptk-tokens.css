@@ -10,6 +10,7 @@
 @font-face{font-family:'PP Rader';font-style:normal;font-weight:700;font-display:swap;src:url('../fonts/PPRader-Bold.woff2') format('woff2');}
 @font-face{font-family:'Neue World';font-style:normal;font-weight:200;font-display:swap;src:url('../fonts/NeueWorld-Ultralight.woff2') format('woff2');}
 @font-face{font-family:'Neue World';font-style:normal;font-weight:400;font-display:swap;src:url('../fonts/NeueWorld-Regular.woff2') format('woff2');}
+@font-face{font-family:'Amithen';font-style:normal;font-weight:400;font-display:swap;src:url('../fonts/Amithen.woff2') format('woff2');}
 
 :root{
   color-scheme: light;
@@ -47,6 +48,7 @@
   --font-body:      system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; /* UI/funcional legivel */
   --font-mono:      'PP Rader','Helvetica Neue',Arial,sans-serif;            /* rotulos pequenos com tracking */
   --font-script:    var(--font-editorial);
+  --font-amithen: 'Amithen', 'Segoe Script', cursive;  /* rótulos Custom Simples */
   --font-ui:        var(--font-body);
 
   /* ----- Escala tipografica ----- */

@@ -75,6 +75,11 @@ class PageController extends Controller
                 'eyebrow'  => 'Para o trade',
                 'title'    => 'APTK no seu bar, restaurante ou loja',
                 'lead'     => 'Bares, restaurantes, distribuidores e varejo: leve a coquetelaria engarrafada da APTK para o seu negócio, com condições de revenda e abastecimento recorrente.',
+                // Vídeo VERTICAL da Ice4Pros (leva 02). Converter o
+                // "ICE4PRO - CUBO.mov" para MP4 e soltar em
+                // public/video/ice4pros-cubo.mp4. A imagem abaixo vira o poster.
+                'video'     => 'video/ice4pros-cubo.mp4',
+                'video_tag' => 'Ice4Pros — o cubo perfeito',
                 'image'    => 'img/aptk/parceiros-hero.jpg',
                 'hero_cta' => ['label' => 'Falar com o comercial', 'href' => $this->mailto('Collab / parceria comercial — APTK')],
                 'features_eyebrow' => 'Nossos diferenciais',
