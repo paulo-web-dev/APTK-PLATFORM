@@ -41,8 +41,16 @@ class AppmaxWebhookController extends Controller
         $event = (string) $request->input('event', '');
         $data  = (array) $request->input('data', []);
 
-        // O id do pedido Appmax vem em data.id (payload de pedido).
-        $appmaxOrderId = (int) ($data['id'] ?? 0);
+        // O id do pedido Appmax: o payload varia por evento (doc 1.2) —
+        // procura nas posições conhecidas.
+        $appmaxOrderId = (int) (
+            $data['order']['id']
+            ?? $data['order_id']
+            ?? $data['id']
+            ?? $request->input('order.id')
+            ?? $request->input('order_id')
+            ?? 0
+        );
 
         Log::info('Appmax webhook recebido', ['event' => $event, 'appmax_order_id' => $appmaxOrderId]);
 
@@ -59,17 +67,22 @@ class AppmaxWebhookController extends Controller
         }
 
         // 3) Aplica o evento (idempotente: reprocessar não duplica efeito).
+        // Eventos oficiais em snake_case (doc 1.2); nomes PascalCase antigos
+        // mantidos por compatibilidade.
         match (true) {
-            in_array($event, ['OrderApproved', 'OrderPaid', 'OrderPaidByPix', 'OrderAuthorized', 'OrderIntegrated'], true)
-                => $this->markPaid($order),
+            in_array($event, [
+                'order_approved', 'order_paid', 'order_paid_by_pix',
+                'order_authorized', 'order_authorized_with_delay', 'order_integrated',
+                'OrderApproved', 'OrderPaid', 'OrderPaidByPix', 'OrderAuthorized', 'OrderIntegrated',
+            ], true) => $this->markPaid($order),
 
-            $event === 'PaymentNotAuthorized'
+            in_array($event, ['payment_not_authorized', 'PaymentNotAuthorized'], true)
                 => $this->markFailed($order),
 
-            in_array($event, ['PixExpired', 'BoletoExpired'], true)
+            in_array($event, ['order_pix_expired', 'order_billet_overdue', 'PixExpired', 'BoletoExpired'], true)
                 => $this->markExpired($order),
 
-            in_array($event, ['OrderRefund', 'ChargebackDispute'], true)
+            in_array($event, ['order_refund', 'order_chargeback_in_treatment', 'OrderRefund', 'ChargebackDispute'], true)
                 => $this->markRefunded($order, $event),
 
             default => Log::info('Appmax webhook: evento sem tratamento', ['event' => $event]),
@@ -109,8 +122,10 @@ class AppmaxWebhookController extends Controller
 
     protected function markRefunded(Order $order, string $event): void
     {
+        $isChargeback = in_array($event, ['order_chargeback_in_treatment', 'ChargebackDispute'], true);
+
         $order->update([
-            'payment_status' => $event === 'ChargebackDispute' ? 'chargeback' : 'refunded',
+            'payment_status' => $isChargeback ? 'chargeback' : 'refunded',
             'status'         => 'cancelled',
         ]);
     }
