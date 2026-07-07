@@ -49,11 +49,13 @@
         @endif
 
 
-        <form data-appmax-checkout data-appmax-external-id="{{ $appmaxExternalId ?? '' }}" action="{{ route('checkout.store') }}" method="POST">
+        <form id="checkoutForm" data-appmax-checkout data-appmax-customer action="{{ route('checkout.store') }}" method="POST">
             @csrf
             {{-- IP coletado pelo Appmax JS (obrigatório p/ homologação — doc 3.1).
                  Preenchido pelo AppmaxScripts.init; fallback: IP do request no servidor. --}}
             <input type="hidden" name="appmax_ip" id="appmax_ip" value="">
+            {{-- Token do cartão gerado pelo Appmax JS (callback do init). --}}
+            <input type="hidden" name="appmax_token" id="appmax_token" value="">
             <div class="cko-layout">
 
                 {{-- Coluna esquerda: dados --}}
@@ -148,12 +150,12 @@
                             <div class="grid-2">
                                 <div class="field">
                                     <label for="card_number">Número do cartão</label>
-                                    <input type="text" id="card_number" name="card_number" appmax-form-element="number" value="{{ old('card_number') }}" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19" autocomplete="cc-number">
+                                    <input type="text" id="card_number" name="card_number" value="{{ old('card_number') }}" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19" autocomplete="cc-number">
                                     @error('card_number') <span class="err">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="field">
                                     <label for="card_name">Nome impresso no cartão</label>
-                                    <input type="text" id="card_name" name="card_name" appmax-form-element="holder_name" value="{{ old('card_name') }}" autocomplete="cc-name" style="text-transform:uppercase;">
+                                    <input type="text" id="card_name" name="card_name" value="{{ old('card_name') }}" autocomplete="cc-name" style="text-transform:uppercase;">
                                     @error('card_name') <span class="err">{{ $message }}</span> @enderror
                                 </div>
                             </div>
@@ -161,14 +163,19 @@
                                 <div class="field">
                                     <label for="card_expiry">Validade (MM/AA)</label>
                                     <input type="text" id="card_expiry" name="card_expiry" value="{{ old('card_expiry') }}" placeholder="09/28" inputmode="numeric" maxlength="5" autocomplete="cc-exp">
-                                    {{-- Doc 5.2.3 espera mês/ano separados — sincronizados via JS a partir do MM/AA. --}}
-                                    <input type="hidden" id="appmax_exp_month" appmax-form-element="expiration_month" value="">
-                                    <input type="hidden" id="appmax_exp_year" appmax-form-element="expiration_year" value="">
+                                    {{-- Espelhos com os names que o Appmax JS lê via FormData
+                                         (card-number, card-holder-name, exp-month, exp-year, cvv).
+                                         Sincronizados via JS; LIMPOS antes do envio quando há token. --}}
+                                    <input type="hidden" name="card-number" id="mx_card_number" value="">
+                                    <input type="hidden" name="card-holder-name" id="mx_card_holder" value="">
+                                    <input type="hidden" name="exp-month" id="mx_exp_month" value="">
+                                    <input type="hidden" name="exp-year" id="mx_exp_year" value="">
+                                    <input type="hidden" name="cvv" id="mx_cvv" value="">
                                     @error('card_expiry') <span class="err">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="field">
                                     <label for="card_cvv">CVV</label>
-                                    <input type="text" id="card_cvv" name="card_cvv" appmax-form-element="cvv" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc">
+                                    <input type="text" id="card_cvv" name="card_cvv" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc">
                                     @error('card_cvv') <span class="err">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="field">
@@ -217,21 +224,85 @@
 
 @push('scripts')
 {{-- Appmax JS (obrigatório — doc 1.3): coleta de IP + tokenização do cartão.
-     Os dados do cartão são tokenizados no NAVEGADOR; o servidor recebe o
-     token no lugar dos dados reais (conformidade PCI DSS). --}}
+     CONTRATO REAL (extraído do fonte do appmax.min.js):
+       · AppmaxScripts.init(onSuccess, onError, EXTERNAL_ID)
+       · data-appmax-customer no form → o script injeta <input name="ip">
+       · data-appmax-checkout no form → o script intercepta o submit,
+         tokeniza lendo FormData pelos names card-number / card-holder-name /
+         exp-month / exp-year / cvv e entrega o TOKEN no onSuccess — quem
+         reenvia o formulário somos nós (form.submit() nativo não redispara
+         o listener deles).
+       · Pix/boleto: nosso listener (registrado ANTES do init) corta a
+         propagação, e o submit segue normal sem tokenização. --}}
 <script src="https://scripts.appmax.com.br/appmax.min.js"></script>
 <script>
-  // Inicializa o AppmaxScripts: o callback de sucesso entrega o IP coletado.
   (function () {
+    var form = document.getElementById('checkoutForm');
+    if (!form) return;
+
+    function currentMethod() {
+      var m = document.querySelector('input[name="payment_method"]:checked');
+      return m ? m.value : null;
+    }
+
+    function clearSensitive() {
+      // Com o token em mãos, os dados reais do cartão NÃO vão pro servidor.
+      ['card_number', 'card_cvv', 'mx_card_number', 'mx_cvv', 'mx_exp_month', 'mx_exp_year', 'mx_card_holder'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+    }
+
+    function nativeSubmit() {
+      // form.submit() nativo NÃO dispara listeners de submit — sem loop.
+      if (typeof form.reportValidity !== 'function' || form.reportValidity()) {
+        form.submit();
+      }
+    }
+
+    // 1) NOSSO listener primeiro (antes do init): Pix/boleto passam reto,
+    //    sem deixar o interceptador da Appmax tocar no submit.
+    form.addEventListener('submit', function (e) {
+      if (currentMethod() !== 'cartao') {
+        e.stopImmediatePropagation(); // o listener deles nunca roda
+        // o submit padrão segue normalmente
+      }
+      // cartão: deixa o evento chegar ao listener da Appmax (tokenização)
+    });
+
+    // 2) Init da Appmax: o MESMO callback recebe {ip} no load e o TOKEN
+    //    (string) após tokenizar o cartão.
+    var externalId = @json($appmaxExternalId ?? null);
+    var falledBack = false;
+
+    function onAppmax(data) {
+      if (data && typeof data === 'object' && data.ip) {
+        var ip = document.getElementById('appmax_ip');
+        if (ip) ip.value = data.ip;
+        return;
+      }
+      if (typeof data === 'string' && data.length) {
+        // Token do cartão: envia o form com o token e SEM os dados reais.
+        var tk = document.getElementById('appmax_token');
+        if (tk) tk.value = data;
+        clearSensitive();
+        nativeSubmit();
+      }
+    }
+
+    function onAppmaxError(err) {
+      console.error('Appmax JS:', err);
+      // Tokenização falhou num submit de cartão: segue com envio direto
+      // (fallback do servidor) pra não travar a compra — uma vez só.
+      if (currentMethod() === 'cartao' && !falledBack) {
+        falledBack = true;
+        nativeSubmit();
+      }
+    }
+
     function boot() {
       if (!window.AppmaxScripts) { console.error('AppmaxScripts não carregado.'); return; }
-      window.AppmaxScripts.init(
-        function (data) {
-          var ip = document.getElementById('appmax_ip');
-          if (ip && data && data.ip) ip.value = data.ip;
-        },
-        function (err) { console.error('Appmax JS:', err); }
-      );
+      window.AppmaxScripts.init(onAppmax, onAppmaxError, externalId);
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', boot);
@@ -241,7 +312,7 @@
   })();
 </script>
 <script>
-  // Checkout: alterna os campos do cartão + máscaras leves de CPF/validade/número.
+  // Checkout: alterna os campos do cartão + máscaras + espelhos do Appmax JS.
   (function () {
     var radios = document.querySelectorAll('input[name="payment_method"]');
     var cardBox = document.getElementById('cardFields');
@@ -257,6 +328,17 @@
     radios.forEach(function (r) { r.addEventListener('change', toggleCard); });
     toggleCard();
 
+    // Espelhos (names com hífen que o Appmax JS lê no FormData)
+    function mirror(srcId, dstId, fn) {
+      var src = document.getElementById(srcId);
+      var dst = document.getElementById(dstId);
+      if (!src || !dst) return;
+      src.addEventListener('input', function () { dst.value = fn ? fn(src.value) : src.value; });
+    }
+    mirror('card_number', 'mx_card_number', function (v) { return v.replace(/\D/g, ''); });
+    mirror('card_name', 'mx_card_holder');
+    mirror('card_cvv', 'mx_cvv');
+
     function mask(el, fn) { if (el) el.addEventListener('input', function () { el.value = fn(el.value); }); }
     mask(document.getElementById('cpf'), function (v) {
       v = v.replace(/\D/g, '').slice(0, 11);
@@ -267,13 +349,11 @@
     });
     mask(document.getElementById('card_expiry'), function (v) {
       v = v.replace(/\D/g, '').slice(0, 4);
-      var out = v.length > 2 ? v.slice(0, 2) + '/' + v.slice(2) : v;
-      // Espelha nos campos separados que o Appmax JS lê (expiration_month/year).
-      var mo = document.getElementById('appmax_exp_month');
-      var yr = document.getElementById('appmax_exp_year');
+      var mo = document.getElementById('mx_exp_month');
+      var yr = document.getElementById('mx_exp_year');
       if (mo) mo.value = v.slice(0, 2);
       if (yr) yr.value = v.slice(2, 4);
-      return out;
+      return v.length > 2 ? v.slice(0, 2) + '/' + v.slice(2) : v;
     });
     mask(document.getElementById('card_cvv'), function (v) { return v.replace(/\D/g, '').slice(0, 4); });
   })();

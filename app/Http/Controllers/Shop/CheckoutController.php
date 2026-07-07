@@ -65,7 +65,7 @@ class CheckoutController extends Controller
             // 2) Cliente e pedido na Appmax.
             // IP: o coletado pelo Appmax JS (doc 3.1) tem prioridade; se o
             // script falhou/foi bloqueado, cai no IP do request.
-            $clientIp = $request->input('appmax_ip');
+            $clientIp = $request->input('appmax_ip') ?: $request->input('ip');
             if (! filter_var($clientIp, FILTER_VALIDATE_IP)) {
                 $clientIp = (string) $request->ip();
             }

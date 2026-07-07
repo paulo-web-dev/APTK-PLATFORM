@@ -62,7 +62,14 @@ class AppmaxInstallController extends Controller
 
         // external_id: UUID v4 novo a cada chamada (exigência da doc).
         $externalId = (string) Str::uuid();
-        Setting::set('appmax_install_external_id', $externalId, 'appmax');
+
+        // O UUID respondido NA INSTALAÇÃO (quando as credenciais vêm junto)
+        // é o que a Appmax vincula ao merchant — o Appmax JS valida a
+        // tokenização contra ele. Só gravamos/atualizamos nesse caso (ou na
+        // primeira vez); health checks posteriores NÃO podem rotacioná-lo.
+        if (filled($payload['client_id'] ?? null) || blank(Setting::get('appmax_install_external_id'))) {
+            Setting::set('appmax_install_external_id', $externalId, 'appmax');
+        }
 
         return response()->json([
             'external_id' => $externalId,
