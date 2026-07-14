@@ -7,10 +7,8 @@
        Custom tem rota própria (route('custom')) e Assinantes saiu da nav
        (a página /assinantes continua existindo para links diretos). */
     $aptkNav = [
-        'clube'     => 'Clube',
-        'eventos'   => 'Eventos',
-        'franquias' => 'Franquias',
-        'collabs'   => 'Collabs',
+        'clube'   => 'Clube',
+        'eventos' => 'Eventos',
     ];
     $aptkLojaAtiva = request()->routeIs('catalog') || request()->routeIs('product');
 @endphp
@@ -157,6 +155,9 @@
           @foreach ($aptkNav as $slug => $label)
             <li><a href="{{ route('pages.show', $slug) }}" @class(['is-active' => request()->is($slug)])>{{ $label }}</a></li>
           @endforeach
+          {{-- Leva 04: Franquias = LP do parceiro (lp.aptkspirits.com). --}}
+          <li><a href="https://lp.aptkspirits.com/">Franquias</a></li>
+          <li><a href="{{ route('pages.show', 'collabs') }}" @class(['is-active' => request()->is('collabs')])>Collabs</a></li>
         </ul>
       </nav>
 
@@ -271,7 +272,7 @@
           <h4>Negócios</h4>
           <ul class="list-clean">
             <li><a href="{{ route('pages.show', 'collabs') }}">Collabs</a></li>
-            <li><a href="{{ route('pages.show', 'franquias') }}">Seja franqueado</a></li>
+            <li><a href="https://lp.aptkspirits.com/">Seja franqueado</a></li>
             <li><a href="{{ route('pages.show', 'eventos') }}">Eventos &amp; corporativo</a></li>
             <li><a href="{{ route('barin') }}">Barín</a></li>
             <li><a href="{{ route('ice4pros') }}">Ice4Pros</a></li>

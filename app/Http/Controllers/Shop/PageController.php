@@ -106,13 +106,8 @@ class PageController extends Controller
                 'video_tag' => 'Ice4Pros — o cubo perfeito',
                 'image'    => 'img/aptk/parceiros-hero.jpg',
                 'hero_cta' => ['label' => 'Falar com o comercial', 'href' => $this->mailto('Collab / parceria comercial — APTK')],
-                'features_eyebrow' => 'Nossos diferenciais',
-                'features_title'   => 'Parceria do balcão ao estoque',
-                'features' => [
-                    ['n' => 'Revenda', 'h' => 'Linha completa', 'p' => 'Drinks prontos e bases autorais para compor o seu mix.'],
-                    ['n' => 'Marca',   'h' => 'Treinamento', 'p' => 'Apoio de marca e know-how de coquetelaria para a sua equipe.'],
-                    ['n' => 'B2B',     'h' => 'Ice4Pros', 'p' => 'Gelo e insumos para o trade, dentro da própria holding.'],
-                ],
+                // Leva 04: seção "Nossos diferenciais" removida — os cases
+                // (collabs já feitas) sobem pra logo após o hero, em destaque.
                 'cases_eyebrow' => 'Projetos feitos',
                 'cases_title'   => 'Quem já criou com a gente',
                 'cases_lead'    => 'Muito além de gelo e bebida: produtos assinados em parceria com casas e marcas que a gente admira.',
@@ -132,25 +127,9 @@ class PageController extends Controller
                 'closing_cta2'  => null,
             ],
 
-            'franquias' => [
-                'eyebrow'  => 'Seja franqueado',
-                'title'    => 'Abra uma unidade APTK',
-                'lead'     => 'Um modelo de negócio com marca consolidada, produto próprio e operação enxuta — do quiosque em shopping à loja de rua.',
-                'image'    => 'img/aptk/franquias-hero.jpg',
-                'hero_cta' => ['label' => 'Quero franquear', 'href' => $this->mailto('Quero franquear — APTK')],
-                'features_eyebrow' => 'O que você recebe',
-                'features_title'   => 'Uma operação pronta para crescer',
-                'features' => [
-                    ['n' => '01', 'h' => 'Marca consolidada', 'p' => 'Uma identidade reconhecida e produto autoral exclusivo.'],
-                    ['n' => '02', 'h' => 'Formatos flexíveis', 'p' => 'Do quiosque compacto à loja completa, conforme o ponto.'],
-                    ['n' => '03', 'h' => 'Operação enxuta', 'p' => 'Processos definidos, fornecimento central e suporte contínuo.'],
-                    ['n' => '04', 'h' => 'Suporte de abertura', 'p' => 'Implantação, treinamento e marketing para começar certo.'],
-                ],
-                'closing_title' => 'Quer os números?',
-                'closing_text'  => 'Solicite o material com investimento, formatos e retorno estimado.',
-                'closing_cta'   => ['label' => 'Pedir apresentação', 'href' => $this->mailto('Franquia APTK — apresentação')],
-                'closing_cta2'  => null,
-            ],
+            /* Leva 04: página interna de Franquias APOSENTADA — o menu e a
+               rota /franquias apontam pra LP do parceiro em
+               https://lp.aptkspirits.com/ (form, GTM e vídeos mantidos lá). */
 
             'eventos' => [
                 'eyebrow'  => 'Eventos & corporativo',

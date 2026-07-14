@@ -136,6 +136,8 @@ Route::match(['GET', 'POST'], '/appmax/health', [\App\Http\Controllers\Webhooks\
 |--------------------------------------------------------------------------
 */
 Route::redirect('/customizacao', '/custom', 301);
+// Leva 04: Franquias agora é a LP do parceiro (form + GTM mantidos lá).
+Route::redirect('/franquias', 'https://lp.aptkspirits.com/', 301);
 Route::redirect('/parceiros', '/collabs', 301);
 Route::redirect('/sobre', '/quem-somos', 301);
 Route::redirect('/marcas', '/quem-somos', 301);
@@ -148,7 +150,7 @@ Route::redirect('/marcas', '/quem-somos', 301);
 | para não capturar nenhuma rota literal acima.
 */
 Route::get('/{slug}', [PageController::class, 'show'])
-    ->where('slug', 'clube|assinantes|collabs|eventos|franquias|quem-somos')
+    ->where('slug', 'clube|assinantes|collabs|eventos|quem-somos')
     ->name('pages.show');
 
 require __DIR__.'/auth.php';

@@ -114,6 +114,7 @@
   @endif
 
   {{-- BLOCOS --}}
+  @if (! empty($page['features']))
   <section class="section">
     <div class="container-aptk">
       <div class="section-head">
@@ -131,6 +132,8 @@
       </div>
     </div>
   </section>
+
+  @endif
 
   {{-- CASES / PROJETOS FEITOS (carrossel) — só quando a página define 'cases'.
        Fotos dos produtos ainda virão do cliente: 'image' => null renderiza
