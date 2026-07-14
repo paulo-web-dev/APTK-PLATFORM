@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
 use App\Models\Lead;
-use App\Models\SubscriptionPlan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,9 +19,10 @@ class PageController extends Controller
         }
 
         if ($slug === 'clube') {
-            $plans = SubscriptionPlan::where('active', true)->orderBy('sort_order')->get();
-
-            return view('shop.clube', compact('plans'));
+            // Leva 03 — pré-lançamento: a página é só captação de interesse.
+            // Os planos seguem no banco (máquina de assinatura DORMENTE),
+            // mas não são exibidos nem consultados aqui.
+            return view('shop.clube');
         }
 
         // Demais páginas institucionais — template único (hero + blocos + fechamento).
@@ -30,6 +30,30 @@ class PageController extends Controller
         abort_unless(isset($pages[$slug]), 404);
 
         return view('shop.page', ['page' => $pages[$slug]]);
+    }
+
+    /**
+     * Clube APTK (pré-lançamento): grava o interesse como Lead tipo "clube"
+     * — base qualificada pra ativação quando o programa lançar.
+     */
+    public function clubeInteresse(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name'  => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        Lead::create([
+            'type'    => 'clube',
+            'name'    => $data['name'],
+            'email'   => $data['email'],
+            'phone'   => $data['phone'] ?? null,
+            'status'  => 'new',
+            'message' => 'Lista de interesse do Clube APTK (pré-lançamento).',
+        ]);
+
+        return back()->with('clube_ok', 'Você está na lista! Avisamos em primeira mão quando o Clube abrir.');
     }
 
     public function newsletter(Request $request): RedirectResponse

@@ -173,13 +173,13 @@
           <span class="b-tag">Artesanal</span>
           <h3>BARIN</h3>
           <p>A linha artesanal da holding, com receitas próprias e alma de bar.</p>
-          <a href="{{ route('catalog', ['categoria' => 'barin']) }}" class="btn-aptk btn-aptk--outline">Ver a loja BARIN</a>
+          <a href="{{ route('barin') }}" class="btn-aptk btn-aptk--outline">Conhecer a Barín</a>
         </div>
         <div class="brand-box">
           <span class="b-tag">B2B</span>
           <h3>Ice4Pros</h3>
           <p>Gelo e insumos para o trade, com capacidade produtiva e qualidade certificada.</p>
-          <a href="{{ route('pages.show', 'collabs') }}" class="btn-aptk btn-aptk--outline">Falar com o comercial</a>
+          <a href="{{ route('ice4pros') }}" class="btn-aptk btn-aptk--outline">Conhecer a Ice4Pros</a>
         </div>
       </div>
     </div>

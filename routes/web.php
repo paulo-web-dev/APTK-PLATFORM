@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\CustomController;
+use App\Http\Controllers\Shop\FreteController;
 use App\Http\Controllers\Shop\HomeController;
 use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\PageController;
@@ -46,6 +47,20 @@ Route::delete('/carrinho/remover', [CartController::class, 'remove'])->name('car
 |--------------------------------------------------------------------------
 */
 Route::post('/newsletter', [PageController::class, 'newsletter'])->name('newsletter');
+
+// Cotação de frete (SuperFrete) — usada pelo bloco de CEP do checkout.
+Route::post('/frete/cotar', [FreteController::class, 'cotar'])->name('frete.cotar');
+
+/*
+|--------------------------------------------------------------------------
+| Landing pages das marcas (leva 03) — branding antes da venda
+|--------------------------------------------------------------------------
+*/
+Route::view('/barin', 'shop.barin')->name('barin');
+Route::view('/ice4pros', 'shop.ice4pros')->name('ice4pros');
+
+// Clube (pré-lançamento): captação de interesse → Lead tipo "clube".
+Route::post('/clube/interesse', [PageController::class, 'clubeInteresse'])->name('clube.interesse');
 
 /*
 |--------------------------------------------------------------------------

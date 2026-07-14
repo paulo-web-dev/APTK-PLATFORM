@@ -85,19 +85,9 @@
   .promo-band .carousel-control-next { right: -8px; }
   .promo-band .carousel-control-prev-icon, .promo-band .carousel-control-next-icon { filter: invert(0.4) sepia(0.2); width: 18px; height: 18px; }
 
-  /* ---- Home: clube ---- */
+  /* ---- Home: clube (teaser) ---- */
   .club { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
-  .plan-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; align-items: stretch; }
-  .plan-card { position: relative; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 28px 22px; display: flex; flex-direction: column; transition: border-color .25s ease, transform .25s ease; }
-  .plan-card:hover { border-color: var(--color-primary-muted); transform: translateY(-3px); }
-  .plan-card.is-featured { border-color: var(--color-primary); box-shadow: var(--shadow-glow); }
-  .plan-card .plan-name { font-family: var(--font-script); font-size: var(--text-2xl); color: var(--color-primary); margin-bottom: 4px; }
-  .plan-card .plan-kicker { font-size: var(--text-xs); color: var(--color-text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 20px; min-height: 30px; }
-  .plan-card .plan-price { font-family: var(--font-mono); color: var(--color-text); font-size: var(--text-2xl); margin-bottom: 2px; }
-  .plan-card .plan-price small { font-size: var(--text-sm); color: var(--color-text-muted); }
-  .plan-card .plan-cycle { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: 22px; }
-  .plan-card .btn-aptk { margin-top: auto; }
-  .plan-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--color-primary); color: var(--color-text-inverse); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 3px 12px; border-radius: var(--radius-sm); white-space: nowrap; }
+
 
   /* ---- Home: animação de entrada do hero ---- */
   @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
@@ -113,7 +103,6 @@
     .featured-grid { grid-template-columns: 1fr; gap: 28px; }
     .promo-slide { grid-template-columns: 1fr; gap: 24px; }
     .promo-media { order: -1; }
-    .plan-grid { grid-template-columns: repeat(2, 1fr); }
     .promo-band .carousel-control-prev, .promo-band .carousel-control-next { display: none; }
   }
   @media (max-width: 820px) {
@@ -122,7 +111,6 @@
   }
   @media (max-width: 520px) {
     .category-grid { grid-template-columns: 1fr; }
-    .plan-grid { grid-template-columns: 1fr; }
     .hero-ctas .btn-aptk { width: 100%; }
   }
 </style>
@@ -203,7 +191,8 @@
             <span class="cat-link">Área reservada →</span>
           </div>
         </a>
-        <a href="{{ route('catalog', ['categoria' => 'barin']) }}" class="card-aptk category-card category-card--brand">
+        {{-- Leva 03: as marcas abrem a LP institucional; a loja fica pro CTA da LP. --}}
+        <a href="{{ route('barin') }}" class="card-aptk category-card category-card--brand">
           <img src="{{ asset('img/aptk/cat-pessoas.jpg') }}" class="cat-img" alt="Pessoas brindando com drinks da APTK" loading="lazy">
           <div class="cat-body">
             <h3>BARIN</h3>
@@ -211,7 +200,7 @@
             <span class="cat-link">Ver categoria →</span>
           </div>
         </a>
-        <a href="{{ route('catalog', ['categoria' => 'ice4pros']) }}" class="card-aptk category-card category-card--brand">
+        <a href="{{ route('ice4pros') }}" class="card-aptk category-card category-card--brand">
           <img src="{{ asset('img/aptk/cat-loja.jpg') }}" class="cat-img" alt="Balcão da loja física da APTK" loading="lazy">
           <div class="cat-body">
             <h3>ICE4PROS</h3>
@@ -236,10 +225,9 @@
           <span class="cm-soon">Em breve</span>
           <p>Faça parte dessa atmosfera e saboreie o melhor da coquetelaria nacional.</p>
           <div class="cm-ctas">
-            <a href="{{ route('login') }}" class="btn-aptk btn-aptk--block">Sou membro</a>
-            <a href="{{ route('register') }}" class="btn-aptk btn-aptk--outline btn-aptk--block">Quero ser membro</a>
-            {{-- Login por CPF/CNPJ: 2ª etapa. Por enquanto o acesso é por e-mail e senha. --}}
-            <p class="cm-hint">Membros acessam com e-mail e senha. Novo por aqui? Faça o cadastro.</p>
+            {{-- Leva 03 — pré-lançamento: só captação de interesse, sem mecânica. --}}
+            <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--block">Quero receber novidades</a>
+            <p class="cm-hint">Deixe seu contato e saiba tudo em primeira mão.</p>
           </div>
         </div>
       </div>
@@ -364,10 +352,10 @@
           <div class="carousel-item">
             <div class="promo-slide">
               <div class="promo-copy">
-                <span class="eyebrow">Clube APTK</span>
-                <h2>Receba em casa, todo mês</h2>
-                <p>Cinco planos de assinatura, com curadoria da casa, brindes e acesso antecipado aos lotes que não se repetem.</p>
-                <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk">Conhecer o Clube</a>
+                <span class="eyebrow">Clube APTK · em breve</span>
+                <h2>O melhor da casa, primeiro pra quem é da casa</h2>
+                <p>Estamos preparando o Clube APTK. Entre na lista e receba as novidades em primeira mão — do conceito ao lançamento.</p>
+                <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk">Entrar na lista</a>
               </div>
               <div class="promo-media">
                 <img src="{{ asset('img/aptk/clube-hero.jpg') }}" alt="Experiência do Clube APTK" loading="lazy">
@@ -390,53 +378,17 @@
 
   {{-- Seção "Uma holding, três mundos" REMOVIDA (leva 01). --}}
 
-  {{-- CLUBE — planos renomeados (leva 01): Admirador · Bronze · Prata · Ouro · Aged.
-       Programação, planos, diferenciais, pagamentos e renovação: 2ª ETAPA. --}}
+  {{-- CLUBE (leva 03 — pré-lançamento): a vitrine de planos SAIU por decisão
+       do cliente (sem valores/planos/benefícios). Teaser de captação abaixo;
+       a máquina de assinatura segue dormente no código pro lançamento. --}}
   <section class="section club">
-    <div class="container-aptk">
-      <div class="section-head">
-        <span class="eyebrow">Clube APTK</span>
-        <h2 class="section-title">Receba em casa, todo mês</h2>
-        <p>Cinco planos de assinatura. Recorrência simples, brindes e acesso antecipado aos lotes.</p>
+    <div class="container-aptk" style="max-width: 780px; text-align: center;">
+      <div class="section-head" style="margin-bottom: 22px;">
+        <span class="eyebrow">Clube APTK · em breve</span>
+        <h2 class="section-title">Um clube pra quem leva a bebida a sério</h2>
+        <p>A atmosfera do balcão, os lotes que não se repetem e as histórias da casa — chegando primeiro pra quem estiver na lista.</p>
       </div>
-      <div class="plan-grid">
-        <div class="plan-card">
-          <p class="plan-name">Admirador</p>
-          <p class="plan-kicker">Entrada no universo APTK</p>
-          <p class="plan-price">R$ 89<small>/mês</small></p>
-          <p class="plan-cycle">cobrança mensal</p>
-          <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--outline btn-aptk--block">Assinar</a>
-        </div>
-        <div class="plan-card is-featured">
-          <span class="plan-badge">Mais assinado</span>
-          <p class="plan-name">Bronze</p>
-          <p class="plan-kicker">Curadoria mensal</p>
-          <p class="plan-price">R$ 149<small>/mês</small></p>
-          <p class="plan-cycle">cobrança mensal</p>
-          <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--block">Assinar agora</a>
-        </div>
-        <div class="plan-card">
-          <p class="plan-name">Prata</p>
-          <p class="plan-kicker">Acesso especial</p>
-          <p class="plan-price">R$ 249<small>/mês</small></p>
-          <p class="plan-cycle">cobrança mensal</p>
-          <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--outline btn-aptk--block">Assinar</a>
-        </div>
-        <div class="plan-card">
-          <p class="plan-name">Ouro</p>
-          <p class="plan-kicker">Edições artesanais</p>
-          <p class="plan-price">R$ 329<small>/mês</small></p>
-          <p class="plan-cycle">cobrança mensal</p>
-          <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--outline btn-aptk--block">Assinar</a>
-        </div>
-        <div class="plan-card">
-          <p class="plan-name">Aged</p>
-          <p class="plan-kicker">Empresas e equipes</p>
-          <p class="plan-price">Sob<small> consulta</small></p>
-          <p class="plan-cycle">faturamento PJ</p>
-          <a href="{{ route('pages.show', 'eventos') }}" class="btn-aptk btn-aptk--outline btn-aptk--block">Falar com time</a>
-        </div>
-      </div>
+      <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk">Quero ser avisado</a>
     </div>
   </section>
 

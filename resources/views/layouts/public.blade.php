@@ -15,7 +15,7 @@
     $aptkLojaAtiva = request()->routeIs('catalog') || request()->routeIs('product');
 @endphp
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -273,7 +273,8 @@
             <li><a href="{{ route('pages.show', 'collabs') }}">Collabs</a></li>
             <li><a href="{{ route('pages.show', 'franquias') }}">Seja franqueado</a></li>
             <li><a href="{{ route('pages.show', 'eventos') }}">Eventos &amp; corporativo</a></li>
-            <li><a href="{{ route('catalog', ['categoria' => 'ice4pros']) }}">Ice4Pros B2B</a></li>
+            <li><a href="{{ route('barin') }}">Barín</a></li>
+            <li><a href="{{ route('ice4pros') }}">Ice4Pros</a></li>
             <li><a href="{{ route('pages.show', 'quem-somos') }}">Quem Somos</a></li>
           </ul>
         </div>
@@ -313,6 +314,6 @@
     });
   </script>
   @stack('scripts')
-  @include('partials.theme-toggle')
+  {{-- toggle de tema removido (leva 03: dark fixo) --}}
 </body>
 </html>
