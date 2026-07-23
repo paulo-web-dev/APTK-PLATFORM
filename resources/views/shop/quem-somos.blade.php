@@ -88,6 +88,24 @@
 
 @section('content')
 
+  {{-- A HOLDING (leva 06) — texto institucional oficial da Small Batches,
+       publicado em capitalização normal (o design veio em caps; caixa alta
+       integral nesse volume prejudica leitura e acessibilidade). --}}
+  <section class="section" style="border-bottom:1px solid var(--color-border);">
+    <div class="container-aptk" style="max-width: 820px;">
+      <div class="section-head" style="text-align:center;">
+        <span class="eyebrow">A holding</span>
+        <h2 class="section-title">Small Batches</h2>
+      </div>
+      <div style="color:var(--color-text-muted); line-height:1.9; font-size:var(--text-base); display:flex; flex-direction:column; gap:18px;">
+        <p>A Small Batches é uma holding brasileira dedicada à criação de marcas, produtos e experiências para o universo da coquetelaria e da hospitalidade. Seu ecossistema reúne a APTK Spirits, referência em coquetéis engarrafados e projetos especiais; a Ice4Pros, especializada em gelos profissionais; e a Barín, voltada ao atendimento de bares, restaurantes, eventos e operações de alta demanda.</p>
+        <p>Mais do que produzir bebidas e insumos, a Small Batches nasce para transformar conhecimento, técnica e criatividade em soluções capazes de elevar a experiência de consumo. Cada marca atua de forma complementar, conectando desenvolvimento de produtos, excelência operacional, inovação e sensibilidade para compreender diferentes canais, ocasiões e públicos.</p>
+        <p>A holding carrega em sua essência a produção cuidadosa, a atenção aos detalhes e o olhar humano sobre cada projeto. Acredita que grandes experiências não dependem apenas do produto final, mas de tudo o que existe ao redor dele: a receita, o gelo, o serviço, a apresentação, o ambiente e as pessoas.</p>
+        <p>Com uma atuação que combina coquetelaria, indústria, branding e hospitalidade, a Small Batches desenvolve marcas próprias, colaborações e projetos personalizados para empresas que desejam criar experiências autênticas e memoráveis. Seu propósito é construir um ecossistema em que cada detalhe tenha intenção, cada produto conte uma história e cada encontro possa se transformar em um momento especial.</p>
+      </div>
+    </div>
+  </section>
+
   {{-- HERO --}}
   <section class="sobre-hero">
     <img src="{{ asset('img/aptk/sobre-loja.jpg') }}" alt="Loja física da APTK Spirits">

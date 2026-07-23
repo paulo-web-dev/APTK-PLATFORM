@@ -274,6 +274,7 @@
             <li><a href="{{ route('pages.show', 'collabs') }}">Collabs</a></li>
             <li><a href="https://lp.aptkspirits.com/">Seja franqueado</a></li>
             <li><a href="{{ route('pages.show', 'eventos') }}">Eventos &amp; corporativo</a></li>
+            <li><a href="{{ route('novidades.index') }}">Dicas e Novidades</a></li>
             <li><a href="{{ route('barin') }}">Barín</a></li>
             <li><a href="{{ route('ice4pros') }}">Ice4Pros</a></li>
             <li><a href="{{ route('pages.show', 'quem-somos') }}">Quem Somos</a></li>

@@ -19,10 +19,13 @@ class PageController extends Controller
         }
 
         if ($slug === 'clube') {
-            // Leva 03 — pré-lançamento: a página é só captação de interesse.
-            // Os planos seguem no banco (máquina de assinatura DORMENTE),
-            // mas não são exibidos nem consultados aqui.
-            return view('shop.clube');
+            // Leva 05 — lançamento da mecânica oficial: 4 níveis do banco
+            // (ClubePlanos2026Seeder). A vitrine antiga ficou inativa.
+            $plans = \App\Models\SubscriptionPlan::where('active', true)
+                ->orderBy('sort_order')
+                ->get();
+
+            return view('shop.clube', compact('plans'));
         }
 
         // Demais páginas institucionais — template único (hero + blocos + fechamento).
@@ -96,34 +99,47 @@ class PageController extends Controller
              |    marcados; trocar 'image' => null pelos paths quando chegarem).
              */
             'collabs' => [
-                'eyebrow'  => 'Para o trade',
-                'title'    => 'APTK no seu bar, restaurante ou loja',
-                'lead'     => 'Bares, restaurantes, distribuidores e varejo: leve a coquetelaria engarrafada da APTK para o seu negócio, com condições de revenda e abastecimento recorrente.',
-                // Vídeo VERTICAL da Ice4Pros (leva 02). Converter o
-                // "ICE4PRO - CUBO.mov" para MP4 e soltar em
-                // public/video/ice4pros-cubo.mp4. A imagem abaixo vira o poster.
+                'eyebrow'  => 'Collab',
+                'title'    => 'Tenha um coquetel para chamar de seu',
+                'lead'     => 'Transformamos ideias em edições exclusivas. Seja para presentear clientes, celebrar um marco importante, lançar uma collab ou criar um brinde memorável, a APTK desenvolve projetos personalizados que unem coquetelaria autoral, design e curadoria — garrafas únicas, pensadas para representar a identidade de cada projeto, do líquido ao rótulo.',
                 'video'     => 'video/ice4pros-cubo.mp4',
                 'video_tag' => 'Ice4Pros — o cubo perfeito',
                 'image'    => 'img/aptk/parceiros-hero.jpg',
-                'hero_cta' => ['label' => 'Falar com o comercial', 'href' => $this->mailto('Collab / parceria comercial — APTK')],
-                // Leva 04: seção "Nossos diferenciais" removida — os cases
-                // (collabs já feitas) sobem pra logo após o hero, em destaque.
-                'cases_eyebrow' => 'Projetos feitos',
-                'cases_title'   => 'Quem já criou com a gente',
-                'cases_lead'    => 'Muito além de gelo e bebida: produtos assinados em parceria com casas e marcas que a gente admira.',
+                'hero_cta' => ['label' => 'Compartilhar minha ideia', 'href' => $this->mailto('Collab / projeto personalizado — APTK')],
+
+                // Parcerias — lista oficial (doc leva 05). Fotos: aguardando material.
+                'cases_eyebrow' => 'Nossas parcerias',
+                'cases_title'   => 'Algumas histórias também são servidas em uma garrafa',
+                'cases_lead'    => 'A APTK está presente em alguns dos principais destinos de gastronomia, hospitalidade e lifestyle do país — rótulos exclusivos e projetos personalizados para quem compartilha do nosso compromisso com excelência, curadoria e atenção aos detalhes.',
                 'cases' => [
-                    ['h' => 'Gelo Carimbado',  'p' => 'Presença APTK em diversos estabelecimentos.', 'image' => null],
-                    ['h' => 'Braz Pizzaria',   'p' => 'Limoncello Braz, criado para a casa.', 'image' => null],
-                    ['h' => 'Gurumê',          'p' => 'Gin Gurumê, assinatura exclusiva.', 'image' => null],
-                    ['h' => 'Hotel Emiliano',  'p' => 'Drink Cubo, servido no hotel.', 'image' => null],
-                    ['h' => 'Cacau Show',      'p' => 'Licor de Chocolate e Whisky com Cacau.', 'image' => null],
-                    ['h' => 'Guilhotina',      'p' => 'Vodka e Gin personalizados para o bar.', 'image' => null],
-                    ['h' => 'Astor',           'p' => 'Vermute personalizado da casa.', 'image' => null],
-                    ['h' => 'Hotéis & casas',  'p' => 'Hotel Unique, Hotel Pullman, Pirajá e outros.', 'image' => null],
+                    ['h' => 'Selvagem',           'p' => 'Projeto personalizado para a casa.', 'image' => null],
+                    ['h' => 'Hotel Unique',       'p' => 'Rótulo exclusivo da casa.', 'image' => null],
+                    ['h' => 'Rosewood São Paulo', 'p' => 'Parceria com assinatura APTK.', 'image' => null],
+                    ['h' => 'Bráz Pizzaria',      'p' => 'Limoncello Bráz, criado para a casa.', 'image' => null],
+                    ['h' => 'Gurumê',             'p' => 'Gin Gurumê, assinatura exclusiva.', 'image' => null],
+                    ['h' => 'Pirajá',             'p' => 'Projeto exclusivo para a casa.', 'image' => null],
+                    ['h' => 'Hotel Emiliano',     'p' => 'Drink Cubo, servido no hotel.', 'image' => null],
+                    ['h' => 'Camolese',           'p' => 'Rótulo personalizado da casa.', 'image' => null],
+                    ['h' => 'Barbacoa',           'p' => 'Projeto em parceria com a marca.', 'image' => null],
                 ],
-                'closing_title' => 'Vamos fechar parceria?',
-                'closing_text'  => 'Conte o seu formato de negócio e a gente monta a melhor condição.',
-                'closing_cta'   => ['label' => 'Falar com o comercial', 'href' => $this->mailto('Parceria comercial — APTK')],
+                'cases_footer' => 'Mais do que um produto, entregamos uma extensão da marca de nossos parceiros — coquetelaria autoral como elemento de conexão, memória e celebração.',
+
+                // Como funciona — passos oficiais + prazo (doc leva 05).
+                'steps_eyebrow' => 'Como funciona?',
+                'steps_title'   => 'Da ideia ao brinde',
+                'steps' => [
+                    ['h' => 'Entre em contato',            'p' => 'Compartilhe sua ideia, ocasião e objetivo.'],
+                    ['h' => 'Reunião de alinhamento',      'p' => 'Definimos quantidade, receita, prazo e necessidades do projeto.'],
+                    ['h' => 'Criação e aprovação',         'p' => 'Desenvolvemos o rótulo, embalagem e todos os detalhes visuais.'],
+                    ['h' => 'Alinhamento de comunicação',  'p' => 'Caso necessário, desenhamos a narrativa e os materiais de apoio da collab.'],
+                    ['h' => 'Produção',                    'p' => 'Iniciamos a produção das garrafas personalizadas.'],
+                    ['h' => 'Entrega',                     'p' => 'Seu projeto é entregue pronto para brindar.'],
+                ],
+                'steps_note' => 'Prazo estimado: de 15 a 20 dias úteis, podendo variar conforme a complexidade e o nível de personalização do projeto.',
+
+                'closing_title' => 'Na APTK, cada garrafa pode contar uma história',
+                'closing_text'  => 'Conte a sua — e a gente transforma em uma edição exclusiva.',
+                'closing_cta'   => ['label' => 'Falar com o comercial', 'href' => $this->mailto('Collab / projeto personalizado — APTK')],
                 'closing_cta2'  => null,
             ],
 
@@ -132,19 +148,38 @@ class PageController extends Controller
                https://lp.aptkspirits.com/ (form, GTM e vídeos mantidos lá). */
 
             'eventos' => [
-                'eyebrow'  => 'Eventos & corporativo',
-                'title'    => 'Drinks que fazem o evento',
-                'lead'     => 'Casamentos, confraternizações e ativações de marca: coquetelaria APTK no copo dos seus convidados, com bar, equipe e curadoria sob medida.',
+                'eyebrow'  => 'Eventos',
+                'title'    => 'Cada celebração merece um brinde à altura',
+                'lead'     => 'A Small Batches desenvolve soluções personalizadas para eventos de diferentes tamanhos e ocasiões, combinando coquetelaria premium, hospitalidade e curadoria para transformar momentos especiais em memórias inesquecíveis.',
                 'image'    => 'img/aptk/eventos-hero.jpg',
                 'hero_cta' => ['label' => 'Solicitar proposta', 'href' => $this->mailto('Evento — solicitar proposta — APTK')],
-                'features_eyebrow' => 'Formatos',
-                'features_title'   => 'Do íntimo ao grande porte',
+
+                // Ocasiões (doc leva 05).
+                'chips_eyebrow' => 'Ocasiões',
+                'chips' => ['Corporativos', 'Casamentos', 'Aniversários', 'Eventos sociais', 'Lançamentos de marca', 'Jantares e encontros exclusivos'],
+
+                // Formatos — como podemos fazer parte do seu evento (doc leva 05).
+                'features_eyebrow' => 'Como podemos fazer parte do seu evento?',
+                'features_title'   => 'Quatro formatos, uma assinatura',
                 'features' => [
-                    ['n' => '01', 'h' => 'Open bar autoral', 'p' => 'Clássicos e autorais da casa, servidos como no balcão.'],
-                    ['n' => '02', 'h' => 'Bar e equipe', 'p' => 'Estrutura e bartenders para atender qualquer escala.'],
-                    ['n' => '03', 'h' => 'Brindes & kits', 'p' => 'Lembranças engarrafadas e rótulos personalizados do evento.'],
-                    ['n' => '04', 'h' => 'Corporativo', 'p' => 'Ativações de marca, lançamentos e confraternizações.'],
+                    ['n' => '01', 'h' => 'Bar para eventos', 'p' => 'Leve a assinatura da APTK para o seu evento com uma operação completa de bar, carta autoral e equipe especializada.'],
+                    ['n' => '02', 'h' => 'Small Batches para presentear', 'p' => 'Garrafas e kits exclusivos para convidados, padrinhos, clientes, colaboradores ou ações especiais.'],
+                    ['n' => '03', 'h' => 'Patrocínio e apoio institucional', 'p' => 'Projetos em parceria com marcas, ativações e eventos alinhados ao universo Small Batches.'],
+                    ['n' => '04', 'h' => 'Customização de produtos', 'p' => 'Rótulos e embalagens personalizados para transformar sua celebração em algo verdadeiramente único.'],
                 ],
+
+                // Nosso processo (doc leva 05).
+                'steps_eyebrow' => 'Nosso processo',
+                'steps_title'   => 'Da primeira taça ao último brinde',
+                'steps' => [
+                    ['h' => 'Entendimento',  'p' => 'Ocasião e necessidades do evento.'],
+                    ['h' => 'Formato',       'p' => 'Bar, gifting, patrocínio ou customização.'],
+                    ['h' => 'Proposta',      'p' => 'Desenvolvimento da proposta e identidade visual.'],
+                    ['h' => 'Planejamento',  'p' => 'Produção e planejamento operacional.'],
+                    ['h' => 'Execução',      'p' => 'Execução e entrega — estamos presentes para tornar cada celebração memorável.'],
+                ],
+                'steps_note' => null,
+
                 'closing_title' => 'Tem um evento chegando?',
                 'closing_text'  => 'Conte a data, o local e o número de convidados — montamos a proposta.',
                 'closing_cta'   => ['label' => 'Solicitar proposta', 'href' => $this->mailto('Evento — solicitar proposta — APTK')],

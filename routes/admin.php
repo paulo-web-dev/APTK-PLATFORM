@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\StockController;
@@ -69,6 +70,14 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::patch('/assinaturas/{subscription}/pausar', [SubscriptionController::class, 'pause'])->name('subscriptions.pause');
     Route::patch('/assinaturas/{subscription}/retomar', [SubscriptionController::class, 'resume'])->name('subscriptions.resume');
     Route::patch('/assinaturas/{subscription}/cancelar', [SubscriptionController::class, 'cancel'])->name('subscriptions.cancel');
+
+    // Novidades (mini-blog "Dicas e Novidades" — leva 06)
+    Route::get('/novidades', [PostController::class, 'index'])->name('posts.index');
+    Route::get('/novidades/nova', [PostController::class, 'create'])->name('posts.create');
+    Route::post('/novidades', [PostController::class, 'store'])->name('posts.store');
+    Route::get('/novidades/{post}/editar', [PostController::class, 'edit'])->name('posts.edit');
+    Route::put('/novidades/{post}', [PostController::class, 'update'])->name('posts.update');
+    Route::delete('/novidades/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
 
     // Leads (gestão)
     Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');

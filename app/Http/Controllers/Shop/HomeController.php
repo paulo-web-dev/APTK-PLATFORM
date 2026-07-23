@@ -10,14 +10,18 @@ class HomeController extends Controller
 {
     public function index(): View
     {
-        // Produto em destaque da home (banner com seletor de volume).
-        // Marcar "featured" no admin controla o que aparece aqui.
-        $featured = Product::where('active', true)
-            ->where('featured', true)
-            ->with(['primaryImage', 'category'])
+        // Vitrine de produtos (leva 06): o destaque marcado no admin vem
+        // primeiro e os demais ativos entram no carrossel ("passar pro lado").
+        $showcase = Product::where('active', true)
+            ->with(['category', 'images'])
+            ->orderByDesc('featured')
             ->orderBy('name')
-            ->first();
+            ->limit(8)
+            ->get();
 
-        return view('shop.home', compact('featured'));
+        // Dicas e Novidades (leva 06): os 3 últimos posts publicados.
+        $latestPosts = \App\Models\Post::published()->limit(3)->get();
+
+        return view('shop.home', compact('showcase', 'latestPosts'));
     }
 }

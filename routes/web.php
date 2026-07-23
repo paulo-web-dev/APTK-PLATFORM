@@ -5,6 +5,7 @@ use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\CustomController;
 use App\Http\Controllers\Shop\FreteController;
+use App\Http\Controllers\Shop\NovidadesController;
 use App\Http\Controllers\Shop\HomeController;
 use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\PageController;
@@ -57,6 +58,10 @@ Route::post('/frete/cotar', [FreteController::class, 'cotar'])->name('frete.cota
 |--------------------------------------------------------------------------
 */
 Route::view('/barin', 'shop.barin')->name('barin');
+
+// Dicas e Novidades (leva 06) — mini-blog.
+Route::get('/novidades', [NovidadesController::class, 'index'])->name('novidades.index');
+Route::get('/novidades/{slug}', [NovidadesController::class, 'show'])->name('novidades.show');
 Route::view('/ice4pros', 'shop.ice4pros')->name('ice4pros');
 
 // Clube (pré-lançamento): captação de interesse → Lead tipo "clube".

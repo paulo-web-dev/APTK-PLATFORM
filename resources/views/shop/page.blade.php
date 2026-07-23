@@ -68,6 +68,24 @@
     .pg-hero .btn-aptk, .pg-closing .cta-row .btn-aptk { width: 100%; }
     .cases-track { grid-template-columns: 1fr; }
   }
+
+  /* ---- Chips (ocasiões) — leva 05 ---- */
+  .pg-chips { border-bottom: 1px solid var(--color-border); }
+  .pg-chips .container-aptk { padding-block: clamp(28px, 4vw, 40px); display: flex; flex-direction: column; gap: 16px; align-items: center; }
+  .pg-chips .eyebrow { margin: 0; }
+  .pg-chips .chips-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .pg-chips .chip { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: 100px; padding: 9px 18px; }
+
+  /* ---- Passos numerados (como funciona / processo) — leva 05 ---- */
+  .pg-steps { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
+  .steps-list { max-width: 720px; margin-inline: auto; display: flex; flex-direction: column; }
+  .step-item { display: grid; grid-template-columns: 56px 1fr; gap: 18px; padding: 20px 0; border-bottom: 1px solid var(--color-border); }
+  .step-item:last-child { border-bottom: 0; }
+  .step-item .st-num { font-family: var(--font-mono); font-size: var(--text-xl); color: var(--color-primary); }
+  .step-item h3 { font-family: var(--font-display); font-size: var(--text-lg); margin: 0 0 4px; }
+  .step-item p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.7; margin: 0; }
+  .steps-note { max-width: 720px; margin: 22px auto 0; text-align: center; font-size: var(--text-xs); color: var(--color-text-muted); font-family: var(--font-mono); letter-spacing: 0.04em; }
+  .cases-footer { max-width: 760px; margin: 26px auto 0; text-align: center; color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.8; }
 </style>
 @endpush
 
@@ -114,6 +132,20 @@
   @endif
 
   {{-- BLOCOS --}}
+  {{-- OCASIÕES (chips) — só quando a página define 'chips' (leva 05). --}}
+  @if (! empty($page['chips']))
+  <section class="pg-chips">
+    <div class="container-aptk">
+      @if (! empty($page['chips_eyebrow']))<span class="eyebrow">{{ $page['chips_eyebrow'] }}</span>@endif
+      <div class="chips-row">
+        @foreach ($page['chips'] as $chip)
+          <span class="chip">{{ $chip }}</span>
+        @endforeach
+      </div>
+    </div>
+  </section>
+  @endif
+
   @if (! empty($page['features']))
   <section class="section">
     <div class="container-aptk">
@@ -181,6 +213,35 @@
           </div>
         @endif
       </div>
+      @if (! empty($page['cases_footer']))
+        <p class="cases-footer">{{ $page['cases_footer'] }}</p>
+      @endif
+    </div>
+  </section>
+  @endif
+
+  {{-- PASSOS (como funciona / processo) — só quando a página define 'steps' (leva 05). --}}
+  @if (! empty($page['steps']))
+  <section class="section pg-steps">
+    <div class="container-aptk">
+      <div class="section-head">
+        @if (! empty($page['steps_eyebrow']))<span class="eyebrow">{{ $page['steps_eyebrow'] }}</span>@endif
+        @if (! empty($page['steps_title']))<h2 class="section-title">{{ $page['steps_title'] }}</h2>@endif
+      </div>
+      <div class="steps-list">
+        @foreach ($page['steps'] as $i => $step)
+          <div class="step-item">
+            <span class="st-num">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>
+            <div>
+              <h3>{{ $step['h'] }}</h3>
+              <p>{{ $step['p'] }}</p>
+            </div>
+          </div>
+        @endforeach
+      </div>
+      @if (! empty($page['steps_note']))
+        <p class="steps-note">{{ $page['steps_note'] }}</p>
+      @endif
     </div>
   </section>
   @endif
