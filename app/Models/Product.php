@@ -19,6 +19,7 @@ class Product extends Model
         'abv',
         'sizes',
         'size_prices',
+        'size_stock',
         'price',
         'compare_price',
         'sku',
@@ -36,6 +37,9 @@ class Product extends Model
         'abv'           => 'integer',
         'sizes'         => 'array',
         'size_prices'   => 'array',
+        // Estoque por volume (Microvix: cada volume é um SKU com saldo próprio).
+        // Só a coluna existe por enquanto — a leitura de estoque não a usa ainda.
+        'size_stock'    => 'array',
         'active'        => 'boolean',
         'featured'      => 'boolean',
     ];

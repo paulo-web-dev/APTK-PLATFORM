@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinxMicrovix>
+  <ResponseFormat>xml</ResponseFormat>
+  <IdPortal>18443</IdPortal>
+  <Command>
+    <Name>B2CConsultaEmpresas</Name>
+  </Command>
+  <ResponseResult>
+    <Registro>
+      <empresa>4</empresa>
+      <nome_emp>04 - APTK SPIRITS MATRIZ</nome_emp>
+      <cnpjEmp>36491550000106</cnpjEmp>
+      <end_unidade>Avenida das alamedas nº 467</end_unidade>
+      <bairro_unidade>Boa Vista</bairro_unidade>
+      <cep_unidade>89234-091</cep_unidade>
+      <cidade_unidade>Joinville</cidade_unidade>
+      <uf_unidade>SC</uf_unidade>
+      <timestamp>185318313</timestamp>
+      <data_criacao>2024-08-09 11:37:00</data_criacao>
+      <centro_distribuicao>0</centro_distribuicao>
+      <portal>18443</portal>
+      <envia_produtos_b2c>0</envia_produtos_b2c>
+      <envia_estoque_b2c>0</envia_estoque_b2c>
+    </Registro>
+    <Registro>
+      <empresa>5</empresa>
+      <nome_emp>05 - APTK SPIRITS CD</nome_emp>
+      <cnpjEmp>36491550000287</cnpjEmp>
+      <timestamp>185318320</timestamp>
+      <data_criacao>2024-09-01 09:00:00</data_criacao>
+      <centro_distribuicao>1</centro_distribuicao>
+      <portal>18443</portal>
+      <envia_produtos_b2c>0</envia_produtos_b2c>
+      <envia_estoque_b2c>0</envia_estoque_b2c>
+    </Registro>
+  </ResponseResult>
+</LinxMicrovix>

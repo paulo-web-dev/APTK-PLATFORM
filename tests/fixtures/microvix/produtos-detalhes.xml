@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinxMicrovix>
+  <ResponseFormat>xml</ResponseFormat>
+  <IdPortal>18443</IdPortal>
+  <Command>
+    <Name>B2CConsultaProdutosDetalhes</Name>
+  </Command>
+  <ResponseResult>
+    <Registro>
+      <Id_prod_det>56234</Id_prod_det>
+      <codigoproduto>12837</codigoproduto>
+      <empresa>4</empresa>
+      <saldo>3</saldo>
+      <controla_lote>0</controla_lote>
+      <timestamp>310</timestamp>
+      <referencia>NEGRONI</referencia>
+      <portal>18443</portal>
+    </Registro>
+    <Registro>
+      <Id_prod_det>56235</Id_prod_det>
+      <codigoproduto>12838</codigoproduto>
+      <empresa>4</empresa>
+      <saldo>40</saldo>
+      <controla_lote>0</controla_lote>
+      <timestamp>320</timestamp>
+      <referencia>NEGRONI</referencia>
+      <portal>18443</portal>
+    </Registro>
+  </ResponseResult>
+</LinxMicrovix>

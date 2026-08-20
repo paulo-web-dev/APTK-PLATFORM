@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinxMicrovix>
+  <ResponseFormat>xml</ResponseFormat>
+  <IdPortal>18443</IdPortal>
+  <Command>
+    <Name>B2CConsultaVendedores</Name>
+  </Command>
+  <ResponseResult>
+    <Registro>
+      <cod_vendedor>12</cod_vendedor>
+      <nome_vendedor>Vendedor E-commerce</nome_vendedor>
+      <tipo>V</tipo>
+      <ativo>1</ativo>
+      <comissionado>0</comissionado>
+      <timestamp>185318400</timestamp>
+      <portal>18443</portal>
+    </Registro>
+  </ResponseResult>
+</LinxMicrovix>

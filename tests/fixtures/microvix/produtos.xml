@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinxMicrovix>
+  <ResponseFormat>xml</ResponseFormat>
+  <IdPortal>18443</IdPortal>
+  <Command>
+    <Name>B2CConsultaProdutos</Name>
+  </Command>
+  <ResponseResult>
+    <Registro>
+      <codigoproduto>12837</codigoproduto>
+      <referencia>NEGRONI</referencia>
+      <codauxiliar1>APTK-NEG-375</codauxiliar1>
+      <descricao_basica>Negroni 375ml</descricao_basica>
+      <nome_produto>APTK Negroni 375ml</nome_produto>
+      <peso_liquido>0.65</peso_liquido>
+      <unidade>UN</unidade>
+      <ativo>1</ativo>
+      <cod_fornecedor>3</cod_fornecedor>
+      <timestamp>100</timestamp>
+      <portal>18443</portal>
+    </Registro>
+    <Registro>
+      <codigoproduto>12838</codigoproduto>
+      <referencia>NEGRONI</referencia>
+      <codauxiliar1>APTK-NEG-750</codauxiliar1>
+      <descricao_basica>Negroni 750ml</descricao_basica>
+      <nome_produto>APTK Negroni 750ml</nome_produto>
+      <peso_liquido>1.25</peso_liquido>
+      <unidade>UN</unidade>
+      <ativo>1</ativo>
+      <cod_fornecedor>3</cod_fornecedor>
+      <timestamp>250</timestamp>
+      <portal>18443</portal>
+    </Registro>
+  </ResponseResult>
+</LinxMicrovix>

@@ -10,6 +10,7 @@ class Order extends Model
 {
     protected $fillable = [
         'user_id',
+        'address_id',
         'status',
         'subtotal',
         'discount',
@@ -24,6 +25,23 @@ class Order extends Model
         'paid_at',
         'shipping_method',
         'notes',
+        // Snapshot do endereço de entrega (congelado na compra; ver OrderService)
+        'ship_name',
+        'ship_cpf',
+        'ship_phone',
+        'ship_zipcode',
+        'ship_street',
+        'ship_number',
+        'ship_complement',
+        'ship_neighborhood',
+        'ship_city',
+        'ship_state',
+        // Integração Linx Microvix (fase 2 preenche)
+        'microvix_pedido_id',
+        'microvix_cod_cliente',
+        'microvix_status',
+        'microvix_synced_at',
+        'microvix_reserved',
     ];
 
     protected $casts = [
@@ -33,6 +51,8 @@ class Order extends Model
         'total'           => 'decimal:2',
         'payment_details' => 'array',
         'paid_at'         => 'datetime',
+        'microvix_synced_at' => 'datetime',
+        'microvix_reserved'  => 'boolean',
     ];
 
     /** Pagamento confirmado (cartão aprovado ou Pix/boleto compensado). */

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinxMicrovix>
+  <ResponseFormat>xml</ResponseFormat>
+  <IdPortal>18443</IdPortal>
+  <Command>
+    <Name>B2CConsultaProdutos</Name>
+  </Command>
+  <ResponseResult/>
+</LinxMicrovix>

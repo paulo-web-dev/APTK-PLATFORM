@@ -68,9 +68,33 @@ class OrderService
                 $notes .= "\nObs. do cliente: ".$data['notes'];
             }
 
-            // 4) Pedido.
+            // CPF: o checkout valida mas o dado morria aqui. Grava no usuário
+            // (só se ainda não tiver — não sobrescreve cadastro existente).
+            // B2CCadastraClientes (Microvix) exige doc_cliente.
+            $cpf = isset($data['cpf'])
+                ? preg_replace('/\D+/', '', $data['cpf'])
+                : null;
+
+            if ($cpf && blank($user->cpf)) {
+                $user->forceFill(['cpf' => $cpf])->save();
+            }
+
+            // 4) Pedido — endereço congelado em colunas ship_* (snapshot manda;
+            //    address_id é referência fraca, o cliente pode editar/apagar
+            //    o endereço da conta depois).
             $order = Order::create([
-                'user_id'         => $user->id,
+                'user_id'           => $user->id,
+                'address_id'        => $address->id,
+                'ship_name'         => $address->name,
+                'ship_cpf'          => $cpf,
+                'ship_phone'        => $data['phone'] ?? null,
+                'ship_zipcode'      => $address->zipcode,
+                'ship_street'       => $address->street,
+                'ship_number'       => $address->number,
+                'ship_complement'   => $address->complement,
+                'ship_neighborhood' => $address->neighborhood,
+                'ship_city'         => $address->city,
+                'ship_state'        => $address->state,
                 'status'          => 'pending',
                 'subtotal'        => $subtotal,
                 'discount'        => $discount,
