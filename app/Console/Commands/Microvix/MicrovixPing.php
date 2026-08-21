@@ -29,7 +29,7 @@ class MicrovixPing extends MicrovixCommand
             'centro_distribuicao', 'data_criacao', 'timestamp',
         ]);
 
-        $this->info(count($rows).' empresa(s). Comunicação OK.');
+        $this->info(count($rows ?? []).' empresa(s). Comunicação OK.');
 
         return self::SUCCESS;
     }

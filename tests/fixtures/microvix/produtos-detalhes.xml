@@ -1,30 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinxMicrovix>
-  <ResponseFormat>xml</ResponseFormat>
-  <IdPortal>18443</IdPortal>
-  <Command>
-    <Name>B2CConsultaProdutosDetalhes</Name>
-  </Command>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Microvix>
+  <ResponseData>
+    <C><D>Id_prod_det</D><D>codigoproduto</D><D>empresa</D><D>saldo</D><D>controla_lote</D><D>timestamp</D><D>referencia</D><D>portal</D></C>
+    <R><D>56234</D><D>12837</D><D>4</D><D>3</D><D>0</D><D>310</D><D>NEGRONI</D><D>18443</D></R>
+    <R><D>56235</D><D>12838</D><D>4</D><D>40</D><D>0</D><D>320</D><D>NEGRONI</D><D>18443</D></R>
+  </ResponseData>
   <ResponseResult>
-    <Registro>
-      <Id_prod_det>56234</Id_prod_det>
-      <codigoproduto>12837</codigoproduto>
-      <empresa>4</empresa>
-      <saldo>3</saldo>
-      <controla_lote>0</controla_lote>
-      <timestamp>310</timestamp>
-      <referencia>NEGRONI</referencia>
-      <portal>18443</portal>
-    </Registro>
-    <Registro>
-      <Id_prod_det>56235</Id_prod_det>
-      <codigoproduto>12838</codigoproduto>
-      <empresa>4</empresa>
-      <saldo>40</saldo>
-      <controla_lote>0</controla_lote>
-      <timestamp>320</timestamp>
-      <referencia>NEGRONI</referencia>
-      <portal>18443</portal>
-    </Registro>
+    <ResponseSuccess>True</ResponseSuccess>
   </ResponseResult>
-</LinxMicrovix>
+</Microvix>

@@ -59,7 +59,7 @@ class MicrovixClientTest extends TestCase
         });
     }
 
-    public function test_consulta_parseia_registros_da_resposta(): void
+    public function test_consulta_zipa_cabecalho_c_com_valores_de_cada_r_por_indice(): void
     {
         Http::fake(['*' => Http::response($this->fixture('empresas'))]);
 
@@ -69,15 +69,87 @@ class MicrovixClientTest extends TestCase
         $this->assertSame('4', $rows[0]['empresa']);
         $this->assertSame('04 - APTK SPIRITS MATRIZ', $rows[0]['nome_emp']);
         $this->assertSame('185318320', $rows[1]['timestamp']);
+        // Célula <D/> vazia vira string vazia, na coluna certa.
+        $this->assertSame('', $rows[1]['end_unidade']);
+        // Timestamp fica string: BIGINT do SQL Server não pode virar int.
+        $this->assertSame('185318313', $rows[0]['timestamp']);
     }
 
-    public function test_resposta_vazia_retorna_lista_vazia_sem_erro(): void
+    public function test_bom_utf8_no_inicio_da_resposta_e_removido_antes_do_parse(): void
+    {
+        // A resposta real do WS vem com BOM (conferido em microvix_logs id=7).
+        Http::fake(['*' => Http::response("\xEF\xBB\xBF".$this->fixture('empresas'))]);
+
+        $rows = $this->client()->consulta('B2CConsultaEmpresas', ['timestamp' => 0]);
+
+        $this->assertCount(2, $rows);
+    }
+
+    public function test_resposta_com_cabecalho_e_sem_registros_retorna_lista_vazia_sem_erro(): void
     {
         Http::fake(['*' => Http::response($this->fixture('vazio'))]);
 
         $rows = $this->client()->consulta('B2CConsultaProdutos', ['timestamp' => 999]);
 
         $this->assertSame([], $rows);
+    }
+
+    public function test_resposta_sem_cabecalho_retorna_null_para_distinguir_de_nada_mudou(): void
+    {
+        // Caso real de Empresas/ProdutosTabelas sem cadastro no portal:
+        // ResponseSuccess True, mas ResponseData sem <C>. Não é erro, e não
+        // pode se confundir com [] ("nada mudou desde o timestamp").
+        Http::fake(['*' => Http::response($this->fixture('sem-cadastro'))]);
+
+        $rows = $this->client()->consulta('B2CConsultaEmpresas', ['timestamp' => 0]);
+
+        $this->assertNull($rows);
+    }
+
+    public function test_registro_com_contagem_diferente_do_cabecalho_lanca_excecao(): void
+    {
+        // 4 colunas no <C>, 3 valores no segundo <R>: casamento posicional
+        // errado corromperia o dado em silêncio — tem que explodir.
+        $xml = '<?xml version="1.0" encoding="utf-8" standalone="yes"?>'
+            .'<Microvix><ResponseData>'
+            .'<C><D>id_status</D><D>descricao_status</D><D>timestamp</D><D>portal</D></C>'
+            .'<R><D>1</D><D>EM ABERTO</D><D>1950211</D><D>18443</D></R>'
+            .'<R><D>2</D><D>ENCERRADO</D><D>1950212</D></R>'
+            .'</ResponseData>'
+            .'<ResponseResult><ResponseSuccess>True</ResponseSuccess></ResponseResult></Microvix>';
+
+        Http::fake(['*' => Http::response($xml)]);
+
+        try {
+            $this->client()->consulta('B2CConsultaStatus', ['timestamp' => 0]);
+            $this->fail('Deveria ter lançado MicrovixException.');
+        } catch (MicrovixException $e) {
+            $this->assertStringContainsString('B2CConsultaStatus', $e->getMessage());
+            $this->assertStringContainsString('posição 2', $e->getMessage());
+            $this->assertStringContainsString('3 valores', $e->getMessage());
+            $this->assertStringContainsString('4 colunas', $e->getMessage());
+        }
+    }
+
+    public function test_response_success_diferente_de_true_lanca_excecao_com_o_response_result(): void
+    {
+        $xml = '<?xml version="1.0" encoding="utf-8" standalone="yes"?>'
+            .'<Microvix><ResponseData/>'
+            .'<ResponseResult><ResponseSuccess>False</ResponseSuccess>'
+            .'<ResponseError>Chave invalida para o portal informado</ResponseError>'
+            .'</ResponseResult></Microvix>';
+
+        Http::fake(['*' => Http::response($xml)]);
+
+        try {
+            $this->client()->consulta('B2CConsultaEmpresas', ['timestamp' => 0]);
+            $this->fail('Deveria ter lançado MicrovixException.');
+        } catch (MicrovixException $e) {
+            // O ResponseResult inteiro vai na mensagem — pode carregar
+            // detalhe de erro que ainda não conhecemos.
+            $this->assertStringContainsString('B2CConsultaEmpresas', $e->getMessage());
+            $this->assertStringContainsString('Chave invalida para o portal informado', $e->getMessage());
+        }
     }
 
     public function test_credenciais_sao_mascaradas_no_log(): void

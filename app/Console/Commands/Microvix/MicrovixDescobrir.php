@@ -76,7 +76,7 @@ class MicrovixDescobrir extends MicrovixCommand
             $this->tabela($rows, $colunas);
 
             // Sugere valor só quando há UMA opção óbvia após o filtro.
-            $candidatos = array_values(array_filter($rows, $filtro));
+            $candidatos = array_values(array_filter($rows ?? [], $filtro));
             if (count($candidatos) === 1 && isset($candidatos[0][$campo])) {
                 $sugestoes[$chaveEnv] = (string) $candidatos[0][$campo];
             } else {

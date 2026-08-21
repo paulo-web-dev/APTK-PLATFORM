@@ -23,9 +23,11 @@ class MicrovixClient
      * o chamador passa o resto (timestamp, filtros).
      *
      * @param  bool  $incluiCnpj  B2CConsultaCNPJsChave não recebe cnpjEmp
-     * @return array<int, array<string, string>> registros retornados
+     * @return array<int, array<string, string>>|null registros retornados;
+     *         [] = cabeçalho presente sem registros ("nada mudou", doc 4.1);
+     *         null = resposta sem cabeçalho <C> (cadastro inexistente no portal)
      */
-    public function consulta(string $method, array $params = [], bool $incluiCnpj = true): array
+    public function consulta(string $method, array $params = [], bool $incluiCnpj = true): ?array
     {
         $envelope = $this->envelopeConsulta($method, $params, $incluiCnpj);
 
@@ -203,7 +205,7 @@ XML,
      | Resposta da consulta
      ------------------------------------------------------------------ */
 
-    protected function finalizaConsulta(string $method, string $envelope, Response $response, float $started): array
+    protected function finalizaConsulta(string $method, string $envelope, Response $response, float $started): ?array
     {
         if (! $response->successful()) {
             $this->log('out', $method, $envelope, $response->body(), $response->status(), false, "HTTP {$response->status()}", $started);
@@ -222,28 +224,96 @@ XML,
     }
 
     /**
-     * A doc não especifica o envelope de RESPOSTA da consulta, então o parser
-     * é deliberadamente tolerante: procura elementos <Registro> (qualquer
-     * profundidade); sem eles, procura o primeiro grupo de irmãos repetidos
-     * com filhos. Resposta vazia NÃO é erro (seção 4.1: "nada mudou").
-     * O XML cru fica em microvix_logs para conferir o formato real.
+     * Formato REAL da resposta de consulta (conferido em microvix_logs; a doc
+     * não o especifica): tabela posicional —
+     *
+     *   <Microvix>
+     *     <ResponseData>
+     *       <C><D>nome_coluna</D>…</C>    cabeçalho: nomes das colunas
+     *       <R><D>valor</D>…</R>…         um <R> por registro, valores na
+     *                                     MESMA ORDEM do cabeçalho (por índice)
+     *     </ResponseData>
+     *     <ResponseResult><ResponseSuccess>True</ResponseSuccess></ResponseResult>
+     *   </Microvix>
+     *
+     * Retorno: lista de arrays associativos (coluna => valor). Tudo STRING —
+     * conversão de tipo é de quem consome, não do transporte. Em especial o
+     * timestamp é BIGINT do SQL Server: não pode virar int em PHP 32 bits.
+     *
+     *   []   = cabeçalho presente, sem <R>: nada mudou desde o timestamp (4.1)
+     *   null = sem cabeçalho <C>: o cadastro não existe no portal
      */
-    protected function extraiRegistros(string $xml, string $method): array
+    protected function extraiRegistros(string $xml, string $method): ?array
     {
-        if (trim($xml) === '') {
-            return [];
+        $xml = $this->removeBom($xml);
+
+        $anterior = libxml_use_internal_errors(true);
+        $sx = simplexml_load_string($xml);
+        libxml_use_internal_errors($anterior);
+
+        if ($sx === false) {
+            throw new MicrovixException("Resposta de {$method} não é XML válido.", $xml);
         }
 
-        $dados = $this->xmlParaArray($xml, $method);
-
-        $registros = $this->buscaChave($dados, 'registro');
-        if ($registros !== null) {
-            return $this->normalizaLista($registros);
+        // ResponseSuccess é lido ANTES de qualquer parsing de dados.
+        if (! isset($sx->ResponseResult->ResponseSuccess)) {
+            throw new MicrovixException(
+                "Resposta de {$method} sem <ResponseResult><ResponseSuccess>.",
+                $xml,
+            );
         }
 
-        $lista = $this->buscaListaRepetida($dados);
+        if (strcasecmp(trim((string) $sx->ResponseResult->ResponseSuccess), 'true') !== 0) {
+            throw new MicrovixException(
+                "Consulta {$method} retornou ResponseSuccess diferente de True. "
+                    .'ResponseResult completo: '.trim((string) $sx->ResponseResult->asXML()),
+                $xml,
+            );
+        }
 
-        return $lista !== null ? $this->normalizaLista($lista) : [];
+        if (! isset($sx->ResponseData->C)) {
+            return null;
+        }
+
+        $colunas = [];
+        foreach ($sx->ResponseData->C->D as $d) {
+            $colunas[] = (string) $d;
+        }
+
+        $registros = [];
+        $posicao = 0;
+
+        foreach ($sx->ResponseData->R as $r) {
+            $posicao++;
+
+            $valores = [];
+            foreach ($r->D as $d) {
+                $valores[] = (string) $d;
+            }
+
+            // Contagem divergente NUNCA passa: casamento posicional errado
+            // corromperia o dado em silêncio (valor na coluna errada).
+            if (count($valores) !== count($colunas)) {
+                throw new MicrovixException(sprintf(
+                    'Consulta %s: registro na posição %d tem %d valores para %d colunas do cabeçalho (%s).',
+                    $method,
+                    $posicao,
+                    count($valores),
+                    count($colunas),
+                    implode(', ', $colunas),
+                ), $xml);
+            }
+
+            $registros[] = array_combine($colunas, $valores);
+        }
+
+        return $registros;
+    }
+
+    /** BOM UTF-8 no início da resposta quebra alguns parsers de XML. */
+    protected function removeBom(string $xml): string
+    {
+        return str_starts_with($xml, "\xEF\xBB\xBF") ? substr($xml, 3) : $xml;
     }
 
     protected function xmlParaArray(string $xml, string $contexto): array
@@ -263,47 +333,6 @@ XML,
     protected function removePrefixosNamespace(string $xml): string
     {
         return preg_replace('/(<\/?)[\w.-]+:/', '$1', $xml) ?? $xml;
-    }
-
-    /** Busca (case-insensitive, em profundidade) o valor de uma chave. */
-    protected function buscaChave(array $dados, string $chave): mixed
-    {
-        foreach ($dados as $k => $v) {
-            if (strcasecmp((string) $k, $chave) === 0) {
-                return $v;
-            }
-            if (is_array($v) && ($achado = $this->buscaChave($v, $chave)) !== null) {
-                return $achado;
-            }
-        }
-
-        return null;
-    }
-
-    /** Primeira lista numérica de arrays associativos encontrada em profundidade. */
-    protected function buscaListaRepetida(array $dados): ?array
-    {
-        if (array_is_list($dados) && $dados !== [] && is_array($dados[0]) && ! array_is_list($dados[0])) {
-            return $dados;
-        }
-
-        foreach ($dados as $v) {
-            if (is_array($v) && ($lista = $this->buscaListaRepetida($v)) !== null) {
-                return $lista;
-            }
-        }
-
-        return null;
-    }
-
-    /** Um registro único vem como array associativo — embrulha em lista. */
-    protected function normalizaLista(mixed $registros): array
-    {
-        if (! is_array($registros)) {
-            return [];
-        }
-
-        return array_is_list($registros) ? $registros : [$registros];
     }
 
     /* -----------------------------------------------------------------

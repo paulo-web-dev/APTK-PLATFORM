@@ -32,10 +32,12 @@ class MicrovixSync
         );
 
         try {
+            // null (cadastro inexistente no portal) aqui equivale a lote vazio:
+            // nada a processar, timestamp não avança.
             $registros = $this->client->consulta(
                 $method,
                 ['timestamp' => $state->last_timestamp] + $extraParams,
-            );
+            ) ?? [];
 
             $maior = (int) $state->last_timestamp;
             $count = 0;

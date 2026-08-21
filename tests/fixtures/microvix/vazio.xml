@@ -1,9 +1,9 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinxMicrovix>
-  <ResponseFormat>xml</ResponseFormat>
-  <IdPortal>18443</IdPortal>
-  <Command>
-    <Name>B2CConsultaProdutos</Name>
-  </Command>
-  <ResponseResult/>
-</LinxMicrovix>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Microvix>
+  <ResponseData>
+    <C><D>codigoproduto</D><D>referencia</D><D>codauxiliar1</D><D>descricao_basica</D><D>nome_produto</D><D>peso_liquido</D><D>unidade</D><D>ativo</D><D>cod_fornecedor</D><D>timestamp</D><D>portal</D></C>
+  </ResponseData>
+  <ResponseResult>
+    <ResponseSuccess>True</ResponseSuccess>
+  </ResponseResult>
+</Microvix>

@@ -1,19 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinxMicrovix>
-  <ResponseFormat>xml</ResponseFormat>
-  <IdPortal>18443</IdPortal>
-  <Command>
-    <Name>B2CConsultaVendedores</Name>
-  </Command>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Microvix>
+  <ResponseData>
+    <C><D>cod_vendedor</D><D>nome_vendedor</D><D>tipo</D><D>ativo</D><D>comissionado</D><D>timestamp</D><D>portal</D></C>
+    <R><D>12</D><D>Vendedor E-commerce</D><D>V</D><D>1</D><D>0</D><D>185318400</D><D>18443</D></R>
+  </ResponseData>
   <ResponseResult>
-    <Registro>
-      <cod_vendedor>12</cod_vendedor>
-      <nome_vendedor>Vendedor E-commerce</nome_vendedor>
-      <tipo>V</tipo>
-      <ativo>1</ativo>
-      <comissionado>0</comissionado>
-      <timestamp>185318400</timestamp>
-      <portal>18443</portal>
-    </Registro>
+    <ResponseSuccess>True</ResponseSuccess>
   </ResponseResult>
-</LinxMicrovix>
+</Microvix>

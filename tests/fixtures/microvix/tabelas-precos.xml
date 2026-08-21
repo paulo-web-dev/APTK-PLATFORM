@@ -1,18 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinxMicrovix>
-  <ResponseFormat>xml</ResponseFormat>
-  <IdPortal>18443</IdPortal>
-  <Command>
-    <Name>B2CConsultaProdutosTabelasPrecos</Name>
-  </Command>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Microvix>
+  <ResponseData>
+    <C><D>id_prod_tab_preco</D><D>id_tabela</D><D>codigoproduto</D><D>precovenda</D><D>timestamp</D><D>portal</D></C>
+    <R><D>203</D><D>1</D><D>12837</D><D>89,90</D><D>410</D><D>18443</D></R>
+  </ResponseData>
   <ResponseResult>
-    <Registro>
-      <id_prod_tab_preco>203</id_prod_tab_preco>
-      <id_tabela>1</id_tabela>
-      <codigoproduto>12837</codigoproduto>
-      <precovenda>89,90</precovenda>
-      <timestamp>410</timestamp>
-      <portal>18443</portal>
-    </Registro>
+    <ResponseSuccess>True</ResponseSuccess>
   </ResponseResult>
-</LinxMicrovix>
+</Microvix>

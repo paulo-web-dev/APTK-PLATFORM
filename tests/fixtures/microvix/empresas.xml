@@ -1,37 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinxMicrovix>
-  <ResponseFormat>xml</ResponseFormat>
-  <IdPortal>18443</IdPortal>
-  <Command>
-    <Name>B2CConsultaEmpresas</Name>
-  </Command>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Microvix>
+  <ResponseData>
+    <C><D>empresa</D><D>nome_emp</D><D>cnpjEmp</D><D>end_unidade</D><D>bairro_unidade</D><D>cep_unidade</D><D>cidade_unidade</D><D>uf_unidade</D><D>timestamp</D><D>data_criacao</D><D>centro_distribuicao</D><D>portal</D><D>envia_produtos_b2c</D><D>envia_estoque_b2c</D></C>
+    <R><D>4</D><D>04 - APTK SPIRITS MATRIZ</D><D>36491550000106</D><D>Avenida das alamedas nº 467</D><D>Boa Vista</D><D>89234-091</D><D>Joinville</D><D>SC</D><D>185318313</D><D>2024-08-09 11:37:00</D><D>0</D><D>18443</D><D>0</D><D>0</D></R>
+    <R><D>5</D><D>05 - APTK SPIRITS CD</D><D>36491550000287</D><D/><D/><D/><D/><D/><D>185318320</D><D>2024-09-01 09:00:00</D><D>1</D><D>18443</D><D>0</D><D>0</D></R>
+  </ResponseData>
   <ResponseResult>
-    <Registro>
-      <empresa>4</empresa>
-      <nome_emp>04 - APTK SPIRITS MATRIZ</nome_emp>
-      <cnpjEmp>36491550000106</cnpjEmp>
-      <end_unidade>Avenida das alamedas nº 467</end_unidade>
-      <bairro_unidade>Boa Vista</bairro_unidade>
-      <cep_unidade>89234-091</cep_unidade>
-      <cidade_unidade>Joinville</cidade_unidade>
-      <uf_unidade>SC</uf_unidade>
-      <timestamp>185318313</timestamp>
-      <data_criacao>2024-08-09 11:37:00</data_criacao>
-      <centro_distribuicao>0</centro_distribuicao>
-      <portal>18443</portal>
-      <envia_produtos_b2c>0</envia_produtos_b2c>
-      <envia_estoque_b2c>0</envia_estoque_b2c>
-    </Registro>
-    <Registro>
-      <empresa>5</empresa>
-      <nome_emp>05 - APTK SPIRITS CD</nome_emp>
-      <cnpjEmp>36491550000287</cnpjEmp>
-      <timestamp>185318320</timestamp>
-      <data_criacao>2024-09-01 09:00:00</data_criacao>
-      <centro_distribuicao>1</centro_distribuicao>
-      <portal>18443</portal>
-      <envia_produtos_b2c>0</envia_produtos_b2c>
-      <envia_estoque_b2c>0</envia_estoque_b2c>
-    </Registro>
+    <ResponseSuccess>True</ResponseSuccess>
   </ResponseResult>
-</LinxMicrovix>
+</Microvix>
