@@ -38,7 +38,13 @@ class OrderService
             //    debitado pela primeira.
             //    Volume não rastreado (saldo null) segue sem checagem — o
             //    fallback conservador da fase 1.5.
+            //    Ordem de lock FIXA (id ascendente): dois pedidos com os
+            //    mesmos produtos em ordens diferentes travam na mesma ordem
+            //    e não se cruzam em deadlock. O IN numa instrução única já
+            //    varre o PK em ordem no InnoDB; o orderBy torna a invariante
+            //    explícita e sobrevive a refactor para locks por linha.
             $produtos = Product::whereIn('id', $items->pluck('product.id')->unique())
+                ->orderBy('id')
                 ->lockForUpdate()
                 ->get()
                 ->keyBy('id');
