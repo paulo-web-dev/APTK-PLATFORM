@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LeadController;
+use App\Http\Controllers\Admin\MicrovixProductController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\PostController;
@@ -97,5 +98,10 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     // Estoque
     Route::get('/estoque', [StockController::class, 'index'])->name('stock.index');
     Route::patch('/estoque/{product}', [StockController::class, 'update'])->name('stock.update');
+
+    // Microvix ERP — vínculo do espelho com o catálogo (fase 1.5)
+    Route::get('/microvix/produtos', [MicrovixProductController::class, 'index'])->name('microvix.products.index');
+    Route::patch('/microvix/produtos/{microvixProduct}/vinculo', [MicrovixProductController::class, 'vincular'])->name('microvix.products.vincular');
+    Route::delete('/microvix/produtos/{microvixProduct}/vinculo', [MicrovixProductController::class, 'desvincular'])->name('microvix.products.desvincular');
 
 });
