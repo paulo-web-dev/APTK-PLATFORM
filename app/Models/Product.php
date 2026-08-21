@@ -108,4 +108,81 @@ class Product extends Model
 
         return $this->sizes[count($this->sizes) - 1];
     }
+
+    /* -----------------------------------------------------------------
+     | Estoque por volume (Microvix fase 1.5)
+     | `size_stock` só é preenchido pela conciliação com o ERP. O fallback
+     | é CONSERVADOR de propósito: produto (ou volume) sem entrada em
+     | size_stock se comporta EXATAMENTE como antes — stock_qty agregado,
+     | que hoje é placeholder e não limita nada. Nenhum produto não
+     | conciliado passa a esgotar por causa deste bloco.
+     ------------------------------------------------------------------ */
+
+    /** Este produto tem estoque rastreado por volume? */
+    public function tracksSizeStock(): bool
+    {
+        return is_array($this->size_stock) && $this->size_stock !== [];
+    }
+
+    /**
+     * Saldo vendável de um volume. null = volume não rastreado: sem limite
+     * novo (comportamento de sempre). Nunca confundir null com 0.
+     */
+    public function stockForSize(?string $size): ?int
+    {
+        if (! $this->tracksSizeStock() || ! isset($this->size_stock[$size])) {
+            return null;
+        }
+
+        return (int) $this->size_stock[$size];
+    }
+
+    /** Volume rastreado E zerado. Volume não rastreado nunca está esgotado. */
+    public function isSizeOutOfStock(?string $size): bool
+    {
+        $saldo = $this->stockForSize($size);
+
+        return $saldo !== null && $saldo <= 0;
+    }
+
+    /**
+     * Esgotado para a vitrine. Sem rastreio por volume, é a regra de sempre
+     * (stock_qty agregado); com rastreio, só quando TODOS os volumes
+     * rastreados zeraram — um volume sem entrada ainda conta como vendável.
+     */
+    public function isSoldOut(): bool
+    {
+        if (! $this->tracksSizeStock()) {
+            return (int) $this->stock_qty <= 0;
+        }
+
+        foreach ($this->hasSizes() ? $this->sizes : [null] as $size) {
+            if (! $this->isSizeOutOfStock($size)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** Volume pré-selecionado na página: o padrão, a menos que esteja esgotado. */
+    public function defaultAvailableSize(): ?string
+    {
+        if (! $this->hasSizes()) {
+            return null;
+        }
+
+        $default = $this->defaultSize();
+        if (! $this->isSizeOutOfStock($default)) {
+            return $default;
+        }
+
+        foreach (array_reverse($this->sizes) as $size) {
+            if (! $this->isSizeOutOfStock($size)) {
+                return $size;
+            }
+        }
+
+        return $default;
+    }
 }

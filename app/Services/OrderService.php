@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Exceptions\OutOfStockException;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -29,6 +31,37 @@ class OrderService
         }
 
         return DB::transaction(function () use ($user, $data, $items) {
+            // 0) Revalida o estoque por volume DENTRO da transação, com lock
+            //    de linha. Validar antes dela abriria a corrida clássica: duas
+            //    compras simultâneas do último item leriam "tem 1" e as duas
+            //    passariam. Com o lock, a segunda espera e relê o estoque já
+            //    debitado pela primeira.
+            //    Volume não rastreado (saldo null) segue sem checagem — o
+            //    fallback conservador da fase 1.5.
+            $produtos = Product::whereIn('id', $items->pluck('product.id')->unique())
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($items as $row) {
+                $produto = $produtos->get($row->product->id);
+                $rotulo = '"'.$row->product->name.($row->size ? " ({$row->size})" : '').'"';
+
+                if (! $produto) {
+                    throw new OutOfStockException("{$rotulo} saiu do catálogo — remova o item do carrinho para continuar.");
+                }
+
+                $saldo = $produto->stockForSize($row->size);
+
+                if ($saldo !== null && $saldo <= 0) {
+                    throw new OutOfStockException("{$rotulo} esgotou enquanto você fechava o pedido — remova o item do carrinho para continuar.");
+                }
+
+                if ($saldo !== null && $saldo < $row->qty) {
+                    throw new OutOfStockException("{$rotulo} tem só {$saldo} unidade(s) em estoque e o carrinho pede {$row->qty} — ajuste a quantidade para continuar.");
+                }
+            }
+
             // 1) Endereço de entrega, salvo na conta do usuário.
             $address = Address::create([
                 'user_id'      => $user->id,
@@ -119,7 +152,17 @@ class OrderService
                     'total_price'  => $row->subtotal,
                 ]);
 
-                $product = $row->product;
+                // Baixa no MESMO model lockado da revalidação, nunca no da
+                // sessão do carrinho (que pode estar defasado).
+                $product = $produtos[$row->product->id];
+
+                if (($saldo = $product->stockForSize($row->size)) !== null) {
+                    $porVolume = $product->size_stock;
+                    $porVolume[$row->size] = max(0, $saldo - (int) $row->qty);
+                    $product->size_stock = $porVolume;
+                }
+
+                // O agregado continua baixando como sempre (fallback e vitrine).
                 $product->stock_qty = max(0, (int) $product->stock_qty - (int) $row->qty);
                 $product->save();
             }
@@ -144,9 +187,20 @@ class OrderService
 
         DB::transaction(function () use ($order, $paymentStatus) {
             foreach ($order->items as $item) {
-                if ($item->product) {
-                    $item->product->increment('stock_qty', (int) $item->qty);
+                if (! $item->product) {
+                    continue;
                 }
+
+                // Devolve também o saldo do volume, se o item era rastreado.
+                $product = $item->product;
+                if (($saldo = $product->stockForSize($item->size)) !== null) {
+                    $porVolume = $product->size_stock;
+                    $porVolume[$item->size] = $saldo + (int) $item->qty;
+                    $product->size_stock = $porVolume;
+                    $product->save();
+                }
+
+                $product->increment('stock_qty', (int) $item->qty);
             }
 
             $order->update([

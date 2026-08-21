@@ -54,6 +54,12 @@ class CartService
         return $productId.':'.($size ?? '');
     }
 
+    /** Linha crua do carrinho (product_id, size, qty) ou null se não existe. */
+    public function line(string $key): ?array
+    {
+        return $this->raw()[$key] ?? null;
+    }
+
     public function add(int $productId, int $qty = 1, ?string $size = null): void
     {
         $items = $this->raw();

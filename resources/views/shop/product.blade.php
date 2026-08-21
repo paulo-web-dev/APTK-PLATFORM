@@ -30,6 +30,8 @@
     .size-chip-btn { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.06em; color: var(--color-text-muted); background: transparent; border: 1px solid var(--color-border); border-radius: 100px; padding: 7px 14px; cursor: pointer; transition: color .2s ease, border-color .2s ease, background-color .2s ease; }
     .size-chip-btn:hover { color: var(--color-text); border-color: var(--color-primary-muted); }
     .size-chip-btn.is-active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-text-inverse); }
+    /* Volume esgotado continua visível, mas inerte (estoque por volume, fase 1.5). */
+    .size-chip-btn.is-out { opacity: .45; text-decoration: line-through; cursor: not-allowed; }
     .pdp-buy { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
     .stock-ok { color: var(--color-success); }
     .stock-out { color: var(--color-danger); }
@@ -90,8 +92,12 @@
                     <p class="pdp-sub">{{ $product->short_description }}</p>
                 @endif
 
+                @php
+                    // Pré-seleciona um volume COM estoque quando o padrão esgotou.
+                    $selectedSize = $product->defaultAvailableSize();
+                @endphp
                 <div class="pdp-price-row">
-                    <span class="pdp-price" id="pdpPrice">R$ {{ number_format($product->priceForSize($product->defaultSize()), 2, ',', '.') }}</span>
+                    <span class="pdp-price" id="pdpPrice">R$ {{ number_format($product->priceForSize($selectedSize), 2, ',', '.') }}</span>
                     @if ($product->compare_price && $product->compare_price > $product->price)
                         <span class="pdp-compare">R$ {{ number_format($product->compare_price, 2, ',', '.') }}</span>
                     @endif
@@ -113,10 +119,12 @@
                             <span class="k">Volume</span>
                             <span class="v sizes" id="pdpSizePicker">
                                 @foreach ($product->sizeOptions() as $sz => $szPrice)
+                                    @php $esgotado = $product->isSizeOutOfStock($sz); @endphp
                                     <button type="button"
-                                            class="size-chip-btn {{ $sz === $product->defaultSize() ? 'is-active' : '' }}"
+                                            class="size-chip-btn {{ $sz === $selectedSize ? 'is-active' : '' }} {{ $esgotado ? 'is-out' : '' }}"
+                                            @disabled($esgotado)
                                             data-size="{{ $sz }}"
-                                            data-price="{{ number_format($szPrice, 2, ',', '.') }}">{{ $sz }}</button>
+                                            data-price="{{ number_format($szPrice, 2, ',', '.') }}">{{ $sz }}{{ $esgotado ? ' — esgotado' : '' }}</button>
                                 @endforeach
                             </span>
                         </div>
@@ -127,7 +135,7 @@
                     <div>
                         <span class="k">Disponibilidade</span>
                         <span class="v">
-                            @if ($product->stock_qty > 0)
+                            @if (! $product->isSoldOut())
                                 <span class="stock-ok">Em estoque</span>
                             @else
                                 <span class="stock-out">Esgotado</span>
@@ -137,11 +145,11 @@
                 </div>
 
                 <div class="pdp-buy">
-                    @if ($product->stock_qty > 0)
+                    @if (! $product->isSoldOut())
                         <form action="{{ route('cart.add') }}" method="POST" style="display:inline;">
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <input type="hidden" name="size" id="pdpSizeInput" value="{{ $product->defaultSize() }}">
+                            <input type="hidden" name="size" id="pdpSizeInput" value="{{ $selectedSize }}">
                             <button type="submit" class="btn-aptk">Adicionar ao carrinho</button>
                         </form>
                     @else

@@ -25,6 +25,7 @@
     .prod-name { font-family: var(--font-script); font-size: var(--text-2xl); color: var(--color-primary); line-height: 1.1; margin: 0 0 14px; }
     .prod-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .prod-price { font-family: var(--font-mono); font-size: var(--text-lg); color: var(--color-text); }
+    .prod-out { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-danger); border: 1px solid currentColor; border-radius: 100px; padding: 4px 10px; white-space: nowrap; }
     .empty { text-align: center; padding: 80px 20px; color: var(--color-text-muted); border: 1px dashed var(--color-border); border-radius: var(--radius-lg); }
     @media (max-width: 860px) { .prod-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 520px) { .prod-grid { grid-template-columns: 1fr; } }
@@ -85,6 +86,10 @@
                             </a>
                             <div class="prod-foot">
                                 <span class="prod-price">R$ {{ number_format($product->price, 2, ',', '.') }}</span>
+                                {{-- Esgotado continua na vitrine, com selo — não some da lista. --}}
+                                @if ($product->isSoldOut())
+                                    <span class="prod-out">Esgotado</span>
+                                @endif
                                 <a href="{{ route('product', $product->slug) }}" class="btn-aptk">Ver</a>
                             </div>
                         </div>

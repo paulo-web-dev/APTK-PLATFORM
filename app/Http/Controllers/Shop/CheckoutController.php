@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Exceptions\AppmaxException;
+use App\Exceptions\OutOfStockException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\AppmaxService;
@@ -59,7 +60,14 @@ class CheckoutController extends Controller
         $data = $request->validate($this->rules($request), $this->messages());
 
         // 1) Pedido local (endereço + itens + baixa de estoque + limpa carrinho).
-        $order = $this->orders->placeFromCart($request->user(), $data);
+        //    A revalidação de estoque acontece DENTRO da transação; se algo
+        //    esgotou entre o carrinho e aqui, a mensagem diz qual item e
+        //    quanto sobrou, e o cliente volta ao carrinho para ajustar.
+        try {
+            $order = $this->orders->placeFromCart($request->user(), $data);
+        } catch (OutOfStockException $e) {
+            return redirect()->route('cart.index')->with('stock_error', $e->getMessage());
+        }
 
         try {
             // 2) Cliente e pedido na Appmax.

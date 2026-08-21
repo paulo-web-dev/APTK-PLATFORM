@@ -46,6 +46,10 @@
             <div class="cart-alert">{{ session('status') }}</div>
         @endif
 
+        @if (session('stock_error'))
+            <div class="cart-alert" style="color:var(--color-danger); border-left-color:var(--color-danger);">{{ session('stock_error') }}</div>
+        @endif
+
         @if ($items->isEmpty())
             <div class="empty">
                 Seu carrinho está vazio.
