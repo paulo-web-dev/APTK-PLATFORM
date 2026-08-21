@@ -49,4 +49,14 @@ return [
     'plano_pagamento'    => env('MICROVIX_PLANO_PAGAMENTO'),
 
     'timeout' => 60,
+
+    /*
+    | Quem manda em preço e estoque do catálogo:
+    |   site (padrão) — nada do ERP é gravado; microvix:conciliar roda SEMPRE
+    |                   em dry-run, mesmo sem a flag. Admin segue editável.
+    |   erp           — a conciliação grava size_stock/size_prices e o admin
+    |                   trava esses campos para produto vinculado.
+    | O dia da virada é trocar esta linha no .env, não um deploy.
+    */
+    'fonte_da_verdade' => env('MICROVIX_FONTE_VERDADE', 'site'),
 ];
