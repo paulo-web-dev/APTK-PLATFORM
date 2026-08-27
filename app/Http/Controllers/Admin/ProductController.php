@@ -60,7 +60,16 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product): RedirectResponse
     {
-        $data = $this->validateData($request);
+        $erpManaged = $product->managedByErp();
+        $data = $this->validateData($request, $erpManaged);
+
+        // Produto gerenciado pelo ERP (fonte_da_verdade=erp + vínculo): preço
+        // e estoque não passam — o form mostra os campos travados, mas o
+        // guard de verdade é este, senão um POST forjado (ou um form defasado)
+        // sobrescreveria o que a conciliação gravou.
+        if ($erpManaged) {
+            unset($data['price'], $data['size_prices'], $data['stock_qty']);
+        }
 
         // O slug permanece estável para não quebrar URLs já existentes.
         $data['active']   = $request->boolean('active');
@@ -96,15 +105,18 @@ class ProductController extends Controller
         return ProductCategory::orderBy('sort_order')->orderBy('name')->get();
     }
 
-    private function validateData(Request $request): array
+    private function validateData(Request $request, bool $erpManaged = false): array
     {
         $data = $request->validate([
             'name'              => ['required', 'string', 'max:255'],
             'category_id'       => ['nullable', 'integer', 'exists:product_categories,id'],
-            'price'             => ['required', 'numeric', 'min:0'],
+            // Gerenciado pelo ERP: os inputs vêm desabilitados (não são
+            // enviados) e o valor é descartado no update — não podem ser
+            // required aqui.
+            'price'             => [$erpManaged ? 'nullable' : 'required', 'numeric', 'min:0'],
             'compare_price'     => ['nullable', 'numeric', 'min:0'],
             'sku'               => ['nullable', 'string', 'max:255'],
-            'stock_qty'         => ['required', 'integer', 'min:0'],
+            'stock_qty'         => [$erpManaged ? 'nullable' : 'required', 'integer', 'min:0'],
             'weight'            => ['nullable', 'numeric', 'min:0'],
             'base'              => ['nullable', 'string', 'max:255'],
             'abv'               => ['nullable', 'integer', 'min:0', 'max:100'],

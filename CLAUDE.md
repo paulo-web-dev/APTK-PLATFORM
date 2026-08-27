@@ -96,8 +96,20 @@ por método, só avança com lote inteiro OK), `MicrovixProductMirror` (→
 `microvix_products`; vínculo com `products` é manual). Toda chamada logada em
 `microvix_logs` com password/chave mascaradas. Comandos: `microvix:ping`,
 `microvix:descobrir` (acha os parâmetros de faturamento que faltam no `.env`),
-`microvix:sync[-produtos]`, `microvix:status`. Fase 2 (pedidos, `somente_reserva`)
-e fase 3 (ERP como fonte de estoque/preço) não iniciadas.
+`microvix:sync[-produtos]`, `microvix:status`, `microvix:conciliar[ --dry-run]`.
+
+**Fase 1.5 (ERP como fonte de estoque/preço) implementada, mas DESLIGADA:**
+`MICROVIX_FONTE_VERDADE` no `.env` (`site` = padrão; `erp` = a virada). Vínculo
+`microvix_products` → `products` + volume é manual, em `/admin/microvix/produtos`
+(`MicrovixMatcher` só sugere). `MicrovixReconciler` grava `saldo` → `size_stock`
+e `precovenda` → `size_prices` só de vínculo confirmado, nunca editorial/`active`;
+com fonte `site` recusa gravar (dry-run forçado). Trilha de/para em
+`microvix_reconcile_log`. `Product::managedByErp()` (fonte `erp` E vínculo) trava
+preço/estoque no admin — o guard real é no controller, não só no form. Loja:
+`size_stock` null se comporta como antes (`stock_qty` placeholder, nada esgota);
+checkout revalida com `lockForUpdate` dentro da transação. Painel de saúde em
+`/admin/microvix` (sync e conciliação manuais, síncronos — sem queue).
+Fase 2 (pedidos, `somente_reserva`) não iniciada.
 
 ## Clube de assinatura
 

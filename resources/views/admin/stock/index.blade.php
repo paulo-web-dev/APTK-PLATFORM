@@ -12,6 +12,10 @@
         <div class="alert-ok">{{ session('status') }}</div>
     @endif
 
+    @if ($errors->any())
+        <div class="alert-ok" style="color:var(--color-danger); border-left-color:var(--color-danger);">{{ $errors->first() }}</div>
+    @endif
+
     <div class="metric-grid" style="margin-bottom:22px;">
         <div class="metric-card"><div class="m-top"><span class="m-label">SKUs</span></div><div class="m-value">{{ $stats['skus'] }}</div></div>
         <div class="metric-card"><div class="m-top"><span class="m-label">Estoque baixo</span></div><div class="m-value" style="color:var(--color-primary);">{{ $stats['baixo'] }}</div></div>
@@ -47,12 +51,16 @@
                         </td>
                         <td class="td-num" data-label="Atual">{{ $p->stock_qty }}</td>
                         <td data-label="" style="text-align:right;">
-                            <form action="{{ route('admin.stock.update', $p) }}" method="POST" style="display:inline-flex; gap:8px; align-items:center; justify-content:flex-end;">
-                                @csrf
-                                @method('PATCH')
-                                <input type="number" name="stock_qty" value="{{ $p->stock_qty }}" min="0" class="admin-input" style="width:90px; padding:6px 10px;">
-                                <button type="submit" class="admin-btn admin-btn--ghost" style="padding:6px 12px;">Salvar</button>
-                            </form>
+                            @if ($p->managedByErp())
+                                <span class="td-muted" style="font-size:.85em;">Gerenciado pelo ERP — <a href="{{ route('admin.microvix.products.index') }}">ver vínculo</a></span>
+                            @else
+                                <form action="{{ route('admin.stock.update', $p) }}" method="POST" style="display:inline-flex; gap:8px; align-items:center; justify-content:flex-end;">
+                                    @csrf
+                                    @method('PATCH')
+                                    <input type="number" name="stock_qty" value="{{ $p->stock_qty }}" min="0" class="admin-input" style="width:90px; padding:6px 10px;">
+                                    <button type="submit" class="admin-btn admin-btn--ghost" style="padding:6px 12px;">Salvar</button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty

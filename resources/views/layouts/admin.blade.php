@@ -357,7 +357,7 @@
       </a>
 
       <p class="nav-label">Sistema</p>
-      <a href="{{ route('admin.microvix.products.index') }}" class="{{ request()->routeIs('admin.microvix.*') ? 'is-active' : '' }}">
+      <a href="{{ route('admin.microvix.index') }}" class="{{ request()->routeIs('admin.microvix.*') ? 'is-active' : '' }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M7 12h10"/><path d="M12 7v10"/></svg>
         Microvix (ERP)
       </a>

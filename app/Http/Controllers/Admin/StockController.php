@@ -18,6 +18,7 @@ class StockController extends Controller
         $filter = $request->query('filtro'); // baixo | esgotado | null
 
         $products = Product::with('category')
+            ->withCount('microvixProducts') // p/ managedByErp() sem N+1
             ->when($filter === 'baixo', fn ($q) => $q->where('stock_qty', '>', 0)->where('stock_qty', '<=', self::LOW))
             ->when($filter === 'esgotado', fn ($q) => $q->where('stock_qty', '<=', 0))
             ->orderBy('stock_qty')
@@ -41,6 +42,12 @@ class StockController extends Controller
 
     public function update(Request $request, Product $product): RedirectResponse
     {
+        if ($product->managedByErp()) {
+            return back()->withErrors([
+                'stock_qty' => "O estoque de \"{$product->name}\" é gerenciado pelo ERP (Microvix) — ajuste lá e rode a conciliação.",
+            ]);
+        }
+
         $data = $request->validate([
             'stock_qty' => ['required', 'integer', 'min:0'],
         ]);

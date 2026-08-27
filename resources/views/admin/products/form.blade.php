@@ -2,6 +2,8 @@
 
 @php
     $editing = $product->exists;
+    // Preço/estoque travados quando o ERP manda (fonte=erp + vínculo).
+    $erpLock = $editing && $product->managedByErp();
 @endphp
 
 @section('admin_title', $editing ? 'Editar produto' : 'Novo produto')
@@ -66,7 +68,7 @@
                         </div>
                         <div class="field" style="margin-bottom:0;">
                             <label>Preços por volume (R$)</label>
-                            <input type="text" name="size_prices" class="admin-input" style="width:100%;"
+                            <input type="text" name="size_prices" class="admin-input" style="width:100%;" @disabled($erpLock)
                                    value="{{ old('size_prices', is_array($product->size_prices) ? implode('; ', array_map(fn ($v) => number_format((float) $v, 2, ',', '.'), $product->size_prices)) : '') }}"
                                    placeholder="109,90; 189,90">
                             <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:6px;">Na mesma ordem dos volumes, separados por ponto-e-vírgula. Vazio = todos os volumes usam o preço base.</p>
@@ -111,9 +113,16 @@
                 <div class="panel">
                     <div class="panel-head">Preço &amp; estoque</div>
                     <div class="panel-body">
+                        @if ($erpLock)
+                            <div class="field" style="font-size:.85em; color:var(--color-text-muted); border:1px solid var(--color-border); border-left:3px solid var(--color-primary); border-radius:var(--radius-sm); padding:10px 12px;">
+                                Preço e estoque deste produto são <strong>gerenciados pelo ERP</strong> (Microvix)
+                                e sobrescritos a cada conciliação — edite lá.
+                                <a href="{{ route('admin.microvix.products.index') }}">Ver vínculos</a>
+                            </div>
+                        @endif
                         <div class="field">
                             <label>Preço (R$)</label>
-                            <input type="number" step="0.01" min="0" name="price" class="admin-input" style="width:100%;" value="{{ old('price', $product->price) }}">
+                            <input type="number" step="0.01" min="0" name="price" class="admin-input" style="width:100%;" value="{{ old('price', $product->price) }}" @disabled($erpLock)>
                         </div>
                         <div class="field">
                             <label>Preço "de" (opcional)</label>
@@ -125,7 +134,7 @@
                         </div>
                         <div class="field">
                             <label>Estoque</label>
-                            <input type="number" min="0" name="stock_qty" class="admin-input" style="width:100%;" value="{{ old('stock_qty', $product->stock_qty ?? 0) }}">
+                            <input type="number" min="0" name="stock_qty" class="admin-input" style="width:100%;" value="{{ old('stock_qty', $product->stock_qty ?? 0) }}" @disabled($erpLock)>
                         </div>
                         <div class="field" style="margin-bottom:0;">
                             <label>Peso (kg, opcional)</label>

@@ -59,6 +59,30 @@ class Product extends Model
         return $this->hasOne(ProductImage::class)->where('is_primary', true);
     }
 
+    /** SKUs do ERP vinculados a este produto (um por volume). */
+    public function microvixProducts(): HasMany
+    {
+        return $this->hasMany(MicrovixProduct::class);
+    }
+
+    /**
+     * Preço e estoque deste produto são do ERP? Só quando a fonte da verdade
+     * é o ERP (MICROVIX_FONTE_VERDADE=erp) E há vínculo confirmado — os dois
+     * juntos: a virada da chave sozinha não trava produto sem vínculo, e o
+     * vínculo sozinho não trava nada antes da virada.
+     */
+    public function managedByErp(): bool
+    {
+        if (config('microvix.fonte_da_verdade') !== 'erp') {
+            return false;
+        }
+
+        // Usa o withCount quando o chamador carregou (listas), senão consulta.
+        return $this->microvix_products_count !== null
+            ? $this->microvix_products_count > 0
+            : $this->microvixProducts()->exists();
+    }
+
     /* -----------------------------------------------------------------
      | Preço por volume
      | `sizes` define quais volumes existem; `size_prices` define o
