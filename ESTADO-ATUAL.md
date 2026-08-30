@@ -4,7 +4,7 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-08-27** (fechamento da Microvix fase 1.5, etapa 5).
+Última revisão: **2026-08-30** (comando `pedidos:cancelar-cartao-preso`, §3).
 
 ---
 
@@ -133,10 +133,16 @@ entre o commit e a compensação (kill, OOM, deploy no meio), fica um pedido
 - Com o ERP mandando no estoque (`size_stock`), pedido pending preso = produto
   sumindo da vitrine sem motivo.
 - Pix e boleto se resolvem sozinhos pelo webhook de expiração da Appmax.
-- **Saída combinada (não implementada):** comando que cancela pedidos
-  `pending` de CARTÃO parados há mais de X minutos e devolve o estoque via
-  `cancelAndRestoreStock` (idempotente, já devolve `size_stock`). Sem queue
-  no projeto, vai de cron (`schedule:run`) no servidor.
+- **Implementado (30/08):** `pedidos:cancelar-cartao-preso` cancela pedidos
+  `pending` de CARTÃO parados há mais de 60 min (`--minutos` ajusta,
+  `--dry-run` só lista) via `cancelAndRestoreStock`, anota o motivo no
+  `notes` do pedido e loga. Janela de 60 min é proposital: cartão que chegou
+  a ser cobrado recebe `order_approved` via webhook em minutos — pending de
+  cartão velho é processo morto, não venda. Agendado a cada 15 min no
+  `Kernel`, mas **depende do cron do servidor chamar o scheduler** — conferir
+  se existe a linha
+  `* * * * * cd /var/www/aptk && php artisan schedule:run >> /dev/null 2>&1`
+  no crontab; sem ela o comando nunca roda sozinho.
 
 ---
 
@@ -159,8 +165,9 @@ do servidor — mas antes, nesta ordem:
    `/admin/microvix/produtos` (matcher só sugere).
 6. **Paulo:** `microvix:conciliar --dry-run`, revisar os deltas de preço
    (especialmente os 5 sem `size_prices`, §2) com a gestão.
-7. **Paulo:** implementar o comando do §3 antes da virada, porque a partir
-   dela estoque preso aparece na vitrine.
+7. ~~**Paulo:** implementar o comando do §3~~ — feito em 30/08
+   (`pedidos:cancelar-cartao-preso`); falta só confirmar o cron do
+   `schedule:run` no servidor (§3).
 8. **Decisão:** gelo (Ice4Pros, empresa 2) e Barín ficam fora do ERP na
    virada, ou a fase 1.5 ganha multi-empresa — §1.5.
 9. Virar `MICROVIX_FONTE_VERDADE=erp` no `.env` do servidor +

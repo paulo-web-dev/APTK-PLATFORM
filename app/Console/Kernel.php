@@ -12,7 +12,13 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Pedido pending de cartão parado = processo de pagamento morto no
+        // meio, com estoque preso (ESTADO-ATUAL §3). Sem queue no projeto,
+        // isto depende do cron do servidor chamar o scheduler:
+        //   * * * * * cd /var/www/aptk && php artisan schedule:run >> /dev/null 2>&1
+        $schedule->command('pedidos:cancelar-cartao-preso')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping();
     }
 
     /**
