@@ -104,6 +104,8 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/microvix', [MicrovixDashboardController::class, 'index'])->name('microvix.index');
     Route::post('/microvix/sync', [MicrovixDashboardController::class, 'sync'])->name('microvix.sync');
     Route::post('/microvix/conciliar', [MicrovixDashboardController::class, 'conciliar'])->name('microvix.conciliar');
+    Route::get('/microvix/pedidos/{order}', [MicrovixDashboardController::class, 'pedido'])->name('microvix.pedido');
+    Route::post('/microvix/pedidos/{order}/reenviar', [MicrovixDashboardController::class, 'reenviarPedido'])->name('microvix.pedido.reenviar');
     Route::get('/microvix/produtos', [MicrovixProductController::class, 'index'])->name('microvix.products.index');
     Route::patch('/microvix/produtos/{microvixProduct}/vinculo', [MicrovixProductController::class, 'vincular'])->name('microvix.products.vincular');
     Route::delete('/microvix/produtos/{microvixProduct}/vinculo', [MicrovixProductController::class, 'desvincular'])->name('microvix.products.desvincular');

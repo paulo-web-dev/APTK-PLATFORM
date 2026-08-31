@@ -105,6 +105,24 @@
     background: var(--color-primary);
   }
 
+  /* Pedidos parados em erro na integração ERP: badge na nav + banner em
+     toda página do admin — 5 pedidos sem faturar não podem passar batido. */
+  .nav-badge {
+    margin-left: auto; background: var(--color-danger); color: #fff;
+    font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+    min-width: 18px; height: 18px; border-radius: 9px;
+    display: grid; place-items: center; padding: 0 5px;
+  }
+  .erp-alert {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin-bottom: 20px; padding: 13px 16px;
+    border: 1.5px solid var(--color-danger); border-left-width: 5px;
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+    color: var(--color-text); font-size: var(--text-sm);
+  }
+  .erp-alert a { color: var(--color-danger); font-weight: 600; margin-left: auto; white-space: nowrap; }
+
   .admin-sidebar-foot {
     padding: 16px;
     border-top: 1px solid var(--color-border);
@@ -298,6 +316,11 @@
   @stack('styles')
 </head>
 <body>
+@php
+    /* Fase 2 Microvix: pedidos parados em erro de integração (uma query
+       indexada por request do admin — mesmo padrão do carrinho no público). */
+    $aptkErpErros = \App\Models\Order::where('microvix_envio_estado', 'erro')->count();
+@endphp
 
   <!-- ============ SIDEBAR ============ -->
   <aside class="admin-sidebar" id="sidebar">
@@ -360,6 +383,9 @@
       <a href="{{ route('admin.microvix.index') }}" class="{{ request()->routeIs('admin.microvix.*') ? 'is-active' : '' }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M7 12h10"/><path d="M12 7v10"/></svg>
         Microvix (ERP)
+        @if ($aptkErpErros > 0)
+          <span class="nav-badge">{{ $aptkErpErros }}</span>
+        @endif
       </a>
       <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 6.6 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H2a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4 6.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H22a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
@@ -405,6 +431,13 @@
     </header>
 
     <div class="admin-content">
+      @if ($aptkErpErros > 0)
+        <div class="erp-alert">
+          <strong>{{ $aptkErpErros }} pedido{{ $aptkErpErros === 1 ? '' : 's' }} parado{{ $aptkErpErros === 1 ? '' : 's' }} em erro na integração Microvix</strong>
+          — sem envio ao ERP, não fatura{{ $aptkErpErros === 1 ? '' : 'm' }}.
+          <a href="{{ route('admin.microvix.index') }}">Resolver agora →</a>
+        </div>
+      @endif
       @yield('content')
     </div>
 

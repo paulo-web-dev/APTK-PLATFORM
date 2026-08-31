@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\EnviarPedidoMicrovix;
 use App\Models\MicrovixLog;
 use App\Models\MicrovixProduct;
 use App\Models\MicrovixReconcileLog;
 use App\Models\MicrovixSyncState;
+use App\Models\Order;
 use App\Services\Microvix\MicrovixReconciler;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +35,20 @@ class MicrovixDashboardController extends Controller
                 'semVinculo' => MicrovixProduct::whereNull('product_id')->count(),
             ],
             'conciliacoes' => MicrovixReconcileLog::with('product')->latest('id')->limit(20)->get(),
+            // Fase 2: fila de envio de pedidos ao ERP.
+            'enviaLigado'  => (bool) config('microvix.envia_pedido'),
+            'pedidos'      => [
+                'pendentes'       => Order::whereIn('microvix_envio_estado', ['pendente', 'enviando'])->count(),
+                'erro'            => Order::where('microvix_envio_estado', 'erro')->count(),
+                'confirmadosHoje' => Order::where('microvix_envio_estado', 'confirmado')
+                    ->whereDate('microvix_synced_at', today())
+                    ->count(),
+            ],
+            'pedidosComErro' => Order::with('user')
+                ->where('microvix_envio_estado', 'erro')
+                ->orderByDesc('microvix_envio_em')
+                ->limit(20)
+                ->get(),
             'filtroLog'    => $filtroLog,
             'logs'         => MicrovixLog::query()
                 ->when($filtroLog === 'sucesso', fn ($q) => $q->where('success', true))
@@ -41,6 +57,50 @@ class MicrovixDashboardController extends Controller
                 ->limit(30)
                 ->get(),
         ]);
+    }
+
+    /**
+     * Trilha de envio de um pedido: cada chamada ao WS (real ou SIMULADA
+     * pela trava) com o XML enviado/que seria enviado e a resposta.
+     */
+    public function pedido(Order $order): View
+    {
+        return view('admin.microvix.pedido', [
+            'order' => $order->load('user'),
+            'logs'  => MicrovixLog::where('order_id', $order->id)->latest('id')->get(),
+        ]);
+    }
+
+    /**
+     * Reenvio manual: zera tentativas e re-enfileira com a ação certa pro
+     * estado atual do pagamento. A trava MICROVIX_ENVIA_PEDIDO continua
+     * valendo — ela vive no MicrovixPedidoSender, não aqui.
+     */
+    public function reenviarPedido(Order $order): RedirectResponse
+    {
+        $acao = match (true) {
+            $order->status === 'cancelled' => 'cancelar',
+            $order->isPaid()               => 'confirmar',
+            default                        => 'reservar',
+        };
+
+        $order->fill([
+            'microvix_envio_estado'     => 'pendente',
+            'microvix_envio_tentativas' => 0,
+            'microvix_envio_erro'       => null,
+        ])->save();
+
+        try {
+            EnviarPedidoMicrovix::dispatch($order->id, $acao);
+        } catch (Throwable $e) {
+            return back()->withErrors(['reenviar' => "Falha ao re-enfileirar o pedido #{$order->id}: {$e->getMessage()}"]);
+        }
+
+        $aviso = config('microvix.envia_pedido')
+            ? ''
+            : ' Trava MICROVIX_ENVIA_PEDIDO desligada: o envio será SIMULADO (XML na trilha, nada sai pro ERP).';
+
+        return back()->with('status', "Pedido #{$order->id} re-enfileirado (ação: {$acao}).{$aviso}");
     }
 
     /** Dispara o sync do espelho (síncrono — o projeto não usa queue). */
