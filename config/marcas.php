@@ -1,0 +1,33 @@
+<?php
+
+/*
+|--------------------------------------------------------------------------
+| Domínios próprios das marcas da holding (vitrine isolada)
+|--------------------------------------------------------------------------
+| Cada marca com domínio próprio ganha uma entrada aqui. O middleware
+| MarcaHost resolve a marca pelo Host da requisição: na raiz serve a view
+| com o layout isolado (layouts.marca); qualquer outro caminho leva 301
+| para o mesmo caminho no domínio da APTK (config app.url), exceto assets
+| e infra (lista de passthrough no middleware).
+|
+| 'hosts' inclui o host de dev *.localhost: resolve para 127.0.0.1 sem
+| editar o arquivo hosts (RFC 6761), então http://ice4pros.localhost:8000
+| funciona direto com o artisan serve. A comparação ignora a porta.
+|
+| Barín entra depois só acrescentando uma entrada (e o @extends na view).
+*/
+
+return [
+
+    'marcas' => [
+
+        'ice4pros' => [
+            'nome'  => 'Ice4Pros',
+            'view'  => 'shop.ice4pros',
+            'url'   => 'https://ice4pros.com.br',
+            'hosts' => ['ice4pros.com.br', 'www.ice4pros.com.br', 'ice4pros.localhost'],
+        ],
+
+    ],
+
+];

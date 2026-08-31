@@ -1,7 +1,12 @@
-@extends('layouts.public')
+{{-- No domínio próprio (MarcaHost) chega $layoutMarca = layouts.marca;
+     no /ice4pros da APTK cai no layout público de sempre. --}}
+@extends($layoutMarca ?? 'layouts.public')
 
 @section('title', 'Ice4Pros — O Melhor Gelo Cristal do Brasil · APTK Spirits')
+@section('brand_title', 'Ice4Pros — O Melhor Gelo Cristal do Brasil')
 @section('meta_description', 'Ice4Pros: gelo cristal gourmet, cristalino e padronizado. O gelo oficial do Guia Michelin Brasil. Cubos, esferas, diamantes e retangulares para bares, restaurantes e eventos.')
+{{-- Mesma página nos dois contextos; o domínio próprio é o preferido. --}}
+@section('canonical', config('marcas.marcas.ice4pros.url').'/')
 
 @push('styles')
 <style>
@@ -77,8 +82,8 @@
         <h1>O melhor gelo cristal do Brasil</h1>
         <p class="lead">Gelos perfeitos, cristalinos e padronizados — de classe mundial. Água hiperfiltrada, pedras translúcidas e a logotipagem pioneira no país, servindo a alta coquetelaria desde 2017.</p>
         <div class="ctas">
-          <a href="{{ route('catalog', ['categoria' => 'ice4pros']) }}" class="btn-aptk">Conheça os produtos</a>
-          <a href="{{ route('pages.show', 'collabs') }}" class="btn-aptk btn-aptk--outline">Falar com o comercial</a>
+          <a href="{{ aptk_route('catalog', ['categoria' => 'ice4pros']) }}" class="btn-aptk">Conheça os produtos</a>
+          <a href="{{ aptk_route('pages.show', 'collabs') }}" class="btn-aptk btn-aptk--outline">Falar com o comercial</a>
         </div>
       </div>
       <div class="i4p-video">
@@ -232,8 +237,8 @@
       <h2>Leve o gelo cristal pro seu negócio</h2>
       <p>Conte o seu formato — bar, restaurante, evento ou revenda — e a gente monta a melhor condição.</p>
       <div class="ctas">
-        <a href="{{ route('pages.show', 'collabs') }}" class="btn-aptk">Falar com o comercial</a>
-        <a href="{{ route('catalog', ['categoria' => 'ice4pros']) }}" class="btn-aptk btn-aptk--outline">Ver produtos</a>
+        <a href="{{ aptk_route('pages.show', 'collabs') }}" class="btn-aptk">Falar com o comercial</a>
+        <a href="{{ aptk_route('catalog', ['categoria' => 'ice4pros']) }}" class="btn-aptk btn-aptk--outline">Ver produtos</a>
       </div>
     </div>
   </section>

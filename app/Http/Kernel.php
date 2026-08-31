@@ -18,6 +18,9 @@ class Kernel extends HttpKernel
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
+        // Depois do TrustProxies (Host real atrás de proxy) e do maintenance
+        // (marca também responde 503); antes de qualquer coisa de sessão.
+        \App\Http\Middleware\MarcaHost::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,

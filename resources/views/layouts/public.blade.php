@@ -19,6 +19,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>@yield('title', 'APTK Spirits — Drinks & histórias pra contar')</title>
   <meta name="description" content="@yield('meta_description', 'Alquimia de histórias: drinks engarrafados, criados em pequenos lotes por humanos inquietos. Da nossa loja para a sua mesa.')">
+  @hasSection('canonical')
+    <link rel="canonical" href="@yield('canonical')">
+  @endif
 
   {{-- Tipografia oficial APTK: PP Rader + Neue World, auto-hospedadas (definidas em aptk-tokens.css). --}}
   <link rel="preload" href="{{ asset('fonts/PPRader-Bold.woff2') }}" as="font" type="font/woff2" crossorigin>
