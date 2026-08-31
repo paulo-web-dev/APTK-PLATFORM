@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PALPITE (ver importa-sucesso.xml): recusa de negócio do Importador. -->
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Body>
+    <ImportarResponse xmlns="http://tempuri.org/">
+      <ImportarResult xmlns:a="http://schemas.datacontract.org/2004/07/Linx.Microvix.WebApi.Importacao" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+        <a:Codigo>400</a:Codigo>
+        <a:Descricao>Plano de pagamento informado nao existe no portal</a:Descricao>
+        <a:Sucesso>false</a:Sucesso>
+      </ImportarResult>
+    </ImportarResponse>
+  </s:Body>
+</s:Envelope>

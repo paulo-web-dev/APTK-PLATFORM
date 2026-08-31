@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\Http;
  */
 class MicrovixClient
 {
+    /** Pedido dono da chamada corrente (trilha por pedido em microvix_logs). */
+    protected ?int $orderId = null;
+
     /**
      * Consulta (WS de Saída). Injeta chave e cnpjEmp automaticamente;
      * o chamador passa o resto (timestamp, filtros).
@@ -27,8 +30,9 @@ class MicrovixClient
      *         [] = cabeçalho presente sem registros ("nada mudou", doc 4.1);
      *         null = resposta sem cabeçalho <C> (cadastro inexistente no portal)
      */
-    public function consulta(string $method, array $params = [], bool $incluiCnpj = true): ?array
+    public function consulta(string $method, array $params = [], bool $incluiCnpj = true, ?int $orderId = null): ?array
     {
+        $this->orderId = $orderId;
         $envelope = $this->envelopeConsulta($method, $params, $incluiCnpj);
 
         // Retry 2x SÓ em falha de rede (ConnectionException) e SÓ em consulta.
@@ -68,8 +72,9 @@ class MicrovixClient
      *
      * @param  array<int, array<string, mixed>>  $registros  um item por <linx:Registros>
      */
-    public function importa(string $comando, array $registros): array
+    public function importa(string $comando, array $registros, ?int $orderId = null): array
     {
+        $this->orderId = $orderId;
         $envelope = $this->envelopeImportacao($comando, $registros);
         $started  = microtime(true);
 
@@ -98,6 +103,45 @@ class MicrovixClient
         $this->log('in', $comando, $envelope, $response->body(), $response->status(), true, null, $started);
 
         return $this->xmlParaArray($this->removePrefixosNamespace($response->body()), $comando);
+    }
+
+    /**
+     * Simulação (trava MICROVIX_ENVIA_PEDIDO desligada): monta o envelope
+     * que SERIA enviado e grava em microvix_logs com simulated=true, sem
+     * nenhuma chamada HTTP. Devolve o envelope (mascarado no log, íntegro
+     * no retorno).
+     */
+    public function simulaConsulta(string $method, array $params = [], ?int $orderId = null): string
+    {
+        $envelope = $this->envelopeConsulta($method, $params, true);
+        $this->logSimulado('out', $method, $envelope, $orderId);
+
+        return $envelope;
+    }
+
+    /** @see simulaConsulta() */
+    public function simulaImporta(string $comando, array $registros, ?int $orderId = null): string
+    {
+        $envelope = $this->envelopeImportacao($comando, $registros);
+        $this->logSimulado('in', $comando, $envelope, $orderId);
+
+        return $envelope;
+    }
+
+    protected function logSimulado(string $direction, string $method, string $envelope, ?int $orderId): void
+    {
+        MicrovixLog::create([
+            'order_id'    => $orderId,
+            'direction'   => $direction,
+            'method'      => $method,
+            'request'     => $this->mascaraCredenciais($envelope),
+            'response'    => null,
+            'http_status' => null,
+            'success'     => true,
+            'simulated'   => true,
+            'error'       => null,
+            'duration_ms' => 0,
+        ]);
     }
 
     public function urlSaida(): string
@@ -354,6 +398,7 @@ XML,
         float $started,
     ): void {
         MicrovixLog::create([
+            'order_id'    => $this->orderId,
             'direction'   => $direction,
             'method'      => $method,
             'request'     => $this->mascaraCredenciais($request),

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PALPITE do formato de resposta do Importador.svc (padrão dos WS Linx).
+     A doc (seção 8) só mostra o request e nunca houve importa real.
+     Confirmar no primeiro envio real e ajustar fixture + parse. -->
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Body>
+    <ImportarResponse xmlns="http://tempuri.org/">
+      <ImportarResult xmlns:a="http://schemas.datacontract.org/2004/07/Linx.Microvix.WebApi.Importacao" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
+        <a:Codigo>200</a:Codigo>
+        <a:Descricao>Registros importados com sucesso</a:Descricao>
+        <a:Sucesso>true</a:Sucesso>
+      </ImportarResult>
+    </ImportarResponse>
+  </s:Body>
+</s:Envelope>

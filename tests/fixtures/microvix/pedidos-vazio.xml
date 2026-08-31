@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<!-- B2CConsultaPedidos filtrado por id_pedido: cabeçalho sem <R> =
+     pedido ainda não integrado ao ERP. -->
+<Microvix>
+  <ResponseData>
+    <C><D>id_pedido</D><D>dt_pedido</D><D>cod_cliente_erp</D><D>cod_cliente_b2c</D><D>vl_frete</D><D>forma_pgto</D><D>plano_pagamento</D><D>anotacao</D><D>finalizado</D><D>tipo_frete</D><D>id_status</D><D>ativo</D><D>empresa</D><D>id_tabela_preco</D><D>cod_vendedor</D><D>timestamp</D><D>portal</D></C>
+  </ResponseData>
+  <ResponseResult>
+    <ResponseSuccess>True</ResponseSuccess>
+  </ResponseResult>
+</Microvix>

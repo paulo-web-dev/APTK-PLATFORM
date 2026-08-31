@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Resposta em formato que o parse NÃO reconhece (sem indicador de
+     sucesso/falha): deve virar erro pra revisão humana, nunca sucesso. -->
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+  <s:Body>
+    <ImportarResponse xmlns="http://tempuri.org/">
+      <ImportarResult>Processado</ImportarResult>
+    </ImportarResponse>
+  </s:Body>
+</s:Envelope>
