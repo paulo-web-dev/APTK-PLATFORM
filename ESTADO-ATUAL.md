@@ -4,7 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-08-30** (comando `pedidos:cancelar-cartao-preso`, §3).
+Última revisão: **2026-08-31** (fase 2 do Microvix implementada e travada, §4.1;
+domínio próprio do Ice4Pros no ar via `MarcaHost`).
 
 ---
 
@@ -174,9 +175,32 @@ do servidor — mas antes, nesta ordem:
    `php artisan config:cache`. A partir daí `/admin/produtos` e `/admin/estoque`
    travam preço/estoque de produto vinculado.
 
-Para a **fase 2** (pedido → ERP) somam-se: preencher os 7 parâmetros do §1.4,
-planos APPMAX de Pix/boleto (§1.6) e a estratégia de homologação sem sandbox
-(§1.7).
+## 4.1 Fase 2 (pedido → ERP): código pronto, trava fechada (31/08)
+
+Implementada em 4 etapas (commits `d06cb89`…`1bbd60a`), tudo contra fixtures —
+nenhum envio real foi feito. `MICROVIX_ENVIA_PEDIDO=false` simula: o XML que
+seria enviado fica em `microvix_logs` (`simulated=true`), visível na trilha do
+pedido em `/admin/microvix/pedidos/{id}`.
+
+Para LIGAR (`MICROVIX_ENVIA_PEDIDO=true`), antes precisa:
+
+1. **Gestão:** criar planos APPMAX de Pix e boleto no ERP (§1.6) e preencher
+   `config/microvix.php` (`planos_pagamento`) — hoje pedido pix/boleto para em
+   erro com mensagem clara, de propósito.
+2. **Gestão:** decisões pendentes do §1.4 preenchidas no `.env` do servidor:
+   `MICROVIX_ID_STATUS_INICIAL` (3 ou 1) e `MICROVIX_ID_TIPO_ENCOMENDA`;
+   mais tabela de preço (§1.2) — sem ela o pedido não fatura.
+3. **Servidor:** `QUEUE_CONNECTION=database` no `.env` + `php artisan migrate`
+   (tabela `jobs`) + `config:cache`. O worker roda pelo cron do `schedule:run`
+   que já existe — conferir que a linha do crontab está lá (§3).
+4. **Homologação sem sandbox (§1.7):** primeiro envio real com pedido de valor
+   simbólico, `somente_reserva=1`, conferindo em `/admin/microvix` a resposta
+   crua do Importador — **o parse de sucesso é PALPITE**
+   (`MicrovixPedidoSender::avaliaRespostaImporta` + fixtures `importa-*.xml`);
+   ajustar parse/fixtures com o formato real e cancelar o pedido no ERP.
+
+O que falta de código (fora do escopo da fase 2): retorno do ERP → site
+(status, rastreio, NF-e) é a fase 3.
 
 ---
 

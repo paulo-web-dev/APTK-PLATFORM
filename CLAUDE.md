@@ -109,7 +109,23 @@ preço/estoque no admin — o guard real é no controller, não só no form. Loj
 `size_stock` null se comporta como antes (`stock_qty` placeholder, nada esgota);
 checkout revalida com `lockForUpdate` dentro da transação. Painel de saúde em
 `/admin/microvix` (sync e conciliação manuais, síncronos — sem queue).
-Fase 2 (pedidos, `somente_reserva`) não iniciada.
+
+**Fase 2 (pedido → ERP) implementada, mas TRAVADA:** `MICROVIX_ENVIA_PEDIDO`
+no `.env` (`false` = monta o XML, grava em `microvix_logs` com `simulated=true`
+e não envia; trava vive no `MicrovixPedidoSender`, não no job). Fluxo da doc
+5.1: `B2CConsultaPedidos` (idempotência; `id_pedido` = `orders.id`) →
+CadastraClientes (`atualizar_por_cpf=1`) → EnderecosEntrega (id = `orders.id`,
+`descricao` "Pedido #N") → CadastraPedido (`somente_reserva=1` na criação, `0`
+no webhook de pagamento) → PedidoItens; expirado/recusado/cancelado →
+`B2CCancelaPedido` (dispatch centralizado no `cancelAndRestoreStock`). Fila
+database (`EnviarPedidoMicrovix`, fila `microvix`), worker via scheduler
+(`queue:work --stop-when-empty` a cada minuto), concorrência 1
+(WithoutOverlapping) + guarda de segundo por método (obs. 5 da doc). Erro de
+negócio (plano pix/boleto inexistente etc.) para em `erro` sem retry; rede
+retenta 3x com backoff. Estado em `orders.microvix_envio_*`; painel de pedidos,
+trilha de XML (selo simulado/real) e reenvio em `/admin/microvix`; pedido em
+erro gera banner global no admin. Parse da resposta do Importador é PALPITE —
+confirmar no primeiro envio real (`avaliaRespostaImporta`).
 
 ## Clube de assinatura
 
