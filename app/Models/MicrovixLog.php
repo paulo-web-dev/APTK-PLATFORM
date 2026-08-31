@@ -10,17 +10,20 @@ use Illuminate\Database\Eloquent\Model;
 class MicrovixLog extends Model
 {
     protected $fillable = [
+        'order_id',
         'direction',
         'method',
         'request',
         'response',
         'http_status',
         'success',
+        'simulated',
         'error',
         'duration_ms',
     ];
 
     protected $casts = [
-        'success' => 'boolean',
+        'success'   => 'boolean',
+        'simulated' => 'boolean',
     ];
 }

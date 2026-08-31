@@ -59,4 +59,26 @@ return [
     | O dia da virada é trocar esta linha no .env, não um deploy.
     */
     'fonte_da_verdade' => env('MICROVIX_FONTE_VERDADE', 'site'),
+
+    /*
+    | Fase 2 — envio de pedido ao ERP (B2CCadastraPedido e afins).
+    | Com a trava desligada (padrão), o MicrovixPedidoSender monta o payload
+    | e grava o envelope em microvix_logs (simulated=true), mas NÃO chama o
+    | webservice. A trava vive no service, não no job — vale também pro
+    | reenvio manual do painel. Não existe portal de teste (ESTADO-ATUAL
+    | §1.7): ligar isso escreve no ERP de verdade.
+    */
+    'envia_pedido' => (bool) env('MICROVIX_ENVIA_PEDIDO', false),
+
+    /*
+    | Método de pagamento do site → plano_pagamento do ERP (B2CConsultaPlanos).
+    | null = plano ainda não cadastrado no ERP (pedido à gestão): pedido com
+    | esse método falha com mensagem clara e fica reenviável — nunca é
+    | enviado com plano vazio. Existem só 279/280/281 (APPMAX CRÉDITO 1X/2X/3X).
+    */
+    'planos_pagamento' => [
+        'cartao' => 279,
+        'pix'    => null,
+        'boleto' => null,
+    ],
 ];

@@ -42,6 +42,10 @@ class Order extends Model
         'microvix_status',
         'microvix_synced_at',
         'microvix_reserved',
+        'microvix_envio_estado',
+        'microvix_envio_tentativas',
+        'microvix_envio_erro',
+        'microvix_envio_em',
     ];
 
     protected $casts = [
@@ -53,6 +57,7 @@ class Order extends Model
         'paid_at'         => 'datetime',
         'microvix_synced_at' => 'datetime',
         'microvix_reserved'  => 'boolean',
+        'microvix_envio_em'  => 'datetime',
     ];
 
     /** Pagamento confirmado (cartão aprovado ou Pix/boleto compensado). */
