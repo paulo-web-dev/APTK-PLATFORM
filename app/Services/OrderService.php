@@ -32,7 +32,7 @@ class OrderService
             throw new RuntimeException('Carrinho vazio.');
         }
 
-        return DB::transaction(function () use ($user, $data, $items) {
+        $order = DB::transaction(function () use ($user, $data, $items) {
             // 0) Revalida o estoque por volume DENTRO da transação, com lock
             //    de linha. Validar antes dela abriria a corrida clássica: duas
             //    compras simultâneas do último item leriam "tem 1" e as duas
@@ -180,6 +180,19 @@ class OrderService
 
             return $order;
         });
+
+        // Fase 2 Microvix: reserva de estoque no ERP (somente_reserva=1).
+        // FORA do closure da transação (a fila database grava o job na MESMA
+        // conexão — dentro, ele participaria da transação) E com afterCommit
+        // (se alguém reembrulhar isto numa transação maior, o job só sai no
+        // commit real). Falha ao enfileirar jamais derruba o pedido.
+        try {
+            EnviarPedidoMicrovix::dispatch($order->id, 'reservar')->afterCommit();
+        } catch (Throwable $e) {
+            report($e);
+        }
+
+        return $order;
     }
 
     /**
