@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\EnviarPedidoMicrovix;
 use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Webhook da Appmax (Apphooks).
@@ -94,7 +96,7 @@ class AppmaxWebhookController extends Controller
     protected function markPaid(Order $order): void
     {
         if ($order->isPaid()) {
-            return;
+            return; // reentrega do evento: nada a fazer, nada a re-enfileirar
         }
 
         $order->update([
@@ -102,6 +104,11 @@ class AppmaxWebhookController extends Controller
             'status'         => $order->status === 'pending' ? 'processing' : $order->status,
             'paid_at'        => $order->paid_at ?? now(),
         ]);
+
+        // Fase 2 Microvix: efetiva a reserva no ERP (somente_reserva=0).
+        // ÚLTIMA coisa do tratamento, e nunca derruba a resposta: sem o 200
+        // rápido a Appmax retenta e o evento chega duplicado.
+        $this->enfileiraEnvioErp($order, 'confirmar');
     }
 
     protected function markFailed(Order $order): void
@@ -117,6 +124,16 @@ class AppmaxWebhookController extends Controller
         // Pix/boleto venceu sem pagamento: libera o estoque reservado.
         if (! $order->isPaid()) {
             $this->orders->cancelAndRestoreStock($order, 'expired');
+        }
+    }
+
+    /** Enfileirar o espelho no ERP jamais pode quebrar a resposta do webhook. */
+    protected function enfileiraEnvioErp(Order $order, string $acao): void
+    {
+        try {
+            EnviarPedidoMicrovix::dispatch($order->id, $acao);
+        } catch (Throwable $e) {
+            report($e);
         }
     }
 

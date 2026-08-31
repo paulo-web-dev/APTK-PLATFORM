@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\OutOfStockException;
+use App\Jobs\EnviarPedidoMicrovix;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -10,6 +11,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Throwable;
 
 class OrderService
 {
@@ -214,6 +216,17 @@ class OrderService
                 'payment_status' => $paymentStatus,
             ]);
         });
+
+        // Fase 2 Microvix: libera a reserva no ERP (B2CCancelaPedido). Ponto
+        // ÚNICO de cancelamento — cobre webhook (expirado/recusado), a
+        // compensação do checkout e o comando cancelar-cartao-preso. FORA da
+        // transação (fila database grava na mesma conexão) + afterCommit; e
+        // falha ao enfileirar nunca desfaz o cancelamento local.
+        try {
+            EnviarPedidoMicrovix::dispatch($order->id, 'cancelar')->afterCommit();
+        } catch (Throwable $e) {
+            report($e);
+        }
     }
 
     /**
