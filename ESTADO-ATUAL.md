@@ -4,8 +4,9 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-08-31** (fase 2 do Microvix implementada e travada, §4.1;
-domínio próprio do Ice4Pros no ar via `MarcaHost`).
+Última revisão: **2026-09-13** (faxina de repositório, §5 — `.gitignore` de upload
+consertado e arquivos órfãos removidos; fase 2 do Microvix segue travada esperando
+a Linx/gestão, §4.1).
 
 ---
 
@@ -204,7 +205,28 @@ O que falta de código (fora do escopo da fase 2): retorno do ERP → site
 
 ---
 
-## 5. Histórico — varredura de 2026-08-20 (mantida como referência)
+## 5. Faxina de repositório (13/09/2026)
+
+Duas pendências antigas do CLAUDE.md fechadas, sem tocar em código de aplicação
+(145 testes seguem passando):
+
+- **Upload de imagem voltou a versionar.** O `*` de `storage/app/.gitignore` vale
+  recursivamente, então o `!public/` de lá só liberava a pasta, não o conteúdo —
+  imagem nova em `products/` ou `categories/` era ignorada em silêncio e não
+  chegava ao servidor pelo deploy (as 33 antigas tinham entrado com `git add -f`).
+  `storage/app/public/.gitignore` agora re-inclui as duas pastas explicitamente
+  (`!products/` + `!products/**`, idem `categories/`). Conferido com
+  `git check-ignore`: arquivo novo nas duas pastas aparece no `git status`; o
+  resto de `storage/app/public/` continua ignorado. **Pasta de upload nova ali
+  precisa do mesmo par de linhas** — senão volta a sumir calado.
+- **Órfãos removidos:** `resources/views/teste.blade.php` e os cinco CSS herdados
+  de outro projeto em `public/css/` (`assessment`, `report`, `result`,
+  `foundation`, `marketing`). Nenhum tinha referência em view, controller, rota
+  ou config — a única menção era o texto da própria `teste.blade.php`.
+
+---
+
+## 6. Histórico — varredura de 2026-08-20 (mantida como referência)
 
 > Snapshot ANTERIOR ao commit `0c07f3a` (Microvix fase 1). O que mudou desde:
 > Microvix tem espelho, descoberta, matcher, conciliação, estoque por volume

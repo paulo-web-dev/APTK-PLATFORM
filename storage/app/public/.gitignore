@@ -1,2 +1,8 @@
+# Uploads de imagem de produto e categoria SAO versionados.
+# O `*` de storage/app/.gitignore vale recursivamente aqui dentro, entao cada
+# pasta precisa ser re-incluida explicitamente (a pasta e o conteudo dela).
 !.gitignore
-
+!products/
+!products/**
+!categories/
+!categories/**

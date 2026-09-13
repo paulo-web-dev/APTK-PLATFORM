@@ -137,13 +137,6 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
 
 1. Frete é casca fixa (R$ 10) — cotação real depende de conta na SuperFrete.
 2. Portal B2B é só fachada: middleware + role + um `/ping`. Sem controllers nem views.
-3. `resources/views/teste.blade.php` órfão; `public/css/` tem cinco arquivos herdados de
-   outro projeto (`assessment`, `report`, `result`, `foundation`, `marketing`) sem uso.
-4. Imagem NOVA em `storage/app/public/products|categories` é silenciosamente ignorada
-   pelo git: o `*` de `storage/app/.gitignore` vence, e o `.gitignore` de
-   `storage/app/public/` só contém `!.gitignore`. As 33 imagens versionadas foram
-   adicionadas à força. Upload novo não chega ao servidor via deploy — usar
-   `git add -f` até consertar o `.gitignore`.
 
 ## Deploy
 
@@ -162,8 +155,10 @@ php artisan view:clear && php artisan config:cache
 Se `git pull` disser "Already up to date" mas o servidor estiver desatualizado, é merge
 abortado antigo: usar `git fetch origin` + `git reset --hard origin/main`.
 
-Imagens de produto/categoria são versionadas em `storage/app/public/products|categories`,
-mas o `.gitignore` atual ignora arquivos novos ali — ver pendência 5.
+Imagens de produto/categoria são versionadas em `storage/app/public/products|categories`
+e upload novo entra no `git add .` normalmente: o `.gitignore` de `storage/app/public/`
+re-inclui as duas pastas (o `*` de `storage/app/.gitignore` vale recursivamente, então
+qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 
 ## Regras de trabalho
 
