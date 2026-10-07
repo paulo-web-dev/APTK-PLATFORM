@@ -17,3 +17,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Fotos de origem (leva 07): ficam fora do git. Só as geradas em
+# storage/app/public/products entram.
+/public/img/fotos_produtos/

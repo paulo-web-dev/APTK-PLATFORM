@@ -4,9 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-09-13** (faxina de repositório, §5 — `.gitignore` de upload
-consertado e arquivos órfãos removidos; fase 2 do Microvix segue travada esperando
-a Linx/gestão, §4.1).
+Última revisão: **2026-10-07** (leva 07, §6 — catálogo importado da planilha da
+gestão, sem Linx; fase 2 do Microvix segue travada esperando a Linx/gestão, §4.1).
 
 ---
 
@@ -105,6 +104,8 @@ marcado (`somente_reserva`, valor simbólico) e cancelar no ERP em seguida.
 ---
 
 ## 2. Catálogo do site (banco local, 27/08)
+
+> Desatualizado desde a leva 07 (§6): o catálogo agora vem da planilha.
 
 - **14 produtos, todos ativos, `stock_qty` chapado em 30** em todos. Nada
   esgota, nunca esgotou. O estoque real só vai existir quando `size_stock`
@@ -226,7 +227,54 @@ Duas pendências antigas do CLAUDE.md fechadas, sem tocar em código de aplicaç
 
 ---
 
-## 6. Histórico — varredura de 2026-08-20 (mantida como referência)
+## 6. Leva 07 — catálogo pela planilha, sem Linx (07/10/2026)
+
+A gestão quis os produtos no ar sem esperar o Microvix. Fonte:
+`database/data/catalogo-planilha-2026-10.csv` (uma linha por produto + volume).
+Comando `catalogo:importar-planilha [--dry-run]`, idempotente.
+
+- **Regras:** o CSV atualiza o que tem valor e nunca remove o que já está à
+  venda (volume existente sem preço na planilha mantém volume e preço). Ativo só
+  com preço E imagem. Produto existente mantém slug e categoria; novo nasce com
+  slug = grupo e `stock_qty` 30 (placeholder; 0 = esgotado na vitrine).
+  `managedByErp()` é pulado; produto fora do CSV não é tocado. SKU = o do
+  volume padrão (maior à venda) quando a planilha tem.
+- **Mapas no comando:** slug antigo → grupo (`squadra-amendoas`,
+  `squadra-coco`, `neutral-gin`, `vodka-vdk`) e grupo → categoria dos novos.
+- **Imagens:** origem em `public/img/fotos_produtos/FUNDO PRETO/BAIXA/` (FORA do
+  git, `.gitignore`); geradas em
+  `storage/app/public/products/{grupo}-{vol}-{frente|verso}.jpg`, 1200 px no
+  lado maior, JPG 82 (GD). Galeria só com volumes à venda, do maior (o
+  `defaultSize()`) pro menor; principal = frente do volume padrão, ou do maior
+  à venda com foto. Produto sem volume à venda guarda todas as fotos. A garrafa
+  antiga sai da galeria (só a linha; o arquivo fica) e a `-serve` vai pro fim.
+  Destino existente é reaproveitado — **em produção o comando roda sem as fotos
+  de origem e sem GD**. `Fundo Preto_034` (Drink Perfeito, fundo azul) pulada.
+- **Resultado local:** 33 criados, 12 atualizados; 47 produtos, 18 ativos (16
+  do import + as 2 cachaças, fora do CSV). 60 imagens (3,7 MB).
+- **Volumes mantidos sem preço na planilha** (lista para a gestão): aptk-gin-2
+  750 (219,90), licor-de-amendoas-squadra 750 (159,90), licor-de-coco-squadra
+  375 (97,44, fora da planilha) e 750 (149,90), limoncello 375 (97,44) e 750
+  (149,90), sur-lorange 750 (209,90).
+- **29 inativos** esperando a gestão: 12 sem foto, 8 sem preço, 9 sem nenhum
+  dos dois (lista no resumo do comando). Licor Cacau Show (42,79) e Borelli
+  (41,07) entraram com preço com cara de custo — confirmar antes de ativar.
+- **CSS:** token `--color-bg-media` (= `--color-ink`) no fundo da foto do card,
+  da página de produto, das miniaturas e do "Você também pode gostar" (antes
+  `#0D0A06` hardcoded, que fazia moldura em volta da foto preta).
+- **Local:** `extension=gd` descomentado no `php.ini` do XAMPP.
+
+**Deploy:** depois do `reset --hard`, `php artisan catalogo:importar-planilha
+--dry-run`, conferir, e rodar sem `--dry-run`.
+
+**Pendência — admin apaga imagens:** `Admin\ProductController::handleImage`
+apaga TODAS as imagens do produto (arquivo + linha) ao subir uma foto nova.
+Num produto importado, trocar a foto pelo admin leva junto frente/verso de
+todos os volumes e a `-serve`. Não mexido na leva 07.
+
+---
+
+## 7. Histórico — varredura de 2026-08-20 (mantida como referência)
 
 > Snapshot ANTERIOR ao commit `0c07f3a` (Microvix fase 1). O que mudou desde:
 > Microvix tem espelho, descoberta, matcher, conciliação, estoque por volume

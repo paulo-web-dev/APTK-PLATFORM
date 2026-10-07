@@ -1,0 +1,92 @@
+grupo,nome,marca,volume,sku,preco,foto_frente,foto_verso
+boulevardier,Boulevardier,aptk,100ml,BOU100,80.00,,
+boulevardier,Boulevardier,aptk,375ml,BOU375,165.00,Fundo Preto_016.jpg,Fundo Preto_017.jpg
+boulevardier,Boulevardier,aptk,750ml,BOU750,210.00,Fundo Preto_049.jpg,Fundo Preto_050.jpg
+caipirinha-arazul,Caipirinha Arazul,aptk,100ml,CAIP100,80.00,,
+caipirinha-arazul,Caipirinha Arazul,aptk,375ml,CAIP375,165.00,,
+caipirinha-arazul,Caipirinha Arazul,aptk,750ml,CAIP750,,,
+canarinha,Canarinha,aptk,375ml,CNA375,165.00,,
+caju-amigo,Caju Amigo,aptk,100ml,CA100,80.00,,
+caju-amigo,Caju Amigo,aptk,375ml,CA375,165.00,,
+caju-amigo,Caju Amigo,aptk,750ml,CA750,210.00,,
+cajuzaco-barin,Cajuzaço,barin,750ml,CJB750,90.00,,
+coffee-negroni,Coffee Negroni,aptk,100ml,CNB100,80.00,,
+coffee-negroni,Coffee Negroni,aptk,375ml,CN375,165.00,,
+coffee-negroni,Coffee Negroni,aptk,750ml,CN750,210.00,,
+cosmopolitan,Cosmopolitan,aptk,100ml,COS100,80.00,,
+cosmopolitan,Cosmopolitan,aptk,375ml,COS375,165.00,Fundo Preto_006.jpg,Fundo Preto_007.jpg
+cosmopolitan,Cosmopolitan,aptk,750ml,COS750,210.00,Fundo Preto_041.jpg,Fundo Preto_042.jpg
+dry-martini,Dry Martini,aptk,100ml,DM100,80.00,,
+dry-martini,Dry Martini,aptk,375ml,DM375,165.00,Fundo Preto_012.jpg,Fundo Preto_013.jpg
+dry-martini,Dry Martini,aptk,750ml,DM750,210.00,Fundo Preto_045.jpg,Fundo Preto_046.jpg
+espresso-martini,Espresso Martini,aptk,100ml,ESM100,80.00,,
+espresso-martini,Espresso Martini,aptk,375ml,ESM375,165.00,,
+espresso-martini,Espresso Martini,aptk,750ml,ESM750,210.00,,
+fitzgerald,Fitzgerald,aptk,100ml,FITZ100,80.00,,
+fitzgerald,Fitzgerald,aptk,375ml,FITZ375,165.00,Fundo Preto_008.jpg,Fundo Preto_009.jpg
+fitzgerald,Fitzgerald,aptk,750ml,FITZ750,210.00,Fundo Preto_043.jpg,Fundo Preto_044.jpg
+aptk-gin-1,APTK Gin Nº1 Dry Gin,aptk,375ml,,,Fundo Preto_028.jpg,Fundo Preto_029.jpg
+aptk-gin-1,APTK Gin Nº1 Dry Gin,aptk,750ml,G750,,Fundo Preto_061.jpg,Fundo Preto_062.jpg
+aptk-gin-2,APTK Gin Nº2 Neutral,aptk,375ml,,,Fundo Preto_026.jpg,Fundo Preto_027.jpg
+aptk-gin-2,APTK Gin Nº2 Neutral,aptk,750ml,G2750,,Fundo Preto_059.jpg,Fundo Preto_060.jpg
+asuka-jin,Asuka Jin,aptk,750ml,GAKJ750,,,
+gin-barin,Gin Barín,barin,750ml,GINB750,,,
+licor-chocolate-cacau-show,Licor de Chocolate Cacau Show,aptk,375ml,LCCS375,42.79,,
+licor-chocolate-squadra,Licor de Chocolate Squadra,aptk,750ml,LCH750,,,
+licor-chocolate,Licor de Chocolate,aptk,750ml,LCHF750,,,
+licor-doce-de-leite-borelli,Licor de Doce de Leite Borelli,aptk,375ml,LDLB375,41.07,,
+licor-de-amendoas-squadra,Licor de Amêndoas Squadra,aptk,100ml,LA100,80.00,,
+licor-de-amendoas-squadra,Licor de Amêndoas Squadra,aptk,200ml,LA200,,,
+licor-de-amendoas-squadra,Licor de Amêndoas Squadra,aptk,375ml,LA375,165.00,,
+licor-de-amendoas-squadra,Licor de Amêndoas Squadra,aptk,750ml,LA750,,,
+licor-de-coco-squadra,Licor de Coco Squadra,aptk,100ml,LCC100,80.00,,
+licor-de-coco-squadra,Licor de Coco Squadra,aptk,750ml,LCC750,,,
+limoncello,Limoncello,aptk,100ml,LIM100,80.00,,
+limoncello,Limoncello,aptk,200ml,LIM200,,,
+limoncello,Limoncello,aptk,375ml,LIM375,,,
+limoncello,Limoncello,aptk,750ml,LIM750,,,
+limoncello-barin,Limoncello,barin,750ml,LIMB750,90.00,,
+moscow-mule,Moscow Mule,aptk,100ml,MM100,80.00,,
+moscow-mule,Moscow Mule,aptk,375ml,MM375,165.00,,
+moscow-mule,Moscow Mule,aptk,750ml,MM750,210.00,,
+negroni-classico,Negroni Clássico,aptk,100ml,NC100,80.00,,
+negroni-classico,Negroni Clássico,aptk,200ml,NC200,,,
+negroni-classico,Negroni Clássico,aptk,375ml,NC375,165.00,Fundo Preto_014.jpg,Fundo Preto_015.jpg
+negroni-classico,Negroni Clássico,aptk,750ml,NC750,210.00,,
+negroni-piselli,Negroni Piselli,aptk,375ml,NP375,165.00,,
+negroni-piselli,Negroni Piselli,aptk,750ml,NP750,,,
+negroni-revoara,Negroni Revoara,aptk,750ml,NCRV750,,,
+negroni-barin,Negroni,barin,750ml,NCB750,90.00,,
+negroni-aged,Negroni Aged,aptk,750ml,NGA750,600.00,,
+negroni-jerez,Negroni Jerez,aptk,375ml,,,Fundo Preto_018.jpg,Fundo Preto_019.jpg
+negroni-jerez,Negroni Jerez,aptk,750ml,NGJ,,Fundo Preto_051.jpg,Fundo Preto_052.jpg
+old-fashioned,Old Fashioned,aptk,100ml,OF100,80.00,,
+old-fashioned,Old Fashioned,aptk,375ml,OLD375,165.00,Fundo Preto_010.jpg,Fundo Preto_011.jpg
+old-fashioned,Old Fashioned,aptk,750ml,OF750,,Fundo Preto_047.jpg,Fundo Preto_048.jpg
+sur-lorange,Sur L'Orange,aptk,100ml,SLO100,80.00,,
+sur-lorange,Sur L'Orange,aptk,375ml,SLO375,165.00,Fundo Preto_067.jpg,Fundo Preto_001.jpg
+sur-lorange,Sur L'Orange,aptk,750ml,SLO750,,Fundo Preto_035.jpg,Fundo Preto_036.jpg
+manhattan,Manhattan,aptk,100ml,MHAC100,80.00,,
+manhattan-aged,Manhattan Aged,aptk,750ml,MHA750,,,
+scarlatti,Scarlatti,aptk,375ml,,,Fundo Preto_032.jpg,Fundo Preto_033.jpg
+scarlatti,Scarlatti,aptk,750ml,SCA750,,Fundo Preto_065.jpg,Fundo Preto_066.jpg
+vermute-circollo-bianco,Vermute Circollo Bianco,aptk,375ml,,,Fundo Preto_022.jpg,Fundo Preto_023.jpg
+vermute-circollo-bianco,Vermute Circollo Bianco,aptk,750ml,VCB750,,Fundo Preto_053.jpg,Fundo Preto_054.jpg
+vermute-circollo-rosso,Vermute Circollo Rosso,aptk,375ml,,,Fundo Preto_020.jpg,Fundo Preto_021.jpg
+vermute-circollo-rosso,Vermute Circollo Rosso,aptk,750ml,VBA750,100.00,Fundo Preto_055.jpg,Fundo Preto_056.jpg
+vermute-circollo-dry,Vermute Circollo Dry,aptk,375ml,,,Fundo Preto_024.jpg,Fundo Preto_025.jpg
+vermute-circollo-dry,Vermute Circollo Dry,aptk,750ml,,,Fundo Preto_057.jpg,Fundo Preto_058.jpg
+aptk-vodka,APTK Vodka,aptk,100ml,VDK100,80.00,,
+aptk-vodka,APTK Vodka,aptk,750ml,VDK750,125.00,,
+vodka-barin,Vodka Barín,barin,750ml,VDKB750,,,
+penicillin,Penicillin,aptk,100ml,PCL100,80.00,,
+penicillin,Penicillin,aptk,375ml,PCL375,190.00,,
+penicillin,Penicillin,aptk,750ml,PCL750,,,
+whisky-cacau-show,Whisky Cacau Show,aptk,375ml,WCS375,,,
+ale-tonic,Ale Tonic,aptk,375ml,,,Fundo Preto_004.jpg,Fundo Preto_005.jpg
+ale-tonic,Ale Tonic,aptk,750ml,,,Fundo Preto_039.jpg,Fundo Preto_040.jpg
+gallo-tropicalle,Gallo Tropicalle,aptk,375ml,,,Fundo Preto_002.jpg,Fundo Preto_003.jpg
+gallo-tropicalle,Gallo Tropicalle,aptk,750ml,,,Fundo Preto_037.jpg,Fundo Preto_038.jpg
+voglio-apperitivo,Voglio Apperitivo,aptk,375ml,,,Fundo Preto_030.jpg,Fundo Preto_031.jpg
+voglio-apperitivo,Voglio Apperitivo,aptk,750ml,,,Fundo Preto_063.jpg,Fundo Preto_064.jpg
+o-drink-perfeito,O Drink Perfeito,aptk,375ml,,,Fundo Preto_034.jpg,

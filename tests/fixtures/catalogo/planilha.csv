@@ -1,0 +1,10 @@
+grupo,nome,marca,volume,sku,preco,foto_frente,foto_verso
+boulevardier,Boulevardier,aptk,100ml,BOU100,80.00,,
+boulevardier,Boulevardier,aptk,375ml,BOU375,165.00,f1.jpg,f2.jpg
+boulevardier,Boulevardier,aptk,750ml,BOU750,,f3.jpg,f4.jpg
+scarlatti,Scarlatti,aptk,750ml,SCA750,,f5.jpg,
+negroni-classico,Negroni Clássico,aptk,375ml,NC375,165.00,f6.jpg,f7.jpg
+negroni-classico,Negroni Clássico,aptk,750ml,NC750,,,
+cosmopolitan,Cosmopolitan,aptk,375ml,COS375,165.00,,
+fitzgerald,Fitzgerald,aptk,375ml,FITZ375,165.00,f8.jpg,f9.jpg
+fitzgerald,Fitzgerald,aptk,750ml,FITZ750,210.00,f10.jpg,f11.jpg

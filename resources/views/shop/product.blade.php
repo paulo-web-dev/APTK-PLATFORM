@@ -6,9 +6,9 @@
 <style>
     .pdp { padding-block: 48px; }
     .pdp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
-    .pdp-gallery .main-img { aspect-ratio: 1 / 1; object-fit: contain; background: #0D0A06; padding: 22px; }
+    .pdp-gallery .main-img { aspect-ratio: 1 / 1; object-fit: contain; background: var(--color-bg-media); padding: 22px; }
     .pdp-thumbs { display: flex; gap: 12px; margin-top: 14px; }
-    .pdp-thumbs .thumb { width: 72px; height: 72px; flex-shrink: 0; padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: #0D0A06; cursor: pointer; overflow: hidden; transition: border-color .2s ease; }
+    .pdp-thumbs .thumb { width: 72px; height: 72px; flex-shrink: 0; padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-media); cursor: pointer; overflow: hidden; transition: border-color .2s ease; }
     .pdp-thumbs .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
     .pdp-thumbs .thumb:hover { border-color: var(--color-primary-muted); }
     .pdp-thumbs .thumb.is-active { border-color: var(--color-primary); }
@@ -172,7 +172,7 @@
                                style="display:flex; flex-direction:column; padding:0; overflow:hidden; text-decoration:none;">
                                 @if ($rel->primaryImage)
                                     <img src="{{ \Illuminate\Support\Facades\Storage::url($rel->primaryImage->path) }}" alt="{{ $rel->name }}"
-                                         style="aspect-ratio:1/1; width:100%; object-fit:contain; background:#0D0A06; border:none; border-bottom:1px solid var(--color-border); border-radius:0; padding:16px;">
+                                         style="aspect-ratio:1/1; width:100%; object-fit:contain; background:var(--color-bg-media); border:none; border-bottom:1px solid var(--color-border); border-radius:0; padding:16px;">
                                 @else
                                     <div class="placeholder" style="aspect-ratio:1/1; border:none; border-bottom:1px solid var(--color-border); border-radius:0;"><span>{{ $rel->name }}</span></div>
                                 @endif

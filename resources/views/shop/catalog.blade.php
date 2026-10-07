@@ -18,7 +18,7 @@
     .cat-pill.is-active { background: var(--color-primary); color: var(--color-text-inverse); border-color: var(--color-primary); }
     .prod-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
     .prod-card { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
-    .prod-card .prod-img { aspect-ratio: 1 / 1; border-radius: 0; border: none; border-bottom: 1px solid var(--color-border); background: #0D0A06; }
+    .prod-card .prod-img { aspect-ratio: 1 / 1; border-radius: 0; border: none; border-bottom: 1px solid var(--color-border); background: var(--color-bg-media); }
     .prod-card img.prod-img { width: 100%; object-fit: contain; padding: 18px; }
     .prod-body { padding: 20px; display: flex; flex-direction: column; flex: 1; }
     .prod-cat { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 8px; }

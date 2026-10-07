@@ -27,6 +27,7 @@
   --color-bg:           var(--color-cream);
   --color-bg-card:      #F2EBDD;
   --color-bg-elevated:  #EDE4D3;
+  --color-bg-media:     var(--color-ink);  /* fundo de foto de produto: as fotos sao em preto puro */
   --color-border:       #D8CBB4;
 
   --color-primary:      var(--color-scotch);
@@ -76,6 +77,7 @@
   --color-bg:           var(--color-ink);
   --color-bg-card:      #0F0E0C;
   --color-bg-elevated:  #15130F;
+  --color-bg-media:     var(--color-ink);
   --color-border:       rgba(229,219,201,.16);
 
   --color-primary:      #D4720A;   /* ambar levemente mais quente p/ contraste no escuro */
