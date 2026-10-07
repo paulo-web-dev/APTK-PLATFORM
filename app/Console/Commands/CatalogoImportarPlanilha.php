@@ -22,8 +22,10 @@ use Illuminate\Support\Facades\Storage;
  *   volume existente sem preço na planilha fica com volume e preço atuais
  *   (e sai listado à parte para a gestão).
  * - Produto existente mantém slug e categoria. Novo nasce com slug = grupo.
- * - Ativo só com ao menos 1 volume com preço E ao menos 1 imagem.
- * - Produto managedByErp() é pulado. Produto fora do CSV não é tocado.
+ * - Ativo só com ao menos 1 volume com preço E ao menos 1 foto do pacote
+ *   novo (FUNDO PRETO). Foto antiga do site não conta.
+ * - Produto managedByErp() é pulado. Produto fora do CSV não é tocado, exceto
+ *   a desativação explícita de DESATIVAR_FORA_DA_PLANILHA.
  * - Imagem: gerada em storage/app/public/products a partir das fotos de
  *   origem (fora do git). Se o destino já existe, é reaproveitado — por isso
  *   em produção o comando roda sem as fotos de origem e sem GD.
@@ -103,6 +105,12 @@ class CatalogoImportarPlanilha extends Command
         'whisky-cacau-show'           => 'bases',
     ];
 
+    /**
+     * Fora da planilha, só com a foto antiga do site (227x520, padrão
+     * pré-leva 07): saem do ar. Só o `active` muda.
+     */
+    private const DESATIVAR_FORA_DA_PLANILHA = ['cachaca-prata', 'cachaca-ouro'];
+
     /** Fotos citadas no CSV que não entram (034: Drink Perfeito em fundo azul). */
     private const FOTOS_PULADAS = ['Fundo Preto_034.jpg'];
 
@@ -117,10 +125,18 @@ class CatalogoImportarPlanilha extends Command
 
     private array $mantidos = [];
 
-    private array $resumo = ['criados' => [], 'atualizados' => [], 'sem_mudanca' => [], 'pulados_erp' => [], 'ativos' => [], 'inativos' => []];
+    private array $resumo = [];
 
     public function handle(): int
     {
+        // A instância do comando pode ser reaproveitada (testes): zera o estado.
+        $this->avisos = [];
+        $this->mantidos = [];
+        $this->resumo = [
+            'criados' => [], 'atualizados' => [], 'sem_mudanca' => [], 'pulados_erp' => [],
+            'ativos' => [], 'inativos' => [], 'sairam' => [], 'fora_desativados' => [],
+        ];
+
         $this->dryRun = (bool) $this->option('dry-run');
         $csv = $this->option('csv') ?: base_path(self::CSV_PADRAO);
         $this->dirFotos = rtrim($this->option('fotos') ?: base_path(self::FOTOS_PADRAO), '/\\');
@@ -154,6 +170,8 @@ class CatalogoImportarPlanilha extends Command
                 $this->aplicar($plano);
             }
         }
+
+        $this->desativarForaDaPlanilha();
 
         $this->imprimirResumo();
 
@@ -286,14 +304,18 @@ class CatalogoImportarPlanilha extends Command
 
         $imagens = $this->planejarImagens($grupo, $linhas, $product, $sizes);
 
+        // Só foto do pacote novo conta para ativar: produto que só tem a foto
+        // antiga do site fica inativo — inclusive em reexecução.
         $temPreco = $precos !== [];
-        $temImagem = $imagens['total_depois'] > 0;
-        $attrs['active'] = $temPreco && $temImagem;
+        $temFotoNova = $imagens['novas'] !== [];
+        $soFotoAntiga = ! $temFotoNova && $imagens['total_depois'] > 0;
+        $attrs['active'] = $temPreco && $temFotoNova;
         $motivo = match (true) {
-            $attrs['active']           => null,
-            ! $temPreco && ! $temImagem => 'sem preço e sem imagem',
-            ! $temPreco                => 'sem preço',
-            default                    => 'sem imagem',
+            $attrs['active']              => null,
+            ! $temPreco && ! $temFotoNova => 'sem preço e sem imagem',
+            ! $temPreco                   => 'sem preço',
+            $soFotoAntiga                 => 'só foto antiga',
+            default                       => 'sem imagem',
         };
 
         $mudancas = $product ? $this->diferencas($product, $attrs) : [];
@@ -370,9 +392,9 @@ class CatalogoImportarPlanilha extends Command
      * venda que tenha foto. Sem nenhum volume à venda: todas as fotos, do
      * menor para o maior, prontas para quando o preço chegar.
      *
-     * Produto existente que recebe foto nova: a foto antiga da garrafa sai da
-     * galeria (só a linha; o arquivo fica no disco) e as "-serve" continuam,
-     * no fim. Sem foto nova: imagens intocadas.
+     * Produto existente que recebe foto nova: a galeria fica só com o pacote
+     * novo — garrafa antiga e "-serve" saem (só a linha; o arquivo fica no
+     * disco). Sem foto nova: imagens intocadas (e o produto fica inativo).
      */
     private function planejarImagens(string $grupo, array $linhas, ?Product $product, array $sizes): array
     {
@@ -427,16 +449,16 @@ class CatalogoImportarPlanilha extends Command
 
         if ($novas === []) {
             return [
-                'novas' => [], 'mantidas' => [], 'removidas' => [], 'reordena' => false,
+                'novas' => [], 'removidas' => [], 'reordena' => false,
                 'gerar' => 0, 'linhas_novas' => 0, 'total_depois' => $existentes->count(),
             ];
         }
 
-        $mantidas = $existentes->filter(fn ($i) => ! in_array($i->path, $caminhosNovos, true) && str_contains($i->path, '-serve.'))->values();
-        $removidas = $existentes->filter(fn ($i) => ! in_array($i->path, $caminhosNovos, true) && ! str_contains($i->path, '-serve.'))->values();
+        // Galeria só com o pacote novo: tudo que não é dele (garrafa antiga e
+        // -serve) sai da galeria — só a linha; o arquivo fica no disco.
+        $removidas = $existentes->filter(fn ($i) => ! in_array($i->path, $caminhosNovos, true))->values();
 
-        // Ordem final desejada: novas, depois as -serve. Reordena se diferir.
-        $desejada = array_merge($caminhosNovos, $mantidas->pluck('path')->all());
+        $desejada = $caminhosNovos;
         $reordena = false;
         foreach ($desejada as $ordem => $path) {
             $img = $existentes->firstWhere('path', $path);
@@ -447,12 +469,11 @@ class CatalogoImportarPlanilha extends Command
 
         return [
             'novas'        => $novas,
-            'mantidas'     => $mantidas->all(),
             'removidas'    => $removidas->all(),
             'reordena'     => $reordena,
             'gerar'        => count(array_filter($novas, fn ($n) => $n['status'] === 'gera')),
             'linhas_novas' => count(array_filter($caminhosNovos, fn ($p) => ! $existentes->contains('path', $p))),
-            'total_depois' => count($novas) + $mantidas->count(),
+            'total_depois' => count($novas),
         ];
     }
 
@@ -523,11 +544,6 @@ class CatalogoImportarPlanilha extends Command
                     ['product_id' => $product->id, 'path' => $nova['destino']],
                     ['alt' => $attrs['name'], 'sort_order' => $ordem, 'is_primary' => $ordem === 0],
                 );
-            }
-
-            $ordem = count($img['novas']);
-            foreach ($img['mantidas'] as $mantida) {
-                $mantida->update(['sort_order' => $ordem++, 'is_primary' => false]);
             }
 
             // Só a linha: o arquivo antigo fica no disco.
@@ -621,9 +637,6 @@ class CatalogoImportarPlanilha extends Command
             $this->line('  imagens: sem foto nova'.($p ? " (mantém {$img['total_depois']})" : ''));
         } else {
             $desc = count($img['novas']).' da planilha (gera '.$img['gerar'].', reaproveita '.(count($img['novas']) - $img['gerar']).')';
-            if ($img['mantidas']) {
-                $desc .= ' · -serve mantida(s) no fim: '.count($img['mantidas']);
-            }
             if ($img['removidas']) {
                 $desc .= ' · sai(em) da galeria: '.implode(', ', array_map(fn ($i) => basename($i->path), $img['removidas']));
             }
@@ -641,6 +654,9 @@ class CatalogoImportarPlanilha extends Command
             $this->resumo['ativos'][] = $grupo;
         } else {
             $this->resumo['inativos'][$plano['motivo']][] = $grupo;
+            if ($p?->active) {
+                $this->resumo['sairam'][] = "{$grupo} ({$plano['motivo']})";
+            }
         }
     }
 
@@ -670,11 +686,52 @@ class CatalogoImportarPlanilha extends Command
         $this->line('  atualizados: '.count($r['atualizados']));
         $this->line('  sem mudança: '.count($r['sem_mudanca']));
         $this->line('  pulados (ERP): '.count($r['pulados_erp']).($r['pulados_erp'] ? ' ('.implode(', ', $r['pulados_erp']).')' : ''));
-        $this->line('  ativos: '.count($r['ativos']));
+        $this->line('  ativos ('.count($r['ativos']).'): '.implode(', ', $r['ativos']));
         $this->line("  inativos: {$inativos}");
         foreach ($r['inativos'] as $motivo => $grupos) {
             $this->line('    '.$motivo.' ('.count($grupos).'): '.implode(', ', $grupos));
         }
+        $this->line('  saíram do ar ('.count($r['sairam']).'): '.($r['sairam'] ? implode(', ', $r['sairam']) : 'nenhum'));
+        $this->line('  fora da planilha desativados ('.count($r['fora_desativados']).'): '
+            .($r['fora_desativados'] ? implode(', ', $r['fora_desativados']) : 'nenhum'));
+    }
+
+    /**
+     * Produtos fora da planilha que não podem seguir no ar só com foto antiga
+     * (leva 07). Só desativa — preço, volumes e imagens ficam como estão.
+     * Passo do próprio comando para rodar igual em produção.
+     */
+    private function desativarForaDaPlanilha(): void
+    {
+        foreach (self::DESATIVAR_FORA_DA_PLANILHA as $slug) {
+            $product = Product::withCount('microvixProducts')->where('slug', $slug)->first();
+
+            if (! $product) {
+                $this->avisos[] = "{$slug}: não existe, nada a desativar";
+
+                continue;
+            }
+            if ($product->managedByErp()) {
+                $this->line("<fg=yellow>[PULADO ERP]</> {$slug} (#{$product->id}): gerenciado pelo ERP, intocado");
+                $this->resumo['pulados_erp'][] = $slug;
+
+                continue;
+            }
+            if (! $product->active) {
+                continue;
+            }
+
+            $this->line("<fg=cyan>[DESATIVA]</> {$slug} (#{$product->id}): fora da planilha, só foto antiga");
+            $this->resumo['fora_desativados'][] = $slug;
+
+            if (! $this->dryRun) {
+                $product->update(['active' => false]);
+                Log::info('catalogo:importar-planilha — produto fora da planilha desativado', [
+                    'slug' => $slug, 'product_id' => $product->id,
+                ]);
+            }
+        }
+        $this->newLine();
     }
 
     private function rs(float $valor): string

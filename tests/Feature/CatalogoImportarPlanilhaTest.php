@@ -140,7 +140,7 @@ class CatalogoImportarPlanilhaTest extends TestCase
         $this->assertFalse(Product::where('slug', 'cosmopolitan')->firstOrFail()->active);
     }
 
-    public function test_produto_existente_mantem_volume_sem_preco_slug_e_serve(): void
+    public function test_produto_existente_mantem_volume_sem_preco_e_slug_galeria_so_com_foto_nova(): void
     {
         $antes = $this->negroniExistente();
 
@@ -158,16 +158,76 @@ class CatalogoImportarPlanilhaTest extends TestCase
 
         // Padrão é o 750 (mantido, sem foto): a principal cai na frente do 375.
         $this->assertSame('750 ml', $p->defaultSize());
+        // Garrafa antiga e -serve saem da galeria; os arquivos ficam.
         $this->assertSame([
             'products/negroni-classico-375ml-frente.jpg',
             'products/negroni-classico-375ml-verso.jpg',
-            'products/negroni-classico-serve.jpg',
         ], $p->images->pluck('path')->all());
         $this->assertTrue($p->images->first()->is_primary);
         $this->assertFalse($p->images->last()->is_primary);
-
-        // A foto antiga da garrafa sai da galeria, mas o arquivo fica.
         Storage::disk('public')->assertExists('products/negroni-classico.jpg');
+    }
+
+    public function test_produto_com_preco_e_so_foto_antiga_fica_inativo_e_reexecucao_nao_reativa(): void
+    {
+        $p = Product::create([
+            'name'        => 'Cosmopolitan',
+            'slug'        => 'cosmopolitan',
+            'price'       => 169.90,
+            'sizes'       => ['375 ml'],
+            'size_prices' => ['375 ml' => 110.44],
+            'stock_qty'   => 30,
+            'active'      => true,
+        ]);
+        ProductImage::create(['product_id' => $p->id, 'path' => 'products/cosmopolitan.jpg', 'is_primary' => true, 'sort_order' => 0]);
+
+        $this->importar()
+            ->expectsOutputToContain('só foto antiga (1): cosmopolitan')
+            ->expectsOutputToContain('saíram do ar (1): cosmopolitan (só foto antiga)')
+            ->assertSuccessful();
+
+        $p->refresh();
+        $this->assertFalse($p->active);
+        $this->assertEquals(['375 ml' => 165.0], $p->size_prices); // preço atualiza mesmo inativo
+        $this->assertSame(['products/cosmopolitan.jpg'], $p->images()->pluck('path')->all());
+
+        $this->importar()
+            ->expectsOutputToContain('saíram do ar (0): nenhum')
+            ->assertSuccessful();
+
+        $this->assertFalse($p->fresh()->active);
+    }
+
+    public function test_desativa_produto_fora_da_planilha_da_lista_sem_mexer_no_resto(): void
+    {
+        $cachaca = Product::create([
+            'name'      => 'Cachaça Prata',
+            'slug'      => 'cachaca-prata',
+            'price'     => 129.90,
+            'sizes'     => ['750 ml'],
+            'stock_qty' => 30,
+            'active'    => true,
+        ]);
+        $antes = $cachaca->fresh()->getAttributes();
+
+        $this->importar(dryRun: true)
+            ->expectsOutputToContain('[DESATIVA] cachaca-prata')
+            ->assertSuccessful();
+        $this->assertTrue($cachaca->fresh()->active);
+
+        $this->importar()
+            ->expectsOutputToContain('fora da planilha desativados (1): cachaca-prata')
+            ->assertSuccessful();
+
+        $depois = $cachaca->fresh()->getAttributes();
+        $this->assertSame(0, (int) $depois['active']);
+        unset($antes['active'], $antes['updated_at'], $depois['active'], $depois['updated_at']);
+        $this->assertSame($antes, $depois);
+
+        // Reexecução: já inativo, nada a fazer.
+        $this->importar()
+            ->expectsOutputToContain('fora da planilha desativados (0): nenhum')
+            ->assertSuccessful();
     }
 
     public function test_rodar_duas_vezes_nao_duplica_produto_nem_imagem(): void

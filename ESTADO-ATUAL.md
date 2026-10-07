@@ -234,11 +234,14 @@ A gestão quis os produtos no ar sem esperar o Microvix. Fonte:
 Comando `catalogo:importar-planilha [--dry-run]`, idempotente.
 
 - **Regras:** o CSV atualiza o que tem valor e nunca remove o que já está à
-  venda (volume existente sem preço na planilha mantém volume e preço). Ativo só
-  com preço E imagem. Produto existente mantém slug e categoria; novo nasce com
-  slug = grupo e `stock_qty` 30 (placeholder; 0 = esgotado na vitrine).
-  `managedByErp()` é pulado; produto fora do CSV não é tocado. SKU = o do
-  volume padrão (maior à venda) quando a planilha tem.
+  venda (volume existente sem preço na planilha mantém volume e preço). **Ativo
+  só com preço E foto do pacote novo (FUNDO PRETO)** — foto antiga do site não
+  conta, e a reexecução não reativa produto só com foto antiga. Produto
+  existente mantém slug e categoria; novo nasce com slug = grupo e `stock_qty`
+  30 (placeholder; 0 = esgotado na vitrine). `managedByErp()` é pulado; produto
+  fora do CSV não é tocado, exceto `cachaca-prata` e `cachaca-ouro`
+  (`DESATIVAR_FORA_DA_PLANILHA`: só foto antiga 227x520, só o `active` muda).
+  SKU = o do volume padrão (maior à venda) quando a planilha tem.
 - **Mapas no comando:** slug antigo → grupo (`squadra-amendoas`,
   `squadra-coco`, `neutral-gin`, `vodka-vdk`) e grupo → categoria dos novos.
 - **Imagens:** origem em `public/img/fotos_produtos/FUNDO PRETO/BAIXA/` (FORA do
@@ -246,18 +249,23 @@ Comando `catalogo:importar-planilha [--dry-run]`, idempotente.
   `storage/app/public/products/{grupo}-{vol}-{frente|verso}.jpg`, 1200 px no
   lado maior, JPG 82 (GD). Galeria só com volumes à venda, do maior (o
   `defaultSize()`) pro menor; principal = frente do volume padrão, ou do maior
-  à venda com foto. Produto sem volume à venda guarda todas as fotos. A garrafa
-  antiga sai da galeria (só a linha; o arquivo fica) e a `-serve` vai pro fim.
+  à venda com foto. Produto sem volume à venda guarda todas as fotos. Produto
+  que recebe foto nova fica com galeria só do pacote novo: garrafa antiga e
+  `-serve` saem (só a linha; o arquivo fica). Sem foto nova, imagens intocadas.
   Destino existente é reaproveitado — **em produção o comando roda sem as fotos
   de origem e sem GD**. `Fundo Preto_034` (Drink Perfeito, fundo azul) pulada.
-- **Resultado local:** 33 criados, 12 atualizados; 47 produtos, 18 ativos (16
-  do import + as 2 cachaças, fora do CSV). 60 imagens (3,7 MB).
+- **Resultado local:** 47 produtos, **9 ativos** (boulevardier, cosmopolitan,
+  dry-martini, fitzgerald, neutral-gin, negroni-classico, old-fashioned,
+  sur-lorange, vermute-circollo-rosso). 60 imagens (3,7 MB).
+- **Saíram do ar por "só foto antiga"** (têm preço, esperam foto nova): caju-amigo,
+  squadra-amendoas, squadra-coco, limoncello, moscow-mule, vodka-vdk,
+  penicillin. Mais as duas cachaças, fora da planilha.
 - **Volumes mantidos sem preço na planilha** (lista para a gestão): aptk-gin-2
   750 (219,90), licor-de-amendoas-squadra 750 (159,90), licor-de-coco-squadra
   375 (97,44, fora da planilha) e 750 (149,90), limoncello 375 (97,44) e 750
   (149,90), sur-lorange 750 (209,90).
-- **29 inativos** esperando a gestão: 12 sem foto, 8 sem preço, 9 sem nenhum
-  dos dois (lista no resumo do comando). Licor Cacau Show (42,79) e Borelli
+- **36 inativos do CSV** esperando a gestão: 12 sem foto, 7 só com foto antiga,
+  8 sem preço, 9 sem nenhum dos dois (lista no resumo do comando). Licor Cacau Show (42,79) e Borelli
   (41,07) entraram com preço com cara de custo — confirmar antes de ativar.
 - **CSS:** token `--color-bg-media` (= `--color-ink`) no fundo da foto do card,
   da página de produto, das miniaturas e do "Você também pode gostar" (antes
@@ -270,7 +278,7 @@ Comando `catalogo:importar-planilha [--dry-run]`, idempotente.
 **Pendência — admin apaga imagens:** `Admin\ProductController::handleImage`
 apaga TODAS as imagens do produto (arquivo + linha) ao subir uma foto nova.
 Num produto importado, trocar a foto pelo admin leva junto frente/verso de
-todos os volumes e a `-serve`. Não mexido na leva 07.
+todos os volumes. Não mexido na leva 07.
 
 ---
 
