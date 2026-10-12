@@ -13,6 +13,7 @@
     .ok-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text); }
     .ok-row:last-child { border-bottom: none; }
     .ok-row .q { font-family: var(--font-mono); color: var(--color-text-muted); }
+    .ok-sub { display: flex; justify-content: space-between; gap: 12px; font-size: var(--text-sm); color: var(--color-text-muted); padding: 6px 0; }
     .ok-total { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: var(--text-lg); color: var(--color-text); padding-top: 16px; margin-top: 8px; border-top: 1px solid var(--color-border); }
     .ok-meta { display: flex; gap: 32px; flex-wrap: wrap; }
     .ok-meta div { display: flex; flex-direction: column; gap: 4px; }
@@ -119,6 +120,10 @@
                     <span>R$ {{ number_format($item->total_price, 2, ',', '.') }}</span>
                 </div>
             @endforeach
+            <div class="ok-sub" style="margin-top:8px;"><span>Subtotal</span><span>R$ {{ number_format($order->subtotal, 2, ',', '.') }}</span></div>
+            @if ($order->shippingLabel())
+                <div class="ok-sub"><span>Frete · {{ $order->shippingLabel() }}</span><span>R$ {{ number_format($order->shipping_cost, 2, ',', '.') }}</span></div>
+            @endif
             <div class="ok-total"><span>Total</span><span>R$ {{ number_format($order->total, 2, ',', '.') }}</span></div>
         </div>
 

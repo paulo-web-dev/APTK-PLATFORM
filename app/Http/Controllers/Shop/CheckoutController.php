@@ -224,14 +224,16 @@ class CheckoutController extends Controller
             'name'            => ['required', 'string', 'max:255'],
             'phone'           => ['required', 'string', 'max:20'],
             'cpf'             => ['required', 'string', 'regex:/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/'],
-            'zipcode'         => ['required', 'string', 'max:9'],
+            'zipcode'         => ['required', 'string', 'regex:/^\d{5}-?\d{3}$/'],
             'street'          => ['required', 'string', 'max:255'],
             'number'          => ['required', 'string', 'max:20'],
             'complement'      => ['nullable', 'string', 'max:255'],
             'neighborhood'    => ['required', 'string', 'max:255'],
             'city'            => ['required', 'string', 'max:255'],
             'state'           => ['required', 'string', 'size:2'],
-            'shipping_method' => ['nullable', 'string', 'max:50'],
+            // Só o código da opção vem do front; valor e prazo o OrderService
+            // recalcula do CEP (FreteService).
+            'shipping_method' => ['required', 'in:'.implode(',', array_keys(config('frete.servicos')))],
             'payment_method'  => ['required', 'in:pix,cartao,boleto'],
             'notes'           => ['nullable', 'string', 'max:1000'],
         ];
@@ -259,6 +261,9 @@ class CheckoutController extends Controller
     {
         return [
             'cpf.regex'         => 'Informe um CPF válido (000.000.000-00).',
+            'zipcode.regex'     => 'Informe um CEP válido (00000-000).',
+            'shipping_method.required' => 'Escolha uma opção de frete.',
+            'shipping_method.in'       => 'Escolha uma opção de frete.',
             'card_number.regex' => 'Informe o número do cartão (16 dígitos).',
             'card_expiry.regex' => 'Validade no formato MM/AA.',
             'card_cvv.regex'    => 'CVV com 3 ou 4 dígitos.',

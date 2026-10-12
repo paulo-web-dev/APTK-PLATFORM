@@ -24,6 +24,7 @@ class Order extends Model
         'payment_details',
         'paid_at',
         'shipping_method',
+        'shipping_days',
         'notes',
         // Snapshot do endereço de entrega (congelado na compra; ver OrderService)
         'ship_name',
@@ -58,7 +59,32 @@ class Order extends Model
         'microvix_synced_at' => 'datetime',
         'microvix_reserved'  => 'boolean',
         'microvix_envio_em'  => 'datetime',
+        'shipping_days'      => 'integer',
     ];
+
+    /** Nome da opção de frete ("PAC", "SEDEX"); pedido antigo mostra o código cru. */
+    public function shippingName(): ?string
+    {
+        if (blank($this->shipping_method)) {
+            return null;
+        }
+
+        return config('frete.servicos.'.$this->shipping_method) ?? ucfirst($this->shipping_method);
+    }
+
+    /** "PAC · até 5 dias úteis" — o prazo só existe a partir da leva 08. */
+    public function shippingLabel(): ?string
+    {
+        $nome = $this->shippingName();
+
+        if ($nome === null) {
+            return null;
+        }
+
+        return $this->shipping_days
+            ? $nome.' · até '.$this->shipping_days.' '.($this->shipping_days === 1 ? 'dia útil' : 'dias úteis')
+            : $nome;
+    }
 
     /** Pagamento confirmado (cartão aprovado ou Pix/boleto compensado). */
     public function isPaid(): bool

@@ -15,8 +15,10 @@ use Throwable;
 
 class OrderService
 {
-    public function __construct(protected CartService $cart)
-    {
+    public function __construct(
+        protected CartService $cart,
+        protected FreteService $frete,
+    ) {
     }
 
     /**
@@ -32,7 +34,16 @@ class OrderService
             throw new RuntimeException('Carrinho vazio.');
         }
 
-        $order = DB::transaction(function () use ($user, $data, $items) {
+        // Frete recalculado AQUI, do CEP de entrega e da opção escolhida — o
+        // valor que o front mostrou nunca entra. O checkout exige a opção;
+        // sem ela (chamadas internas/testes antigos) o frete fica zerado.
+        // Fora da transação: CEP/opção inválidos lançam ValidationException
+        // antes de qualquer gravação.
+        $frete = filled($data['shipping_method'] ?? null)
+            ? $this->frete->opcao($items, (string) $data['zipcode'], $data['shipping_method'])
+            : null;
+
+        $order = DB::transaction(function () use ($user, $data, $items, $frete) {
             // 0) Revalida o estoque por volume DENTRO da transação, com lock
             //    de linha. Validar antes dela abriria a corrida clássica: duas
             //    compras simultâneas do último item leriam "tem 1" e as duas
@@ -88,8 +99,8 @@ class OrderService
             // 2) Totais.
             $subtotal = (float) $items->sum('subtotal');
             $discount = 0.0;
-            $shipping = 0.0; // frete fica para fase posterior
-            $total    = $subtotal + $shipping - $discount;
+            $shipping = $frete ? (float) $frete['valor'] : 0.0;
+            $total    = round($subtotal + $shipping - $discount, 2);
 
             // 3) Snapshot legível do endereço em notes
             //    (a tabela orders não tem colunas de endereço).
@@ -143,7 +154,8 @@ class OrderService
                 'total'           => $total,
                 'payment_method'  => $data['payment_method'],
                 'payment_status'  => 'pending',
-                'shipping_method' => $data['shipping_method'] ?? null,
+                'shipping_method' => $frete['codigo'] ?? null,
+                'shipping_days'   => $frete['prazo_dias'] ?? null,
                 'notes'           => $notes,
             ]);
 

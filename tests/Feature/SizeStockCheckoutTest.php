@@ -56,8 +56,9 @@ class SizeStockCheckoutTest extends TestCase
             'number'         => '1000',
             'neighborhood'   => 'Bela Vista',
             'city'           => 'São Paulo',
-            'state'          => 'SP',
-            'payment_method' => 'pix',
+            'state'           => 'SP',
+            'payment_method'  => 'pix',
+            'shipping_method' => 'pac', // obrigatório no checkout desde a leva 08
         ];
     }
 

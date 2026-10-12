@@ -46,8 +46,8 @@
             </div>
         @endforeach
         <div class="od-sub"><span>Subtotal</span><span>R$ {{ number_format($order->subtotal, 2, ',', '.') }}</span></div>
-        @if ($order->shipping_cost > 0)
-            <div class="od-sub"><span>Frete</span><span>R$ {{ number_format($order->shipping_cost, 2, ',', '.') }}</span></div>
+        @if ($order->shipping_cost > 0 || $order->shippingLabel())
+            <div class="od-sub"><span>Frete{{ $order->shippingLabel() ? ' · '.$order->shippingLabel() : '' }}</span><span>R$ {{ number_format($order->shipping_cost, 2, ',', '.') }}</span></div>
         @endif
         @if ($order->discount > 0)
             <div class="od-sub"><span>Desconto</span><span>− R$ {{ number_format($order->discount, 2, ',', '.') }}</span></div>

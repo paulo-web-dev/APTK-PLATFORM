@@ -35,6 +35,15 @@
     .card-fields { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--color-border); }
     .card-fields select { width: 100%; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); padding: 11px 12px; font-family: var(--font-body); }
     .pay-hint { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 6px; }
+    .frete-opt { justify-content: space-between; }
+    .frete-opt .frete-nome { display: flex; align-items: center; gap: 12px; }
+    .frete-opt .frete-prazo { display: block; font-size: var(--text-xs); color: var(--color-text-muted); }
+    .frete-opt .frete-valor { font-family: var(--font-mono); color: var(--color-text); }
+    .frete-msg { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0; }
+    .frete-msg.is-error { color: var(--color-danger); }
+    .sum-line { display: flex; justify-content: space-between; gap: 12px; font-size: var(--text-sm); color: var(--color-text-muted); padding: 5px 0; }
+    .sum-line span:last-child { font-family: var(--font-mono); }
+    .sum-lines { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--color-border); }
 </style>
 @endpush
 
@@ -85,7 +94,7 @@
                         <div class="grid-2">
                             <div class="field">
                                 <label for="zipcode">CEP</label>
-                                <input type="text" id="zipcode" name="zipcode" value="{{ old('zipcode') }}" placeholder="00000-000">
+                                <input type="text" id="zipcode" name="zipcode" value="{{ old('zipcode') }}" placeholder="00000-000" inputmode="numeric" maxlength="9">
                                 @error('zipcode') <span class="err">{{ $message }}</span> @enderror
                             </div>
                         </div>
@@ -125,6 +134,15 @@
                                 @error('state') <span class="err">{{ $message }}</span> @enderror
                             </div>
                         </div>
+                    </div>
+
+                    {{-- Frete: opções cotadas pelo CEP (POST /frete/cotar). O valor
+                         mostrado aqui é só exibição — o servidor recalcula no envio. --}}
+                    <div class="cko-card">
+                        <h3>Frete</h3>
+                        <div id="freteOpcoes" class="pay-opts" data-url="{{ route('frete.cotar') }}" data-old="{{ old('shipping_method') }}"></div>
+                        <p id="freteMsg" class="frete-msg">Informe o CEP de entrega para ver as opções.</p>
+                        @error('shipping_method') <span class="err" style="margin-top:10px;">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="cko-card">
@@ -182,7 +200,7 @@
                                     <label for="installments">Parcelas</label>
                                     <select id="installments" name="installments">
                                         @for ($i = 1; $i <= $maxInstallments; $i++)
-                                            <option value="{{ $i }}" {{ (int) old('installments', 1) === $i ? 'selected' : '' }}>
+                                            <option value="{{ $i }}" data-parcelas="{{ $i }}" {{ (int) old('installments', 1) === $i ? 'selected' : '' }}>
                                                 {{ $i }}× de R$ {{ number_format($total / $i, 2, ',', '.') }}{{ $i === 1 ? ' à vista' : '' }}
                                             </option>
                                         @endfor
@@ -210,7 +228,11 @@
                             <span>R$ {{ number_format($row->subtotal, 2, ',', '.') }}</span>
                         </div>
                     @endforeach
-                    <div class="sum-total"><span>Total</span><span>R$ {{ number_format($total, 2, ',', '.') }}</span></div>
+                    <div class="sum-lines">
+                        <div class="sum-line"><span>Subtotal</span><span>R$ {{ number_format($total, 2, ',', '.') }}</span></div>
+                        <div class="sum-line"><span id="sumFreteNome">Frete</span><span id="sumFrete">a calcular</span></div>
+                    </div>
+                    <div class="sum-total"><span>Total</span><span id="sumTotal" data-subtotal="{{ number_format($total, 2, '.', '') }}">R$ {{ number_format($total, 2, ',', '.') }}</span></div>
                     <button type="submit" class="btn-aptk btn-aptk--block" style="margin-top:20px;">Confirmar pedido</button>
                     <a href="{{ route('cart.index') }}" class="btn-aptk btn-aptk--outline btn-aptk--block" style="margin-top:10px;">Voltar ao carrinho</a>
                 </aside>
@@ -356,6 +378,119 @@
       return v.length > 2 ? v.slice(0, 2) + '/' + v.slice(2) : v;
     });
     mask(document.getElementById('card_cvv'), function (v) { return v.replace(/\D/g, '').slice(0, 4); });
+  })();
+</script>
+<script>
+  // Frete: cota pelo CEP e atualiza resumo + parcelas. Só exibição — o
+  // pedido é fechado com o frete recalculado no servidor.
+  (function () {
+    var box = document.getElementById('freteOpcoes');
+    var msg = document.getElementById('freteMsg');
+    var cep = document.getElementById('zipcode');
+    var form = document.getElementById('checkoutForm');
+    if (!box || !cep || !form) return;
+
+    var totalEl = document.getElementById('sumTotal');
+    var freteEl = document.getElementById('sumFrete');
+    var freteNomeEl = document.getElementById('sumFreteNome');
+    var subtotal = parseFloat(totalEl.dataset.subtotal) || 0;
+    var ultimo = null;
+    var escolhaAnterior = box.dataset.old || null;
+
+    function brl(v) { return 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+
+    function aviso(texto, erro) {
+      msg.textContent = texto;
+      msg.classList.toggle('is-error', !!erro);
+      msg.hidden = !texto;
+    }
+
+    function atualizarTotais(valor, nome) {
+      var total = subtotal + (valor || 0);
+      freteEl.textContent = valor === null ? 'a calcular' : brl(valor);
+      freteNomeEl.textContent = nome ? 'Frete (' + nome + ')' : 'Frete';
+      totalEl.textContent = brl(total);
+      document.querySelectorAll('#installments option[data-parcelas]').forEach(function (op) {
+        var n = parseInt(op.dataset.parcelas, 10);
+        op.textContent = n + '× de ' + brl(total / n) + (n === 1 ? ' à vista' : '');
+      });
+    }
+
+    function render(opcoes) {
+      box.innerHTML = '';
+      opcoes.forEach(function (o, i) {
+        var label = document.createElement('label');
+        label.className = 'pay-opt frete-opt';
+        var nome = document.createElement('span');
+        nome.className = 'frete-nome';
+        var input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'shipping_method';
+        input.value = o.codigo;
+        input.required = true;
+        input.checked = escolhaAnterior ? escolhaAnterior === o.codigo : i === 0;
+        input.addEventListener('change', function () { escolhaAnterior = o.codigo; atualizarTotais(o.valor, o.nome); });
+        var txt = document.createElement('span');
+        txt.textContent = o.nome;
+        var prazo = document.createElement('small');
+        prazo.className = 'frete-prazo';
+        prazo.textContent = 'até ' + o.prazo_dias + (o.prazo_dias === 1 ? ' dia útil' : ' dias úteis');
+        txt.appendChild(prazo);
+        nome.appendChild(input);
+        nome.appendChild(txt);
+        var valor = document.createElement('span');
+        valor.className = 'frete-valor';
+        valor.textContent = brl(o.valor);
+        label.appendChild(nome);
+        label.appendChild(valor);
+        box.appendChild(label);
+        if (input.checked) atualizarTotais(o.valor, o.nome);
+      });
+    }
+
+    function cotar() {
+      var digitos = cep.value.replace(/\D/g, '');
+      if (digitos.length !== 8) {
+        ultimo = null;
+        box.innerHTML = '';
+        atualizarTotais(null);
+        aviso('Informe o CEP de entrega para ver as opções.');
+        return;
+      }
+      if (digitos === ultimo) return;
+      ultimo = digitos;
+      aviso('Calculando o frete…');
+
+      fetch(box.dataset.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value },
+        body: JSON.stringify({ zipcode: digitos.slice(0, 5) + '-' + digitos.slice(5) }),
+      })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+        .then(function (res) {
+          if (digitos !== ultimo) return; // chegou resposta de um CEP antigo
+          if (!res.ok) {
+            var e = res.body.errors || {};
+            box.innerHTML = '';
+            atualizarTotais(null);
+            aviso((e.zipcode || e.cart || [res.body.message || 'Não foi possível calcular o frete.'])[0], true);
+            return;
+          }
+          aviso('');
+          render(res.body.opcoes || []);
+        })
+        .catch(function () {
+          ultimo = null;
+          aviso('Não foi possível calcular o frete agora. Tente de novo em instantes.', true);
+        });
+    }
+
+    cep.addEventListener('input', function () {
+      var v = cep.value.replace(/\D/g, '').slice(0, 8);
+      cep.value = v.length > 5 ? v.slice(0, 5) + '-' + v.slice(5) : v;
+      cotar();
+    });
+    cotar();
   })();
 </script>
 @endpush

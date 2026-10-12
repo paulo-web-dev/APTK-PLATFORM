@@ -89,6 +89,7 @@
                 <div class="panel-body">
                     <div class="kv"><span class="k">Subtotal</span><span class="v">R$ {{ number_format($order->subtotal, 2, ',', '.') }}</span></div>
                     <div class="kv"><span class="k">Frete</span><span class="v">R$ {{ number_format($order->shipping_cost, 2, ',', '.') }}</span></div>
+                    <div class="kv"><span class="k">Opção de frete</span><span class="v">{{ $order->shippingLabel() ?? '—' }}</span></div>
                     <div class="kv"><span class="k">Desconto</span><span class="v">R$ {{ number_format($order->discount, 2, ',', '.') }}</span></div>
                     <div class="kv"><span class="k">Total</span><span class="v" style="color:var(--color-primary);">R$ {{ number_format($order->total, 2, ',', '.') }}</span></div>
                 </div>
