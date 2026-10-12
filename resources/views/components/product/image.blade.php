@@ -10,6 +10,6 @@
     <img {{ $attributes }} src="{{ \Illuminate\Support\Facades\Storage::url($path) }}" alt="{{ $alt }}" @if ($loading) loading="{{ $loading }}" @endif>
 @else
     <span {{ $attributes->merge(['class' => 'prod-ph-box']) }}>
-        <x-product.placeholder :compact="$compact" />
+        <span class="prod-ph-area"><x-product.placeholder :compact="$compact" /></span>
     </span>
 @endif

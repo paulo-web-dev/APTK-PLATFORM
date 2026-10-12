@@ -6,12 +6,23 @@
    ===================================================================== */
 
 /* Produto sem foto (leva 08) — <x-product.placeholder> / <x-product.image>.
-   A caixa ocupa o lugar da <img>; dentro, a moldura 2:3 das fotos do pacote. */
+   A caixa ocupa o lugar da <img> (tamanho vem de quem usa: aspect-ratio ou
+   width/height); a área absoluta herda o padding dela e dá altura definida
+   para a moldura 2:3 caber — height: 100% não resolve contra aspect-ratio. */
 .prod-ph-box {
-  display: grid;
-  place-items: center;
+  display: block;
+  position: relative;
   background: var(--color-bg-media);
   overflow: hidden;
+}
+.prod-ph-area {
+  position: absolute;
+  inset: 0;
+  padding: inherit;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .prod-ph {
   display: flex;

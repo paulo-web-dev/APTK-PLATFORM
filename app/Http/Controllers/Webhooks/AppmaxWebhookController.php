@@ -130,6 +130,10 @@ class AppmaxWebhookController extends Controller
     /** Enfileirar o espelho no ERP jamais pode quebrar a resposta do webhook. */
     protected function enfileiraEnvioErp(Order $order, string $acao): void
     {
+        if (! EnviarPedidoMicrovix::integracaoLigada()) {
+            return; // integração desligada (leva 08): nem enfileira
+        }
+
         try {
             EnviarPedidoMicrovix::dispatch($order->id, $acao);
         } catch (Throwable $e) {

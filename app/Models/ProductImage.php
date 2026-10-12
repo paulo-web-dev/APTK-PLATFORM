@@ -24,4 +24,14 @@ class ProductImage extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    /**
+     * Subida pelo admin (store() do Laravel: nome aleatório de 40 caracteres).
+     * Só esse arquivo o admin apaga do disco — foto do pacote (import) e foto
+     * antiga do site não têm como ser regeradas em produção.
+     */
+    public function isUploadDoAdmin(): bool
+    {
+        return (bool) preg_match('#^products/[A-Za-z0-9]{40}\.[A-Za-z0-9]+$#', $this->path);
+    }
 }

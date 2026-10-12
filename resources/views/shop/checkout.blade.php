@@ -27,6 +27,7 @@
     .sum-item .q { font-family: var(--font-mono); }
     .sum-item-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .sum-thumb { width: 40px; height: 40px; }
+    .sum-item > span:last-child { white-space: nowrap; }
     .sum-total { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: var(--text-lg); color: var(--color-text); padding: 16px 0 4px; margin-top: 10px; border-top: 1px solid var(--color-border); }
     @media (max-width: 820px) {
         .cko-layout { grid-template-columns: 1fr; }

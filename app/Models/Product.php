@@ -123,6 +123,23 @@ class Product extends Model
         return $options;
     }
 
+    /**
+     * Menor preço à venda: o menor entre os volumes; sem volumes, o preço
+     * base. null = produto sem preço (não pode ficar ativo — leva 08).
+     */
+    public function menorPreco(): ?float
+    {
+        $precos = $this->hasSizes() ? array_values($this->sizeOptions()) : [(float) $this->price];
+        $precos = array_filter($precos, fn ($v) => $v > 0);
+
+        return $precos ? (float) min($precos) : null;
+    }
+
+    public function temPreco(): bool
+    {
+        return $this->menorPreco() !== null;
+    }
+
     /** Volume padrão pré-selecionado (o maior — normalmente o preço "cheio"). */
     public function defaultSize(): ?string
     {

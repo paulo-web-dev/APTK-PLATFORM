@@ -198,8 +198,11 @@ class OrderService
         // conexão — dentro, ele participaria da transação) E com afterCommit
         // (se alguém reembrulhar isto numa transação maior, o job só sai no
         // commit real). Falha ao enfileirar jamais derruba o pedido.
+        // Integração desligada: nem enfileira (leva 08).
         try {
-            EnviarPedidoMicrovix::dispatch($order->id, 'reservar')->afterCommit();
+            if (EnviarPedidoMicrovix::integracaoLigada()) {
+                EnviarPedidoMicrovix::dispatch($order->id, 'reservar')->afterCommit();
+            }
         } catch (Throwable $e) {
             report($e);
         }
@@ -248,7 +251,9 @@ class OrderService
         // transação (fila database grava na mesma conexão) + afterCommit; e
         // falha ao enfileirar nunca desfaz o cancelamento local.
         try {
-            EnviarPedidoMicrovix::dispatch($order->id, 'cancelar')->afterCommit();
+            if (EnviarPedidoMicrovix::integracaoLigada()) {
+                EnviarPedidoMicrovix::dispatch($order->id, 'cancelar')->afterCommit();
+            }
         } catch (Throwable $e) {
             report($e);
         }

@@ -6,9 +6,15 @@
     <div class="content-head" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
         <div>
             <h1>Produtos</h1>
-            <p>{{ $products->total() }} {{ $products->total() === 1 ? 'produto' : 'produtos' }} no catálogo</p>
+            <p>{{ $products->total() }} {{ $products->total() === 1 ? 'produto' : 'produtos' }}{{ $filtro ? ' '.$filtro : ' no catálogo' }}</p>
         </div>
         <a href="{{ route('admin.products.create') }}" class="admin-btn">+ Novo produto</a>
+    </div>
+
+    <div class="filter-row">
+        <a href="{{ route('admin.products.index') }}" class="filter-pill {{ ! $filtro ? 'is-active' : '' }}">Todos ({{ $contagem['todos'] }})</a>
+        <a href="{{ route('admin.products.index', ['status' => 'ativos']) }}" class="filter-pill {{ $filtro === 'ativos' ? 'is-active' : '' }}">Ativos ({{ $contagem['ativos'] }})</a>
+        <a href="{{ route('admin.products.index', ['status' => 'inativos']) }}" class="filter-pill {{ $filtro === 'inativos' ? 'is-active' : '' }}">Inativos ({{ $contagem['inativos'] }})</a>
     </div>
 
     @if (session('status'))
@@ -18,7 +24,7 @@
     <div class="data-card">
         <table class="data-table">
             <thead>
-                <tr><th></th><th>Produto</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Status</th><th></th></tr>
+                <tr><th></th><th>Produto</th><th>Categoria</th><th>SKU</th><th>Menor preço</th><th>Estoque</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
                 @forelse ($products as $p)
@@ -31,7 +37,14 @@
                             @if ($p->featured)<span class="status status--pendente" style="margin-left:6px;">Destaque</span>@endif
                         </td>
                         <td class="td-muted" data-label="Categoria">{{ $p->category?->name ?? '—' }}</td>
-                        <td class="td-num" data-label="Preço">R$ {{ number_format($p->price, 2, ',', '.') }}</td>
+                        <td class="td-muted" data-label="SKU" style="font-family:var(--font-mono);">{{ $p->sku ?: '—' }}</td>
+                        <td class="td-num" data-label="Menor preço">
+                            @if (($menor = $p->menorPreco()) !== null)
+                                R$ {{ number_format($menor, 2, ',', '.') }}@if (count($p->sizeOptions()) > 1)<span class="td-muted" style="font-size:var(--text-xs);"> · {{ count($p->sizeOptions()) }} vol.</span>@endif
+                            @else
+                                <span class="td-muted">sem preço</span>
+                            @endif
+                        </td>
                         <td class="td-num" data-label="Estoque">{{ $p->stock_qty }}</td>
                         <td data-label="Status">
                             @if ($p->active)
@@ -50,7 +63,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="td-muted" style="text-align:center; padding:48px;">Nenhum produto ainda. <a href="{{ route('admin.products.create') }}" style="color:var(--color-primary);">Criar o primeiro</a>.</td></tr>
+                    <tr><td colspan="8" class="td-muted" style="text-align:center; padding:48px;">Nenhum produto {{ $filtro ? $filtro : 'ainda' }}. <a href="{{ route('admin.products.create') }}" style="color:var(--color-primary);">Criar o primeiro</a>.</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -319,8 +319,14 @@
 <body>
 @php
     /* Fase 2 Microvix: pedidos parados em erro de integração (uma query
-       indexada por request do admin — mesmo padrão do carrinho no público). */
-    $aptkErpErros = \App\Models\Order::where('microvix_envio_estado', 'erro')->count();
+       indexada por request do admin — mesmo padrão do carrinho no público).
+       Leva 08: com a integração desligada (MICROVIX_ENVIA_PEDIDO=false) não
+       existe erro real de envio — sem banner, sem badge e sem item no menu
+       (as rotas /admin/microvix seguem abertas por URL direta). */
+    $aptkMicrovixLigado = \App\Jobs\EnviarPedidoMicrovix::integracaoLigada();
+    $aptkErpErros = $aptkMicrovixLigado
+        ? \App\Models\Order::where('microvix_envio_estado', 'erro')->count()
+        : 0;
 @endphp
 
   <!-- ============ SIDEBAR ============ -->
@@ -381,6 +387,7 @@
       </a>
 
       <p class="nav-label">Sistema</p>
+      @if ($aptkMicrovixLigado)
       <a href="{{ route('admin.microvix.index') }}" class="{{ request()->routeIs('admin.microvix.*') ? 'is-active' : '' }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M7 12h10"/><path d="M12 7v10"/></svg>
         Microvix (ERP)
@@ -388,6 +395,7 @@
           <span class="nav-badge">{{ $aptkErpErros }}</span>
         @endif
       </a>
+      @endif
       <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 6.6 19l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H2a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4 6.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H22a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
         Configurações

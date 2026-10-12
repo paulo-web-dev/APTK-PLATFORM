@@ -10,17 +10,34 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index(): View
-    {
-        $products = Product::with(['category', 'primaryImage'])
-            ->latest()
-            ->paginate(20);
+    private const FILTROS = ['ativos' => true, 'inativos' => false];
 
-        return view('admin.products.index', compact('products'));
+    public function index(Request $request): View
+    {
+        $filtro = $request->query('status');
+
+        $query = Product::with(['category', 'primaryImage'])->orderBy('name');
+
+        if (array_key_exists($filtro, self::FILTROS)) {
+            $query->where('active', self::FILTROS[$filtro]);
+        } else {
+            $filtro = null;
+        }
+
+        return view('admin.products.index', [
+            'products' => $query->paginate(20)->withQueryString(),
+            'filtro'   => $filtro,
+            'contagem' => [
+                'todos'    => Product::count(),
+                'ativos'   => Product::where('active', true)->count(),
+                'inativos' => Product::where('active', false)->count(),
+            ],
+        ]);
     }
 
     public function create(): View
@@ -39,6 +56,8 @@ class ProductController extends Controller
         $data['active']   = $request->boolean('active');
         $data['featured'] = $request->boolean('featured');
 
+        $this->exigePrecoParaAtivar(new Product($data));
+
         $product = Product::create($data);
 
         $this->handleImage($request, $product);
@@ -50,7 +69,7 @@ class ProductController extends Controller
 
     public function edit(Product $product): View
     {
-        $product->load('primaryImage');
+        $product->load('images');
 
         return view('admin.products.form', [
             'product'    => $product,
@@ -71,9 +90,19 @@ class ProductController extends Controller
             unset($data['price'], $data['size_prices'], $data['stock_qty']);
         }
 
+        // Salvar sem mexer não pode regravar o JSON (80 virava 80.0): volume
+        // e preço por volume só entram quando mudaram de fato.
+        foreach (['sizes', 'size_prices'] as $campo) {
+            if (array_key_exists($campo, $data) && $this->mesmoMapa($data[$campo], $product->{$campo})) {
+                unset($data[$campo]);
+            }
+        }
+
         // O slug permanece estável para não quebrar URLs já existentes.
         $data['active']   = $request->boolean('active');
         $data['featured'] = $request->boolean('featured');
+
+        $this->exigePrecoParaAtivar($product->replicate()->fill($data));
 
         $product->update($data);
 
@@ -87,8 +116,7 @@ class ProductController extends Controller
     public function destroy(Product $product): RedirectResponse
     {
         foreach ($product->images as $img) {
-            Storage::disk('public')->delete($img->path);
-            $img->delete();
+            $this->apagaImagem($img);
         }
 
         $product->delete();
@@ -96,6 +124,19 @@ class ProductController extends Controller
         return redirect()
             ->route('admin.products.index')
             ->with('status', 'Produto removido.');
+    }
+
+    /** Remove UMA imagem da galeria; a próxima vira a principal. */
+    public function destroyImage(Product $product, ProductImage $image): RedirectResponse
+    {
+        abort_unless($image->product_id === $product->id, 404);
+
+        $this->apagaImagem($image);
+        $this->renumera($product);
+
+        return redirect()
+            ->route('admin.products.edit', $product)
+            ->with('status', 'Imagem removida da galeria.');
     }
 
     // ------------------------------------------------------------------ //
@@ -134,22 +175,47 @@ class ProductController extends Controller
         $data['sizes'] = $this->parseSizes($data['sizes'] ?? null);
 
         // Preços por volume: casam por posição com os volumes acima.
-        $data['size_prices'] = $this->parseSizePrices($data['sizes'], $data['size_prices'] ?? null);
+        if (! $erpManaged) {
+            $data['size_prices'] = $this->parseSizePrices($data['sizes'], $data['size_prices'] ?? null);
+        }
 
         return $data;
+    }
+
+    /** Produto sem preço não fica ativo (leva 08) — vale no criar e no editar. */
+    private function exigePrecoParaAtivar(Product $candidato): void
+    {
+        if ($candidato->active && ! $candidato->temPreco()) {
+            throw ValidationException::withMessages([
+                'active' => 'Produto sem preço não pode ser ativado. Preencha o preço (ou os preços por volume) e salve de novo.',
+            ]);
+        }
+    }
+
+    /** Mesmo conteúdo, na mesma ordem, comparando número como número (80 == 80.0). */
+    private function mesmoMapa(?array $novo, ?array $atual): bool
+    {
+        return $novo == $atual && array_keys($novo ?? []) === array_keys($atual ?? []);
     }
 
     /**
      * "65,90, 109,90, 189,90" + ['100 ml','375 ml','750 ml']
      *   → {"100 ml":65.90, "375 ml":109.90, "750 ml":189.90}
      * Aceita vírgula OU ponto como decimal; itens separados por vírgula
-     * entre espaços ou ponto-e-vírgula. Quantidade diferente de volumes → null
-     * (o produto passa a usar só o preço base).
+     * entre espaços ou ponto-e-vírgula. Campo vazio → null (o produto usa só
+     * o preço base). Quantidade diferente de volumes ou preço zerado é ERRO
+     * de validação — antes zerava os preços calado.
      */
     private function parseSizePrices(?array $sizes, ?string $raw): ?array
     {
-        if (! $sizes || ! $raw) {
+        if (! $raw) {
             return null;
+        }
+
+        if (! $sizes) {
+            throw ValidationException::withMessages([
+                'size_prices' => 'Preço por volume sem volume: preencha os volumes ou deixe os preços por volume em branco.',
+            ]);
         }
 
         // separa por ";" ou por "," que NÃO seja decimal (vírgula entre dígitos)
@@ -157,7 +223,9 @@ class ProductController extends Controller
         $parts = array_values(array_filter(array_map('trim', $parts), fn ($p) => $p !== ''));
 
         if (count($parts) !== count($sizes)) {
-            return null;
+            throw ValidationException::withMessages([
+                'size_prices' => 'São '.count($sizes).' volume(s) e '.count($parts).' preço(s) por volume — informe um preço para cada volume, na mesma ordem.',
+            ]);
         }
 
         $out = [];
@@ -169,7 +237,9 @@ class ProductController extends Controller
             }
             $value = (float) $clean;
             if ($value <= 0) {
-                return null;
+                throw ValidationException::withMessages([
+                    'size_prices' => "Preço do volume {$size} inválido (\"{$parts[$i]}\").",
+                ]);
             }
             $out[$size] = round($value, 2);
         }
@@ -201,19 +271,21 @@ class ProductController extends Controller
         return $slug;
     }
 
+    /**
+     * Imagem nova ENTRA como principal e as outras sobem uma posição — nada
+     * é apagado (antes apagava arquivo + linha de todas, inclusive as fotos
+     * do pacote, que não se regeram em produção).
+     */
     private function handleImage(Request $request, Product $product): void
     {
         if (! $request->hasFile('image')) {
             return;
         }
 
-        // Substitui: apaga imagens antigas (arquivo + registro).
-        foreach ($product->images as $old) {
-            Storage::disk('public')->delete($old->path);
-            $old->delete();
-        }
-
         $path = $request->file('image')->store('products', 'public');
+
+        ProductImage::where('product_id', $product->id)->update(['is_primary' => false]);
+        ProductImage::where('product_id', $product->id)->increment('sort_order');
 
         ProductImage::create([
             'product_id' => $product->id,
@@ -222,5 +294,24 @@ class ProductController extends Controller
             'is_primary' => true,
             'sort_order' => 0,
         ]);
+
+        $this->renumera($product);
+    }
+
+    /** Linha sempre; arquivo só se for upload do admin e ninguém mais usar. */
+    private function apagaImagem(ProductImage $image): void
+    {
+        $image->delete();
+
+        if ($image->isUploadDoAdmin() && ! ProductImage::where('path', $image->path)->exists()) {
+            Storage::disk('public')->delete($image->path);
+        }
+    }
+
+    /** Ordem 0..n sem buracos; a primeira é a principal. */
+    private function renumera(Product $product): void
+    {
+        $product->images()->orderBy('id')->get() // images() já ordena por sort_order
+            ->each(fn (ProductImage $img, int $i) => $img->update(['sort_order' => $i, 'is_primary' => $i === 0]));
     }
 }

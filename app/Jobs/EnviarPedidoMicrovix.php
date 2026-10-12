@@ -33,6 +33,18 @@ class EnviarPedidoMicrovix implements ShouldQueue
         $this->onQueue('microvix');
     }
 
+    /**
+     * Integração de pedido ligada (MICROVIX_ENVIA_PEDIDO)? Leva 08: com o
+     * Microvix fora de operação, os disparos automáticos (checkout, webhook,
+     * cancelamento) nem enfileiram — sem XML simulado, sem estado, sem erro
+     * e sem banner por pedido real. A trava do sender segue valendo para o
+     * reenvio manual do painel.
+     */
+    public static function integracaoLigada(): bool
+    {
+        return (bool) config('microvix.envia_pedido');
+    }
+
     /** Backoff do retry: 1 min, 5 min, 15 min. */
     public function backoff(): array
     {

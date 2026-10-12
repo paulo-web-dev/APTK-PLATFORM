@@ -41,6 +41,7 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/produtos/{product}/editar', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/produtos/{product}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/produtos/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+    Route::delete('/produtos/{product}/imagens/{image}', [ProductController::class, 'destroyImage'])->name('products.images.destroy');
 
     // Categorias (CRUD)
     Route::get('/categorias', [CategoryController::class, 'index'])->name('categories.index');

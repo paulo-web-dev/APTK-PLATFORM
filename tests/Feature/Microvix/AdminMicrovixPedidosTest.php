@@ -81,6 +81,19 @@ class AdminMicrovixPedidosTest extends TestCase
         $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'microvix_envio_erro' => 'x']);
         $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'microvix_envio_erro' => 'y']);
 
+        // Leva 08: integração desligada = não há erro real de envio. Sem
+        // banner, sem badge e sem o item Microvix no menu (a rota segue
+        // aberta por URL direta).
+        $this->actingAs($this->admin)
+            ->get('/admin')
+            ->assertOk()
+            ->assertDontSee('parados em erro na integração Microvix')
+            ->assertDontSee('<span class="nav-badge">', false)
+            ->assertDontSee('Microvix (ERP)');
+        $this->actingAs($this->admin)->get('/admin/microvix')->assertOk();
+
+        config(['microvix.envia_pedido' => true]);
+
         // No dashboard geral do admin, não só no painel Microvix.
         $this->actingAs($this->admin)
             ->get('/admin')
