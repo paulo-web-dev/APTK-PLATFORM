@@ -4,8 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-07** (leva 07, §6 — catálogo importado da planilha da
-gestão, sem Linx; fase 2 do Microvix segue travada esperando a Linx/gestão, §4.1).
+Última revisão: **2026-10-11** (leva 08, §8 — frete estimado PAC/SEDEX, catálogo
+completo com placeholder, admin de produtos; Microvix fora de operação, §8.4).
 
 ---
 
@@ -182,7 +182,9 @@ do servidor — mas antes, nesta ordem:
 Implementada em 4 etapas (commits `d06cb89`…`1bbd60a`), tudo contra fixtures —
 nenhum envio real foi feito. `MICROVIX_ENVIA_PEDIDO=false` simula: o XML que
 seria enviado fica em `microvix_logs` (`simulated=true`), visível na trilha do
-pedido em `/admin/microvix/pedidos/{id}`.
+pedido em `/admin/microvix/pedidos/{id}`. **Desde a leva 08 (§8.4), com a trava
+fechada os disparos automáticos nem enfileiram** — a simulação só roda por
+reenvio manual no painel.
 
 Para LIGAR (`MICROVIX_ENVIA_PEDIDO=true`), antes precisa:
 
@@ -275,10 +277,94 @@ Comando `catalogo:importar-planilha [--dry-run]`, idempotente.
 **Deploy:** depois do `reset --hard`, `php artisan catalogo:importar-planilha
 --dry-run`, conferir, e rodar sem `--dry-run`.
 
-**Pendência — admin apaga imagens:** `Admin\ProductController::handleImage`
-apaga TODAS as imagens do produto (arquivo + linha) ao subir uma foto nova.
-Num produto importado, trocar a foto pelo admin leva junto frente/verso de
-todos os volumes. Não mexido na leva 07.
+**Pendência — admin apaga imagens:** resolvida na leva 08 (§8.3). As regras
+de ativação e de foto antiga desta seção foram substituídas pela §8.2.
+
+---
+
+## 8. Leva 08 — frete calculado, catálogo completo e admin (11/10/2026)
+
+Três commits, um por bloco (`f8acf17` frete, `8d2c270` placeholder/import,
+`99c3175` admin + Microvix oculto). 186 testes passando.
+
+### 8.1 Frete estimado (substitui a casca de R$ 10)
+
+- `FreteService` + `config/frete.php`. Envio próprio a partir de SP capital:
+  tabela de referência dos Correios por região + **20%**, arredondado pra cima
+  no centavo; prazo = tabela + `dias_manuseio` (2). Opções: PAC e SEDEX.
+- Peso por item = ml do volume / 1000 + 1 kg de embalagem
+  (`embalagem_por` item|pedido), total arredondado pra cima ao kg inteiro.
+  Volume sem ml legível usa `peso_padrao_kg` — **hoje nenhum produto cai
+  nisso** (todos os volumes são "N ml"; o Ice4Pros não tem produto no banco).
+- Região pela faixa de CEP da UF. SP: 01000–09999 = capital (inclui a Grande
+  SP, decisão da gestão), 10000–19999 = interior.
+- O checkout cota em `/frete/cotar` (mesmo formato `{opcoes: [...]}`, com
+  `codigo`) e mostra as opções, o resumo e as parcelas recalculadas. No submit
+  só o código da opção vem do front: o `OrderService` recalcula valor e prazo
+  do CEP. Grava `shipping_cost`, `shipping_method` (pac|sedex) e
+  `shipping_days` (migration nova, nullable). A Appmax já recebia
+  `shipping_value`.
+- Frete com opção e prazo na tela de sucesso, em meus pedidos e no admin
+  (detalhe e listagem). **Não existe e-mail de pedido** (o único mailable é o
+  do Custom).
+- Quando a SuperFrete entrar: trocar só a implementação do `FreteService`.
+
+### 8.2 Catálogo completo com placeholder
+
+- `catalogo:importar-planilha`: **ativo = ao menos 1 volume com preço**; foto
+  deixou de ser condição. A foto antiga do site (`products/{slug}.jpg` e
+  `-serve.jpg`) sai da galeria sempre (só a linha, o arquivo fica), inclusive
+  das cachaças. Upload do admin (nome hash de 40 caracteres) nunca é tocado e
+  fica na frente do pacote em reexecução.
+- **Cacau Show e Borelli:** preço apagado no CSV E na constante
+  `PRECO_DESCARTADO` do comando — só apagar no CSV não bastava, porque a regra
+  "nunca remove o que está à venda" manteria o 42,79/41,07 do banco. Ficam
+  inativos "sem preço (descartado, confirmar com a gestão)"; quando a gestão
+  confirmar, voltar o preço ao CSV e tirar o grupo da constante.
+- **Resultado local:** 45 do CSV, **26 ativos** (17 deles com placeholder), 19
+  inativos (17 sem preço + os 2 descartados), mais as 2 cachaças desativadas.
+- `<x-product.image>` (foto ou placeholder) e `<x-product.placeholder>`
+  (moldura 2:3 com `<x-brand.symbol>`, "Produto ainda sem foto"). CSS em
+  `public/css/aptk-produto.css`, linkado nos layouts public, app e admin.
+  Usado em: card do catálogo, página do produto (principal + miniaturas),
+  relacionados, carrossel da home, carrinho, checkout, meus pedidos e
+  listagem/editar do admin.
+- **Carrossel da home só leva produto com foto** (destaque, depois nome).
+
+### 8.3 Admin
+
+- Listagem com categoria, SKU, menor preço, placeholder e filtro
+  Todos/Ativos/Inativos.
+- Editar: salvar sem mudar nada deixa o registro idêntico (teste lê o form
+  renderizado e reenvia). Preço por volume descasado agora é erro (antes zerava
+  calado). Produto sem preço não pode ser ativado.
+- `handleImage`: o upload **adiciona** como principal (pendência da §6
+  resolvida). Remover por imagem: apaga a linha sempre e o arquivo só se for
+  upload do admin.
+
+### 8.4 Microvix fora de operação
+
+- Com `MICROVIX_ENVIA_PEDIDO=false` (ou ausente), checkout, webhook e
+  cancelamento **nem enfileiram** o `EnviarPedidoMicrovix`
+  (`EnviarPedidoMicrovix::integracaoLigada()`). Antes enfileiravam e o sender
+  validava os pré-requisitos mesmo com a trava fechada: sem tabela de preço e
+  sem plano Pix/boleto no ERP, todo pedido real cairia em `erro` e acenderia o
+  banner. A simulação de XML (`simulated=true`) agora só acontece por reenvio
+  manual no painel.
+- Banner, badge e item "Microvix (ERP)" do menu só aparecem com a integração
+  ligada. As rotas `/admin/microvix/*` seguem abertas por URL direta.
+- Código e testes do Microvix intactos (fases 1, 1.5 e 2).
+- **Pendência para quando a integração voltar:** `tipo_frete` do
+  `B2CCadastraPedido` hoje é fixo (`MICROVIX_ID_TIPO_ENCOMENDA`). Com PAC/SEDEX
+  no pedido, mapear `orders.shipping_method` → tipo de encomenda do ERP
+  (`pac` → 41106, `sedex` → 40010, que já existem, §1.4).
+
+### 8.5 Deploy da leva 08
+
+Depois do `reset --hard`: `php artisan migrate --force` (cria
+`orders.shipping_days`), `php artisan catalogo:importar-planilha --dry-run`,
+conferir os 26 ativos, rodar sem `--dry-run`, e `config:cache`
+(`config/frete.php` novo).
 
 ---
 

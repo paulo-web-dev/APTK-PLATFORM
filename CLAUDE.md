@@ -72,6 +72,17 @@ com toggle global — não tratar como opcional.
 **Componentes de marca:** `<x-brand.symbol>`, `<x-brand.logo>`, `<x-brand.sunburst>`,
 `<x-brand.divider>`.
 
+**Imagem de produto:** sempre via `<x-product.image :image="..." :alt="...">` (foto ou
+`<x-product.placeholder>`, moldura 2:3 "Produto ainda sem foto"). CSS em
+`public/css/aptk-produto.css` (linkado também no layout admin, que não carrega o
+`aptk.css`). Foto do pacote: `products/{grupo}-{vol}-{frente|verso}.jpg` (import);
+upload do admin: nome hash de 40 caracteres (`ProductImage::isUploadDoAdmin()`) — só
+esse arquivo o admin apaga do disco. Upload ADICIONA como principal.
+
+**Catálogo** vem de `catalogo:importar-planilha` (CSV em `database/data/`): ativo =
+ao menos 1 volume com preço; foto antiga do site sai da galeria; upload do admin
+nunca é tocado. Admin não deixa ativar produto sem preço (`Product::temPreco()`).
+
 **Voz da marca:** leve, detalhista, inspiradora. "Alquimia de histórias".
 "Feito por humanos inquietos." Narrativa e construção de valor acima de preço/desconto.
 Evitar linguagem técnica ou promocional.
@@ -82,9 +93,16 @@ Evitar linguagem técnica ou promocional.
 Webhook em `/webhooks/appmax/{token}`. Produção operacional; o sandbox estava fora do ar
 (504 no endpoint de auth) — ticket de suporte aberto.
 
-**SuperFrete**: sem conta ainda. `Shop\FreteController@cotar` existe como casca:
-valida CEP e devolve opção fixa (Entrega padrão, R$ 10, 5 dias úteis) no formato
-final `{opcoes: [{nome, valor, prazo_dias}]}` — trocar só a implementação depois.
+**Frete** (leva 08): estimativa própria, sem transportadora. `FreteService` +
+`config/frete.php`: origem SP capital, tabela de referência dos Correios por
+região (faixa de CEP da UF) + 20%, PAC e SEDEX. Peso = ml do volume / 1000 +
+1 kg de embalagem por item, arredondado pra cima ao kg. `/frete/cotar`
+(`Shop\FreteController`) cota o carrinho da sessão no formato
+`{opcoes: [{codigo, nome, valor, prazo_dias}]}`. **O servidor recalcula no
+fechamento** (`OrderService::placeFromCart`, do CEP + `shipping_method`); o valor
+do front nunca entra. Pedido grava `shipping_cost`, `shipping_method`
+(pac|sedex) e `shipping_days`. SuperFrete (sem conta ainda): trocar só a
+implementação do `FreteService`.
 
 **Linx Microvix ERP** (WS B2C): fase 1 implementada — espelho somente-leitura.
 Doc em `docs/linx-microvix-ws-b2c.md`; **em divergência de nome de campo, vale o
@@ -119,12 +137,15 @@ CadastraClientes (`atualizar_por_cpf=1`) → EnderecosEntrega (id = `orders.id`,
 no webhook de pagamento) → PedidoItens; expirado/recusado/cancelado →
 `B2CCancelaPedido` (dispatch centralizado no `cancelAndRestoreStock`). Fila
 database (`EnviarPedidoMicrovix`, fila `microvix`), worker via scheduler
-(`queue:work --stop-when-empty` a cada minuto), concorrência 1
+(`queue:work --stop-when-empty` a cada minuto) — **e só enfileira com a trava
+aberta** (`EnviarPedidoMicrovix::integracaoLigada()`; com ela fechada nem o XML
+simulado sai, só por reenvio manual no painel), concorrência 1
 (WithoutOverlapping) + guarda de segundo por método (obs. 5 da doc). Erro de
 negócio (plano pix/boleto inexistente etc.) para em `erro` sem retry; rede
 retenta 3x com backoff. Estado em `orders.microvix_envio_*`; painel de pedidos,
 trilha de XML (selo simulado/real) e reenvio em `/admin/microvix`; pedido em
-erro gera banner global no admin. Parse da resposta do Importador é PALPITE —
+erro gera banner global no admin. Com `MICROVIX_ENVIA_PEDIDO=false` o banner, o
+badge e o item do menu somem (rotas seguem por URL direta). Parse da resposta do Importador é PALPITE —
 confirmar no primeiro envio real (`avaliaRespostaImporta`).
 
 ## Clube de assinatura
@@ -135,8 +156,9 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
 
 ## Pendências conhecidas
 
-1. Frete é casca fixa (R$ 10) — cotação real depende de conta na SuperFrete.
+1. Frete é estimativa por tabela (+20%) — cotação real depende de conta na SuperFrete.
 2. Portal B2B é só fachada: middleware + role + um `/ping`. Sem controllers nem views.
+3. Microvix fora de operação (`MICROVIX_ENVIA_PEDIDO=false`); ver ESTADO-ATUAL §8.4.
 
 ## Deploy
 
@@ -166,4 +188,4 @@ qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 - Não rodar `migrate:fresh` sem avisar — apaga dados locais.
 - Depois de mexer em rota, rodar `php artisan route:clear`.
 - Mudanças do cliente vêm agrupadas em "levas" numeradas, cada uma com escopo fechado
-  antes da execução. As levas 01 a 06 já foram concluídas.
+  antes da execução. As levas 01 a 08 já foram concluídas.
