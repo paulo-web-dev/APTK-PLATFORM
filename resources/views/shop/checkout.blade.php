@@ -25,6 +25,8 @@
     .cko-summary h3 { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-text); margin: 0 0 18px; }
     .sum-item { display: flex; justify-content: space-between; gap: 12px; font-size: var(--text-sm); color: var(--color-text-muted); padding: 7px 0; }
     .sum-item .q { font-family: var(--font-mono); }
+    .sum-item-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .sum-thumb { width: 40px; height: 40px; }
     .sum-total { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: var(--text-lg); color: var(--color-text); padding: 16px 0 4px; margin-top: 10px; border-top: 1px solid var(--color-border); }
     @media (max-width: 820px) {
         .cko-layout { grid-template-columns: 1fr; }
@@ -224,7 +226,10 @@
                     <h3>Seu pedido</h3>
                     @foreach ($items as $row)
                         <div class="sum-item">
-                            <span><span class="q">{{ $row->qty }}×</span> {{ $row->product->name }}@if ($row->size) <small style="color:var(--color-text-muted);">({{ $row->size }})</small>@endif</span>
+                            <span class="sum-item-name">
+                                <x-product.image class="prod-thumb sum-thumb" :image="$row->product->primaryImage" :alt="$row->product->name" compact />
+                                <span><span class="q">{{ $row->qty }}×</span> {{ $row->product->name }}@if ($row->size) <small style="color:var(--color-text-muted);">({{ $row->size }})</small>@endif</span>
+                            </span>
                             <span>R$ {{ number_format($row->subtotal, 2, ',', '.') }}</span>
                         </div>
                     @endforeach

@@ -15,6 +15,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     @include('partials.theme-init')
     <link href="{{ asset('css/aptk.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/aptk-produto.css') }}" rel="stylesheet">
 
     @stack('styles')
 

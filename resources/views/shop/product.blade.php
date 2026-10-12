@@ -6,7 +6,7 @@
 <style>
     .pdp { padding-block: 48px; }
     .pdp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
-    .pdp-gallery .main-img { aspect-ratio: 1 / 1; object-fit: contain; background: var(--color-bg-media); padding: 22px; }
+    .pdp-gallery .main-img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: var(--color-bg-media); padding: 22px; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
     .pdp-thumbs { display: flex; gap: 12px; margin-top: 14px; }
     .pdp-thumbs .thumb { width: 72px; height: 72px; flex-shrink: 0; padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-media); cursor: pointer; overflow: hidden; transition: border-color .2s ease; }
     .pdp-thumbs .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
@@ -55,28 +55,20 @@
             {{-- Galeria --}}
             <div class="pdp-gallery">
                 @if ($product->images->isNotEmpty())
-                    <img id="pdpMain"
-                         src="{{ \Illuminate\Support\Facades\Storage::url($product->images->first()->path) }}"
-                         alt="{{ $product->name }}" class="main-img"
-                         style="width:100%; border:1px solid var(--color-border); border-radius:var(--radius-md);">
+                    <x-product.image id="pdpMain" class="main-img" :image="$product->images->first()" :alt="$product->name" loading="" />
                     @if ($product->images->count() > 1)
                         <div class="pdp-thumbs">
                             @foreach ($product->images as $img)
                                 <button type="button" class="thumb {{ $loop->first ? 'is-active' : '' }}"
                                         data-src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}"
                                         aria-label="Ver imagem {{ $loop->iteration }}">
-                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}" alt="">
+                                    <x-product.image :image="$img" alt="" />
                                 </button>
                             @endforeach
                         </div>
                     @endif
                 @else
-                    <div class="placeholder main-img"><span>{{ $product->name }}</span></div>
-                    <div class="pdp-thumbs">
-                        <div class="placeholder thumb"></div>
-                        <div class="placeholder thumb"></div>
-                        <div class="placeholder thumb"></div>
-                    </div>
+                    <x-product.image class="main-img" :alt="$product->name" />
                 @endif
             </div>
 
@@ -170,12 +162,8 @@
                         <div class="col-12 col-md-4">
                             <a href="{{ route('product', $rel->slug) }}" class="card-aptk"
                                style="display:flex; flex-direction:column; padding:0; overflow:hidden; text-decoration:none;">
-                                @if ($rel->primaryImage)
-                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($rel->primaryImage->path) }}" alt="{{ $rel->name }}"
-                                         style="aspect-ratio:1/1; width:100%; object-fit:contain; background:var(--color-bg-media); border:none; border-bottom:1px solid var(--color-border); border-radius:0; padding:16px;">
-                                @else
-                                    <div class="placeholder" style="aspect-ratio:1/1; border:none; border-bottom:1px solid var(--color-border); border-radius:0;"><span>{{ $rel->name }}</span></div>
-                                @endif
+                                <x-product.image :image="$rel->primaryImage" :alt="$rel->name"
+                                    style="aspect-ratio:1/1; width:100%; object-fit:contain; background:var(--color-bg-media); border:none; border-bottom:1px solid var(--color-border); border-radius:0; padding:16px;" />
                                 <div style="padding:18px;">
                                     <p style="font-family:var(--font-script); font-size:var(--text-xl); color:var(--color-primary); margin:0 0 8px;">{{ $rel->name }}</p>
                                     <span style="font-family:var(--font-mono); color:var(--color-text);">R$ {{ number_format($rel->price, 2, ',', '.') }}</span>

@@ -136,8 +136,10 @@ class CatalogoImportarPlanilhaTest extends TestCase
         $this->assertNull($p->sizes);
         $this->assertSame(1, $p->images()->count());
 
-        // Sem imagem também fica inativo, mesmo com preço.
-        $this->assertFalse(Product::where('slug', 'cosmopolitan')->firstOrFail()->active);
+        // Leva 08: com preço e sem foto entra no ar (o site mostra o placeholder).
+        $cosmo = Product::where('slug', 'cosmopolitan')->firstOrFail();
+        $this->assertTrue($cosmo->active);
+        $this->assertSame(0, $cosmo->images()->count());
     }
 
     public function test_produto_existente_mantem_volume_sem_preco_e_slug_galeria_so_com_foto_nova(): void
@@ -168,7 +170,7 @@ class CatalogoImportarPlanilhaTest extends TestCase
         Storage::disk('public')->assertExists('products/negroni-classico.jpg');
     }
 
-    public function test_produto_com_preco_e_so_foto_antiga_fica_inativo_e_reexecucao_nao_reativa(): void
+    public function test_produto_com_preco_e_so_foto_antiga_fica_ativo_e_a_foto_antiga_sai_da_galeria(): void
     {
         $p = Product::create([
             'name'        => 'Cosmopolitan',
@@ -177,25 +179,83 @@ class CatalogoImportarPlanilhaTest extends TestCase
             'sizes'       => ['375 ml'],
             'size_prices' => ['375 ml' => 110.44],
             'stock_qty'   => 30,
-            'active'      => true,
+            'active'      => false,
         ]);
+        Storage::disk('public')->put('products/cosmopolitan.jpg', 'antiga');
         ProductImage::create(['product_id' => $p->id, 'path' => 'products/cosmopolitan.jpg', 'is_primary' => true, 'sort_order' => 0]);
+        ProductImage::create(['product_id' => $p->id, 'path' => 'products/cosmopolitan-serve.jpg', 'is_primary' => false, 'sort_order' => 1]);
 
         $this->importar()
-            ->expectsOutputToContain('só foto antiga (1): cosmopolitan')
-            ->expectsOutputToContain('saíram do ar (1): cosmopolitan (só foto antiga)')
+            ->expectsOutputToContain('com placeholder, sem foto (1): cosmopolitan')
             ->assertSuccessful();
 
         $p->refresh();
-        $this->assertFalse($p->active);
-        $this->assertEquals(['375 ml' => 165.0], $p->size_prices); // preço atualiza mesmo inativo
-        $this->assertSame(['products/cosmopolitan.jpg'], $p->images()->pluck('path')->all());
+        $this->assertTrue($p->active);
+        $this->assertEquals(['375 ml' => 165.0], $p->size_prices);
+        $this->assertSame(0, $p->images()->count());
+        Storage::disk('public')->assertExists('products/cosmopolitan.jpg'); // só a linha sai
 
-        $this->importar()
-            ->expectsOutputToContain('saíram do ar (0): nenhum')
-            ->assertSuccessful();
+        $this->importar()->assertSuccessful();
+        $this->assertTrue($p->fresh()->active);
+        $this->assertSame(0, $p->images()->count());
+    }
 
-        $this->assertFalse($p->fresh()->active);
+    public function test_upload_do_admin_sobrevive_a_reexecucao_e_fica_na_frente(): void
+    {
+        $negroni = $this->negroniExistente();
+        $this->importar()->assertSuccessful();
+
+        // A gestão sobe uma foto pelo admin (nome hash): vira a principal.
+        ProductImage::where('product_id', $negroni->id)->increment('sort_order');
+        ProductImage::where('product_id', $negroni->id)->update(['is_primary' => false]);
+        ProductImage::create(['product_id' => $negroni->id, 'path' => 'products/Hx9aQ2upload.jpg', 'is_primary' => true, 'sort_order' => 0]);
+
+        // Produto sem foto do pacote também guarda o upload.
+        $this->importar()->assertSuccessful();
+        $cosmo = Product::where('slug', 'cosmopolitan')->firstOrFail();
+        ProductImage::create(['product_id' => $cosmo->id, 'path' => 'products/Zk3upload.jpg', 'is_primary' => true, 'sort_order' => 0]);
+
+        $this->importar()->assertSuccessful();
+
+        $galeria = $negroni->fresh('images')->images;
+        $this->assertSame([
+            'products/Hx9aQ2upload.jpg',
+            'products/negroni-classico-375ml-frente.jpg',
+            'products/negroni-classico-375ml-verso.jpg',
+        ], $galeria->pluck('path')->all());
+        $this->assertSame([true, false, false], $galeria->pluck('is_primary')->all());
+        $this->assertSame(['products/Zk3upload.jpg'], $cosmo->images()->pluck('path')->all());
+    }
+
+    public function test_preco_descartado_entra_inativo_sem_preco(): void
+    {
+        $licor = Product::create([
+            'name'        => 'Licor de Chocolate Cacau Show',
+            'slug'        => 'licor-chocolate-cacau-show',
+            'price'       => 42.79,
+            'sizes'       => ['375 ml'],
+            'size_prices' => ['375 ml' => 42.79],
+            'stock_qty'   => 30,
+            'active'      => true,
+        ]);
+
+        $csv = storage_path('framework/testing/catalogo-descartado.csv');
+        File::put($csv, "grupo,nome,marca,volume,sku,preco,foto_frente,foto_verso\n"
+            ."licor-chocolate-cacau-show,Licor de Chocolate Cacau Show,aptk,375ml,LCCS375,,,\n");
+
+        try {
+            $this->artisan('catalogo:importar-planilha', ['--csv' => $csv, '--fotos' => $this->fotos])
+                ->expectsOutputToContain('sem preço (descartado, confirmar com a gestão) (1): licor-chocolate-cacau-show')
+                ->assertSuccessful();
+        } finally {
+            File::delete($csv);
+        }
+
+        $licor->refresh();
+        $this->assertFalse($licor->active);
+        $this->assertNull($licor->size_prices);
+        $this->assertNull($licor->sizes);
+        $this->assertEquals(0.0, (float) $licor->price);
     }
 
     public function test_desativa_produto_fora_da_planilha_da_lista_sem_mexer_no_resto(): void
@@ -208,12 +268,15 @@ class CatalogoImportarPlanilhaTest extends TestCase
             'stock_qty' => 30,
             'active'    => true,
         ]);
+        ProductImage::create(['product_id' => $cachaca->id, 'path' => 'products/cachaca-prata.jpg', 'is_primary' => true, 'sort_order' => 0]);
+        ProductImage::create(['product_id' => $cachaca->id, 'path' => 'products/cachaca-prata-serve.jpg', 'is_primary' => false, 'sort_order' => 1]);
         $antes = $cachaca->fresh()->getAttributes();
 
         $this->importar(dryRun: true)
             ->expectsOutputToContain('[DESATIVA] cachaca-prata')
             ->assertSuccessful();
         $this->assertTrue($cachaca->fresh()->active);
+        $this->assertSame(2, $cachaca->images()->count());
 
         $this->importar()
             ->expectsOutputToContain('fora da planilha desativados (1): cachaca-prata')
@@ -223,6 +286,7 @@ class CatalogoImportarPlanilhaTest extends TestCase
         $this->assertSame(0, (int) $depois['active']);
         unset($antes['active'], $antes['updated_at'], $depois['active'], $depois['updated_at']);
         $this->assertSame($antes, $depois);
+        $this->assertSame(0, $cachaca->images()->count()); // foto antiga sai da galeria (leva 08)
 
         // Reexecução: já inativo, nada a fazer.
         $this->importar()

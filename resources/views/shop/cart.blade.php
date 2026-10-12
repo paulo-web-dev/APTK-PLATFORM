@@ -60,7 +60,7 @@
                 <div class="cart-items">
                     @foreach ($items as $row)
                         <div class="cart-row">
-                            <div class="placeholder cart-thumb"><span>{{ $row->product->name }}</span></div>
+                            <x-product.image class="prod-thumb cart-thumb" :image="$row->product->primaryImage" :alt="$row->product->name" compact />
 
                             <div class="cart-info">
                                 <a href="{{ route('product', $row->product->slug) }}" class="cart-name">{{ $row->product->name }}</a>

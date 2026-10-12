@@ -24,11 +24,7 @@
                 @forelse ($products as $p)
                     <tr>
                         <td data-label="">
-                            @if ($p->primaryImage)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($p->primaryImage->path) }}" alt="" style="width:44px; height:44px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--color-border); display:block;">
-                            @else
-                                <span style="display:grid; place-items:center; width:44px; height:44px; border-radius:var(--radius-sm); border:1px solid var(--color-border); background:var(--color-bg-elevated); color:var(--color-text-muted); font-family:var(--font-mono); font-size:11px;">—</span>
-                            @endif
+                            <x-product.image class="prod-thumb" :image="$p->primaryImage" alt="" compact style="width:44px; height:44px;" />
                         </td>
                         <td data-label="Produto">
                             {{ $p->name }}

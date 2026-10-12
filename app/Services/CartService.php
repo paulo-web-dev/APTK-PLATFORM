@@ -128,6 +128,7 @@ class CartService
         }
 
         $products = Product::whereIn('id', array_unique(array_column($raw, 'product_id')))
+            ->with('primaryImage') // miniatura no carrinho e no checkout
             ->get()
             ->keyBy('id');
 

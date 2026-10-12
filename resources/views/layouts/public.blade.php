@@ -33,6 +33,7 @@
   {{-- Identidade APTK --}}
   @include('partials.theme-init')
   <link href="{{ asset('css/aptk.css') }}" rel="stylesheet">
+  <link href="{{ asset('css/aptk-produto.css') }}" rel="stylesheet">
 
   <style>
   /* ---- Layout público: header ---- */

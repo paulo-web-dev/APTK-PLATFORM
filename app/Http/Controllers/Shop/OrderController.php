@@ -23,7 +23,7 @@ class OrderController extends Controller
         // Só o dono enxerga o pedido (404 não revela existência).
         abort_unless($order->user_id === auth()->id(), 404);
 
-        $order->load('items');
+        $order->load('items.product.primaryImage'); // miniatura (produto pode ter sido removido: placeholder)
 
         return view('shop.orders.show', compact('order'));
     }

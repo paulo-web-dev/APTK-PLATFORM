@@ -10,6 +10,7 @@
 
   {{-- Fonte única de tokens (paleta + tipografia + escala + tema). O admin usa o tema escuro da marca via data-theme="dark" no <html>. --}}
   <link href="{{ asset('css/aptk-tokens.css') }}" rel="stylesheet">
+  <link href="{{ asset('css/aptk-produto.css') }}" rel="stylesheet">
   <style>
   /* ===================================================================
      APTK ADMIN — IDENTIDADE

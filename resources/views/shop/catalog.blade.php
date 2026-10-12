@@ -19,7 +19,7 @@
     .prod-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
     .prod-card { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
     .prod-card .prod-img { aspect-ratio: 1 / 1; border-radius: 0; border: none; border-bottom: 1px solid var(--color-border); background: var(--color-bg-media); }
-    .prod-card img.prod-img { width: 100%; object-fit: contain; padding: 18px; }
+    .prod-card img.prod-img, .prod-card .prod-ph-box.prod-img { width: 100%; object-fit: contain; padding: 18px; }
     .prod-body { padding: 20px; display: flex; flex-direction: column; flex: 1; }
     .prod-cat { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 8px; }
     .prod-name { font-family: var(--font-script); font-size: var(--text-2xl); color: var(--color-primary); line-height: 1.1; margin: 0 0 14px; }
@@ -73,11 +73,7 @@
                 @foreach ($products as $product)
                     <div class="card-aptk prod-card">
                         <a href="{{ route('product', $product->slug) }}" style="text-decoration:none; color:inherit;">
-                            @if ($product->primaryImage)
-                                <img class="prod-img" src="{{ \Illuminate\Support\Facades\Storage::url($product->primaryImage->path) }}" alt="{{ $product->name }}" loading="lazy">
-                            @else
-                                <div class="placeholder prod-img"><span>{{ $product->name }}</span></div>
-                            @endif
+                            <x-product.image class="prod-img" :image="$product->primaryImage" :alt="$product->name" />
                         </a>
                         <div class="prod-body">
                             <span class="prod-cat">{{ $product->category?->name ?? 'APTK' }}</span>

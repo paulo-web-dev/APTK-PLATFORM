@@ -52,7 +52,7 @@
   /* ---- Home: produto em destaque (retangular, imagem à esquerda) ---- */
   .featured-band { background: var(--color-ink); border-block: 1px solid var(--color-border); }
   .featured-grid { display: grid; grid-template-columns: minmax(280px, 420px) 1fr; gap: clamp(32px, 5vw, 64px); align-items: center; padding-block: clamp(36px, 5vw, 56px); }
-  .featured-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: center; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); background: #0D0A06; }
+  .featured-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: contain; object-position: center; padding: 18px; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); background: var(--color-bg-media); }
   .featured-body .badge-aptk { margin-bottom: 16px; }
   .featured-body .product-name { font-family: var(--font-script); font-size: clamp(2.2rem, 5vw, 3.2rem); color: var(--color-primary); margin-bottom: 12px; line-height: 1.05; }
   .featured-body .sub { font-family: var(--font-display); font-style: italic; font-size: var(--text-lg); color: var(--color-cream); margin: 0 0 14px; }
@@ -191,11 +191,8 @@
           @endphp
           <div class="shw-slide {{ $idx === 0 ? 'is-active' : '' }}" data-slide="{{ $idx }}">
             <div class="featured-grid">
-              @if ($product->primaryImage)
-                <img src="{{ \Illuminate\Support\Facades\Storage::url($product->primaryImage->path) }}" class="featured-img" alt="{{ $product->name }}" loading="lazy">
-              @else
-                <img src="{{ asset('img/aptk/featured-negroni.jpg') }}" class="featured-img" alt="{{ $product->name }}" loading="lazy">
-              @endif
+              {{-- O carrossel só recebe produto com foto (HomeController). --}}
+              <x-product.image class="featured-img" :image="$product->primaryImage" :alt="$product->name" />
               <div class="featured-body">
                 <span class="badge-aptk">{{ $product->category?->name ?? 'Destaque' }}</span>
                 <p class="product-name">{{ $product->name }}</p>

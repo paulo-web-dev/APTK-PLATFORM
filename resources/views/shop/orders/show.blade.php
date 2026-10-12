@@ -6,6 +6,9 @@
         .od-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--color-border); font-size: var(--text-sm); color: var(--color-text); }
         .od-row:last-child { border-bottom: none; }
         .od-row .q { font-family: var(--font-mono); color: var(--color-text-muted); }
+        .od-row { align-items: center; }
+        .od-item { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .od-thumb { width: 44px; height: 44px; }
         .od-sub { display: flex; justify-content: space-between; font-size: var(--text-sm); color: var(--color-text-muted); padding: 6px 0; }
         .od-total { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: var(--text-lg); color: var(--color-text); padding-top: 14px; margin-top: 6px; border-top: 1px solid var(--color-border); }
         .od-meta { display: flex; gap: 32px; flex-wrap: wrap; }
@@ -41,7 +44,10 @@
         <h3>Itens</h3>
         @foreach ($order->items as $item)
             <div class="od-row">
-                <span><span class="q">{{ $item->qty }}×</span> {{ $item->product_name }}@if ($item->size) <small style="color:var(--color-text-muted);">({{ $item->size }})</small>@endif</span>
+                <span class="od-item">
+                    <x-product.image class="prod-thumb od-thumb" :image="$item->product?->primaryImage" :alt="$item->product_name" compact />
+                    <span><span class="q">{{ $item->qty }}×</span> {{ $item->product_name }}@if ($item->size) <small style="color:var(--color-text-muted);">({{ $item->size }})</small>@endif</span>
+                </span>
                 <span>R$ {{ number_format($item->total_price, 2, ',', '.') }}</span>
             </div>
         @endforeach

@@ -12,8 +12,12 @@ class HomeController extends Controller
     {
         // Vitrine de produtos (leva 06): o destaque marcado no admin vem
         // primeiro e os demais ativos entram no carrossel ("passar pro lado").
+        // Leva 08: só produto COM foto — placeholder não entra no carrossel.
+        // A foto antiga do site sai da galeria no import, então ter imagem
+        // principal = ter foto do pacote novo (ou subida pelo admin).
         $showcase = Product::where('active', true)
-            ->with(['category', 'images'])
+            ->whereHas('primaryImage')
+            ->with(['category', 'primaryImage'])
             ->orderByDesc('featured')
             ->orderBy('name')
             ->limit(8)
