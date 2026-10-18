@@ -5,13 +5,19 @@ namespace App\Services;
 use App\Exceptions\AppmaxException;
 use App\Models\Order;
 use App\Models\Setting;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Cliente da API Appmax v4 (fluxo de aplicativo) — Pix, cartão e boleto.
+ * Cliente da API Appmax v4 — Pix, cartão e boleto.
+ *
+ * Modelo em uso: credenciais da PRÓPRIA LOJA, geradas no painel (menu API,
+ * doc guides/meus-tokens) e lidas do .env. O fluxo de instalação de app
+ * (settings gravadas pelo health check) segue como fallback legado.
  *
  * Autenticação (doc 1.1.5): server-to-server com token Bearer de CURTA
  * duração, sem refresh token. As credenciais do MERCHANT (recebidas no
@@ -57,13 +63,78 @@ class AppmaxService
      | Credenciais e autenticação do merchant
      ------------------------------------------------------------------ */
 
-    /** Credenciais do merchant: settings (gravadas na instalação) > .env. */
+    /**
+     * Credenciais do merchant, nesta ordem:
+     *   1. APPMAX_CLIENT_ID/SECRET do .env (painel → API, loja própria);
+     *   2. settings gravadas pelo health check do fluxo de instalação (legado);
+     *   3. APPMAX_MERCHANT_CLIENT_ID/SECRET (fallback legado).
+     * O par é usado junto: nunca client_id de uma fonte com secret de outra.
+     */
     protected function merchantCredentials(): array
     {
+        if (filled(config('appmax.client_id')) && filled(config('appmax.client_secret'))) {
+            return [
+                'client_id'     => config('appmax.client_id'),
+                'client_secret' => config('appmax.client_secret'),
+            ];
+        }
+
         return [
             'client_id'     => Setting::get('appmax_merchant_client_id') ?: config('appmax.merchant_client_id'),
             'client_secret' => Setting::get('appmax_merchant_client_secret') ?: config('appmax.merchant_client_secret'),
         ];
+    }
+
+    /** URL do /oauth2/token: APPMAX_AUTH_URL > mapa por APPMAX_ENV. */
+    public static function authUrl(): string
+    {
+        return (string) (config('appmax.auth_url')
+            ?: config('appmax.auth_urls.'.config('appmax.environment', 'sandbox')));
+    }
+
+    /** Base da API: APPMAX_API_URL > mapa por APPMAX_ENV. */
+    public static function apiUrl(): string
+    {
+        return rtrim((string) (config('appmax.api_url')
+            ?: config('appmax.api_urls.'.config('appmax.environment', 'sandbox'))), '/');
+    }
+
+    /**
+     * Build do Appmax JS no MESMO ambiente da API — script de um ambiente
+     * com o external_id do outro dá "Merchant not found".
+     */
+    public static function scriptUrl(): string
+    {
+        $host = strtolower((string) parse_url(self::apiUrl(), PHP_URL_HOST));
+
+        $env = match (true) {
+            $host === 'api.appmax.com.br'           => 'production',
+            str_contains($host, 'sandboxappmax')    => 'sandbox',
+            default                                 => config('appmax.environment', 'sandbox'),
+        };
+
+        return (string) config("appmax.script_urls.{$env}");
+    }
+
+    /** External ID do Appmax JS: APPMAX_EXTERNAL_ID > setting da instalação. */
+    public static function externalId(): ?string
+    {
+        return config('appmax.external_id') ?: Setting::get('appmax_install_external_id');
+    }
+
+    /**
+     * Retry só em falha de rede ou 5xx — usado APENAS no token e em GET.
+     * POST de pedido/pagamento nunca passa por aqui (cobrança dupla).
+     */
+    protected function comRetry(PendingRequest $http): PendingRequest
+    {
+        return $http->retry(
+            max(1, (int) config('appmax.http_retry_times', 3)),
+            max(0, (int) config('appmax.http_retry_sleep_ms', 300)),
+            fn ($e) => $e instanceof ConnectionException
+                || ($e instanceof RequestException && $e->response->serverError()),
+            throw: false,
+        );
     }
 
     public function isConfigured(): bool
@@ -91,18 +162,16 @@ class AppmaxService
                 'Credenciais do merchant Appmax ausentes (instalação do app não concluída?).');
         }
 
-        $env     = config('appmax.environment', 'sandbox');
-        $authUrl = config("appmax.auth_urls.{$env}");
-
         try {
-            $response = Http::asForm()
-                ->timeout(config('appmax.http_timeout', 30))
-                ->post($authUrl, [
+            // O token pode repetir: ninguém é cobrado por pedir token.
+            $response = $this->comRetry(Http::asForm()->timeout(config('appmax.http_timeout', 30)))
+                ->post(self::authUrl(), [
                     'grant_type'    => 'client_credentials',
                     'client_id'     => $c['client_id'],
                     'client_secret' => $c['client_secret'],
                 ]);
         } catch (\Throwable $e) {
+            // Mensagem da exceção de transporte: URL e motivo, nunca o corpo (secret).
             Log::error('Appmax: falha ao autenticar merchant', ['erro' => $e->getMessage()]);
             // Sem token nenhuma cobrança saiu: indisponível, não indefinido.
             throw new AppmaxException(self::MSG_INDISPONIVEL, null, AppmaxException::INDISPONIVEL,
@@ -125,10 +194,7 @@ class AppmaxService
 
     protected function client(): PendingRequest
     {
-        $env  = config('appmax.environment', 'sandbox');
-        $base = config("appmax.api_urls.{$env}");
-
-        return Http::baseUrl($base)
+        return Http::baseUrl(self::apiUrl())
             ->acceptJson()
             ->asJson()
             ->withToken($this->merchantToken())
@@ -142,8 +208,14 @@ class AppmaxService
     }
 
     /**
-     * Requisição autenticada. Se o Bearer expirou no meio do caminho (401),
-     * renova uma vez e repete — padrão da doc 1.1.5 (sem refresh token).
+     * Requisição autenticada.
+     *
+     * Repetição:
+     *   - GET: retry em rede/5xx (comRetry) e, em 401 (Bearer vencido),
+     *     renova o token e repete uma vez.
+     *   - POST: NUNCA repete. Nem em 401: o token cacheado é descartado e a
+     *     falha volta como INDISPONIVEL (nada foi processado); a próxima
+     *     tentativa do cliente já sai com token novo.
      *
      * Classifica a falha (AppmaxException::$tipo):
      *   - timeout, rede, 5xx, 408, 2xx ilegível → INDEFINIDO (pode ter processado)
@@ -155,12 +227,18 @@ class AppmaxService
      */
     protected function request(string $method, string $endpoint, array $body, string $friendlyError): array
     {
+        $isGet = $method === 'get';
+        $http = fn () => $isGet ? $this->comRetry($this->client()) : $this->client();
+
         try {
-            $response = $this->client()->{$method}($endpoint, $body);
+            $response = $http()->{$method}($endpoint, $body);
 
             if ($response->status() === 401) {
                 Cache::forget(self::TOKEN_CACHE_KEY);
-                $response = $this->client()->{$method}($endpoint, $body);
+
+                if ($isGet) {
+                    $response = $http()->{$method}($endpoint, $body);
+                }
             }
         } catch (AppmaxException $e) {
             throw $e;

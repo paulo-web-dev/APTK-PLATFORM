@@ -4,31 +4,44 @@
 |--------------------------------------------------------------------------
 | Appmax — gateway de pagamento (Pix, cartão de crédito e boleto)
 |--------------------------------------------------------------------------
-| API v4, fluxo de aplicativo com OAuth2 (ver AppmaxService).
+| API v4 com OAuth2 (ver AppmaxService). Modelo em uso: credenciais da
+| PRÓPRIA LOJA geradas no painel (menu "API", doc guides/meus-tokens).
 |
-| .env:
-|   APPMAX_ENV=sandbox            (sandbox | production — troca auth, API e script JS)
-|   APPMAX_CLIENT_ID=             (credenciais do APLICATIVO, painel do desenvolvedor)
-|   APPMAX_CLIENT_SECRET=
+| .env (produção):
+|   APPMAX_CLIENT_ID=             (card da loja no painel → Client ID)
+|   APPMAX_CLIENT_SECRET=         (exibido UMA vez ao gerar; nunca logar)
+|   APPMAX_AUTH_URL=https://auth.appmax.com.br/oauth2/token
+|   APPMAX_API_URL=https://api.appmax.com.br
+|   APPMAX_EXTERNAL_ID=           (card da loja → External ID, p/ o Appmax JS)
 |   APPMAX_WEBHOOK_TOKEN=         (string aleatória sua — compõe a URL do webhook)
 |
-| URL do webhook a cadastrar no app:
+| Sem essas variáveis vale o legado (fluxo de instalação de app): URLs por
+| APPMAX_ENV e credenciais/external_id gravados em settings pelo health check.
+|
+| URL do webhook (painel → API → Webhooks):
 |   https://SEU-DOMINIO/webhooks/appmax/{APPMAX_WEBHOOK_TOKEN}
 */
 
 return [
 
-    // Credenciais do APLICATIVO (painel do desenvolvedor). Usadas no fluxo
-    // de instalação; as credenciais do MERCHANT (que transacionam) chegam
-    // pelo health check e ficam na tabela settings (grupo "appmax"),
-    // com fallback opcional nas envs abaixo.
+    // Credenciais do MERCHANT (painel → API). Têm prioridade sobre as
+    // gravadas em settings pelo fluxo de instalação. O fluxo de instalação
+    // (legado, fora de uso) também lê este par como credenciais do app.
     'client_id'     => env('APPMAX_CLIENT_ID'),
     'client_secret' => env('APPMAX_CLIENT_SECRET'),
 
+    // Fallback legado das credenciais do merchant (depois das settings).
     'merchant_client_id'     => env('APPMAX_MERCHANT_CLIENT_ID'),
     'merchant_client_secret' => env('APPMAX_MERCHANT_CLIENT_SECRET'),
 
-    // sandbox | production
+    // URLs explícitas: prioridade sobre o mapa por ambiente abaixo.
+    'auth_url' => env('APPMAX_AUTH_URL'),
+    'api_url'  => env('APPMAX_API_URL'),
+
+    // External ID da loja (Appmax JS). Fallback: setting appmax_install_external_id.
+    'external_id' => env('APPMAX_EXTERNAL_ID'),
+
+    // sandbox | production — só vale quando APPMAX_AUTH_URL/API_URL estão vazias.
     'environment' => env('APPMAX_ENV', 'sandbox'),
 
     'auth_urls' => [
@@ -43,6 +56,7 @@ return [
     // Appmax JS: cada ambiente tem o SEU build (a URL da API vai embutida no
     // bundle). Script de um ambiente com external_id do outro = tokenização
     // contra a API errada (404 Merchant not found) — doc "Ambientes".
+    // O ambiente do script segue a URL da API (AppmaxService::scriptUrl).
     'script_urls' => [
         'production' => 'https://scripts.appmax.com.br/appmax.min.js',
         'sandbox'    => 'https://scripts.sandboxappmax.com.br/appmax.min.js',
@@ -63,4 +77,9 @@ return [
     'min_installment_value' => (float) env('APPMAX_MIN_INSTALLMENT_VALUE', 30.00),
 
     'http_timeout' => 30,
+
+    // Retry (só token e GET — POST de pedido/pagamento NUNCA, risco de
+    // cobrança dupla): tentativas totais e espera entre elas.
+    'http_retry_times'    => 3,
+    'http_retry_sleep_ms' => 300,
 ];

@@ -90,8 +90,12 @@ Evitar linguagem técnica ou promocional.
 ## Integrações
 
 **Appmax** (pagamentos — Pix, cartão, boleto): API v4 com OAuth2. `AppmaxService`.
-Webhook em `/webhooks/appmax/{token}`. Produção operacional; o sandbox estava fora do ar
-(504 no endpoint de auth) — ticket de suporte aberto.
+Credenciais da própria loja geradas no painel (menu API): `APPMAX_CLIENT_ID/SECRET`,
+`APPMAX_AUTH_URL`, `APPMAX_API_URL`, `APPMAX_EXTERNAL_ID` no `.env`, com prioridade
+sobre o legado do fluxo de instalação (settings + `APPMAX_ENV`). O script do
+Appmax JS segue o ambiente da API URL. Cartão só com token do Appmax JS (dado cru
+é recusado). Retry só no token e em GET — POST de pedido/pagamento nunca repete.
+Webhook em `/webhooks/appmax/{token}`. Ver ESTADO-ATUAL §9.
 
 **Frete** (leva 08): estimativa própria, sem transportadora. `FreteService` +
 `config/frete.php`: origem SP capital, tabela de referência dos Correios por

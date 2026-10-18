@@ -4,8 +4,9 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-11** (leva 08, §8 — frete estimado PAC/SEDEX, catálogo
-completo com placeholder, admin de produtos; Microvix fora de operação, §8.4).
+Última revisão: **2026-10-18** (§9 — Appmax com credenciais do painel, loja
+própria; rotas do fluxo de instalação fora de uso). Antes: 2026-10-11 (leva 08,
+§8 — frete estimado PAC/SEDEX, catálogo completo, admin; Microvix fora, §8.4).
 
 ---
 
@@ -365,6 +366,27 @@ Depois do `reset --hard`: `php artisan migrate --force` (cria
 `orders.shipping_days`), `php artisan catalogo:importar-planilha --dry-run`,
 conferir os 26 ativos, rodar sem `--dry-run`, e `config:cache`
 (`config/frete.php` novo).
+
+---
+
+## 9. Appmax — credenciais pelo painel, loja própria (18/10/2026)
+
+- A APTK deixou o fluxo de instalação de app e usa as credenciais da própria
+  loja geradas no painel (menu **API**, doc `guides/meus-tokens`). Uma chamada
+  em `/oauth2/token` com o par do `.env` e pronto.
+- `.env`: `APPMAX_CLIENT_ID`, `APPMAX_CLIENT_SECRET`, `APPMAX_AUTH_URL`,
+  `APPMAX_API_URL`, `APPMAX_EXTERNAL_ID` têm prioridade. Vazios, vale o
+  legado (URLs por `APPMAX_ENV`, credenciais e external_id em `settings`).
+  O script do Appmax JS segue o ambiente da `APPMAX_API_URL`.
+- **Rotas do fluxo de instalação, fora de uso:** `/appmax/health`
+  (`AppmaxInstallController@health`, recebia as credenciais do merchant no
+  health check) e `/appmax/callback` (closure que loga a query e o corpo).
+  Ficam no código, mas nada nesse modelo chama essas rotas. Candidatas a
+  remoção numa faxina — o callback ainda loga payload inteiro.
+- Local: o `APPMAX_CLIENT_ID/SECRET` do `.env` de desenvolvimento são as
+  credenciais do APP (fluxo antigo). Com a prioridade nova elas passam a ser
+  usadas como merchant e a autenticação falha — trocar pelo par de uma loja
+  do sandbox (painel `breakingcode.sandboxappmax.com.br` → API) ou apagar.
 
 ---
 

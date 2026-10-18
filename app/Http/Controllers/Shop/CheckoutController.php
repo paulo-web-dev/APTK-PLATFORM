@@ -57,17 +57,15 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
-        $env = config('appmax.environment', 'sandbox');
-
         return view('shop.checkout', [
             'items'               => $this->cart->items(),
             'total'               => $this->cart->total(),
             'maxInstallments'     => max(1, (int) config('appmax.max_installments', 3)),
             'minInstallmentValue' => (float) config('appmax.min_installment_value', 30.00),
-            // external_id da instalação: obrigatório pra tokenização (doc Appmax JS).
-            'appmaxExternalId'    => Setting::get('appmax_install_external_id'),
-            // Build do script por ambiente — tem que casar com o external_id.
-            'appmaxScriptUrl'     => config("appmax.script_urls.{$env}"),
+            // External ID da loja: obrigatório pra tokenização (doc Appmax JS).
+            'appmaxExternalId'    => AppmaxService::externalId(),
+            // Build do script no ambiente da API — tem que casar com o external_id.
+            'appmaxScriptUrl'     => AppmaxService::scriptUrl(),
         ]);
     }
 

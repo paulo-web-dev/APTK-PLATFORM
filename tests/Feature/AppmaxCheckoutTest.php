@@ -41,6 +41,7 @@ class AppmaxCheckoutTest extends TestCase
             'appmax.webhook_token'          => 'tok-teste',
             'appmax.max_installments'       => 3,
             'appmax.min_installment_value'  => 30.00,
+            'appmax.http_retry_sleep_ms'    => 0,
         ]);
     }
 
