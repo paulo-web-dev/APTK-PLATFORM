@@ -361,4 +361,81 @@ class CatalogoImportarPlanilhaTest extends TestCase
 
         $this->assertSame($antes, $p->fresh()->getAttributes());
     }
+
+    // ---- catalogo:produto-teste ------------------------------------------
+
+    public function test_produto_teste_cria_ativo_em_bases_a_um_real_com_placeholder(): void
+    {
+        $this->artisan('catalogo:produto-teste')
+            ->expectsOutputToContain('Criado o produto de teste')
+            ->assertSuccessful();
+
+        $p = Product::where('slug', 'teste')->sole();
+        $this->assertSame('Teste', $p->name);
+        $this->assertSame('TESTE', $p->sku);
+        $this->assertTrue($p->active);
+        $this->assertSame('bases', $p->category->slug);
+        $this->assertSame(['100 ml'], $p->sizes);
+        $this->assertSame(1.0, $p->priceForSize('100 ml'));
+        $this->assertTrue($p->temPreco());
+        $this->assertSame(0, $p->images()->count()); // vitrine mostra o placeholder
+    }
+
+    public function test_produto_teste_e_idempotente_e_remover_so_desativa(): void
+    {
+        $this->artisan('catalogo:produto-teste')->assertSuccessful();
+        $this->artisan('catalogo:produto-teste')->assertSuccessful();
+        $this->assertSame(1, Product::where('slug', 'teste')->count());
+
+        $this->artisan('catalogo:produto-teste --remover')
+            ->expectsOutputToContain('desativado')
+            ->assertSuccessful();
+        $p = Product::where('slug', 'teste')->sole();
+        $this->assertFalse($p->active);
+
+        // Alguém mexeu no preço pelo admin; rodar de novo reativa e repõe.
+        $p->update(['size_prices' => ['100 ml' => 50.00], 'price' => 50.00]);
+        $this->artisan('catalogo:produto-teste')
+            ->expectsOutputToContain('Reativado')
+            ->assertSuccessful();
+        $p->refresh();
+        $this->assertTrue($p->active);
+        $this->assertSame(1.0, $p->priceForSize('100 ml'));
+        $this->assertSame(1, Product::where('slug', 'teste')->count());
+    }
+
+    public function test_remover_sem_produto_nao_quebra(): void
+    {
+        $this->artisan('catalogo:produto-teste --remover')
+            ->expectsOutputToContain('não existe')
+            ->assertSuccessful();
+        $this->assertSame(0, Product::count());
+    }
+
+    public function test_importar_planilha_nao_mexe_no_produto_teste(): void
+    {
+        $this->artisan('catalogo:produto-teste')->assertSuccessful();
+        $antes = Product::where('slug', 'teste')->sole()->getAttributes();
+
+        $this->importar()->assertSuccessful();
+
+        $this->assertSame($antes, Product::where('slug', 'teste')->sole()->getAttributes());
+    }
+
+    public function test_grupo_teste_na_planilha_e_ignorado(): void
+    {
+        $this->artisan('catalogo:produto-teste')->assertSuccessful();
+        $antes = Product::where('slug', 'teste')->sole()->getAttributes();
+
+        $csv = storage_path('framework/testing/planilha-com-teste.csv');
+        File::put($csv, "grupo,nome,marca,volume,sku,preco,foto_frente,foto_verso\nteste,Teste Planilha,aptk,750ml,X750,999.00,,\n");
+
+        $this->artisan('catalogo:importar-planilha', ['--csv' => $csv, '--fotos' => $this->fotos])
+            ->expectsOutputToContain('produto de teste de pagamento, ignorado')
+            ->assertSuccessful();
+
+        File::delete($csv);
+        $this->assertSame($antes, Product::where('slug', 'teste')->sole()->getAttributes());
+        $this->assertSame(1, Product::where('slug', 'teste')->count());
+    }
 }

@@ -82,6 +82,8 @@ esse arquivo o admin apaga do disco. Upload ADICIONA como principal.
 **Catálogo** vem de `catalogo:importar-planilha` (CSV em `database/data/`): ativo =
 ao menos 1 volume com preço; foto antiga do site sai da galeria; upload do admin
 nunca é tocado. Admin não deixa ativar produto sem preço (`Product::temPreco()`).
+`catalogo:produto-teste [--remover]`: produto "Teste" (slug `teste`, 100 ml a
+R$ 1,00, Bases) para teste de pagamento real; o importador nunca toca nele.
 
 **Voz da marca:** leve, detalhista, inspiradora. "Alquimia de histórias".
 "Feito por humanos inquietos." Narrativa e construção de valor acima de preço/desconto.

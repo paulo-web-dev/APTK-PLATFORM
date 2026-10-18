@@ -174,6 +174,14 @@ class CatalogoImportarPlanilha extends Command
         $this->newLine();
 
         foreach ($grupos as $grupo => $linhas) {
+            // Produto de teste de pagamento (catalogo:produto-teste): nunca
+            // é da planilha, mesmo que alguém crie um grupo com esse nome.
+            if ($grupo === CatalogoProdutoTeste::SLUG) {
+                $this->avisos[] = "{$grupo}: é o produto de teste de pagamento, ignorado";
+
+                continue;
+            }
+
             $plano = $this->planejar($grupo, $linhas);
             $this->imprimir($plano);
 
