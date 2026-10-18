@@ -7,6 +7,7 @@ use App\Models\MicrovixLog;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\AppmaxService;
 use App\Services\CartService;
 use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,9 +24,16 @@ class MicrovixDesligadoTest extends TestCase
 {
     use RefreshDatabase;
 
+    /** Situação que a consulta à Appmax devolve (o webhook confirma antes de agir). */
+    protected string $situacaoAppmax = 'pago';
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->partialMock(AppmaxService::class, fn ($m) => $m
+            ->shouldReceive('consultarSituacao')
+            ->andReturnUsing(fn () => $this->situacaoAppmax));
 
         // Como no .env de produção hoje (ou variáveis ausentes).
         config([

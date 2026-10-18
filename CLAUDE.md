@@ -95,7 +95,9 @@ Credenciais da própria loja geradas no painel (menu API): `APPMAX_CLIENT_ID/SEC
 sobre o legado do fluxo de instalação (settings + `APPMAX_ENV`). O script do
 Appmax JS segue o ambiente da API URL. Cartão só com token do Appmax JS (dado cru
 é recusado). Retry só no token e em GET — POST de pedido/pagamento nunca repete.
-Webhook em `/webhooks/appmax/{token}`. Ver ESTADO-ATUAL §9.
+Webhook em `/webhooks/appmax/{token}`, formato do painel (sem assinatura): o
+controller confirma o status em `GET /v1/orders/{id}` antes de agir e responde
+503 pra Appmax retentar se a consulta falhar. Ver ESTADO-ATUAL §9.
 
 **Frete** (leva 08): estimativa própria, sem transportadora. `FreteService` +
 `config/frete.php`: origem SP capital, tabela de referência dos Correios por

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Webhooks;
 
+use App\Exceptions\AppmaxException;
 use App\Http\Controllers\Controller;
 use App\Jobs\EnviarPedidoMicrovix;
 use App\Models\Order;
+use App\Services\AppmaxService;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,22 +14,76 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Webhook da Appmax (Apphooks).
+ * Webhook da Appmax.
  *
- * Cadastrar no painel Appmax (Configurações → Apphooks → Novo Webhook):
- *   URL:      https://SEU-DOMINIO/webhooks/appmax/{APPMAX_WEBHOOK_TOKEN}
- *   Eventos:  OrderApproved, OrderPaid, OrderPaidByPix, OrderAuthorized,
- *             PaymentNotAuthorized, OrderRefund, PixExpired, BoletoExpired,
- *             ChargebackDispute
+ * Formato principal: WEBHOOKS DO PAINEL (loja própria, painel → API →
+ * Webhooks; doc guides/webhooks-painel):
+ *   {"environment": "production", "event": "OrderPaid", "data": {"id": 99042, ...}}
+ *   event em PascalCase; data.id = id do pedido na Appmax; User-Agent: apphook.
+ * O formato da Appstore (event em snake_case, ex. order_paid) segue aceito.
  *
- * A origem é validada pelo token secreto na URL (a Appmax v3 não assina o
- * corpo). Como defesa extra, só atualizamos pedidos que já têm o
- * appmax_order_id correspondente gravado localmente.
+ * URL: https://SEU-DOMINIO/webhooks/appmax/{APPMAX_WEBHOOK_TOKEN}
+ *
+ * Segurança: as entregas NÃO são assinadas. Defesas, como a doc manda:
+ *   1. token secreto no caminho da URL;
+ *   2. só mexe em pedido que já tem o appmax_order_id gravado aqui;
+ *   3. antes de mudar status, CONFIRMA na API (GET /v1/orders/{id}): o
+ *      evento é só o gatilho, quem decide é o status consultado. Evento
+ *      forjado, atrasado ou fora de ordem não muda nada.
+ *
+ * Resposta: 2xx = entregue. Se a consulta à Appmax falhar, devolve 503 e
+ * a Appmax retenta (até 4 entregas: +10s, +100s, +~17min).
  */
 class AppmaxWebhookController extends Controller
 {
-    public function __construct(protected OrderService $orders)
-    {
+    /** Gatilho → ação. Painel (PascalCase) e Appstore (snake_case). */
+    protected const ACOES = [
+        // Pagamento: confirma "pago" na API antes de aprovar. Autorizado
+        // (antifraude) também consulta — só aprova quando a API disser pago.
+        'OrderApproved'            => 'pagamento',
+        'OrderPaid'                => 'pagamento',
+        'OrderPaidByPix'           => 'pagamento',
+        'OrderIntegrated'          => 'pagamento',
+        'OrderPendingIntegration'  => 'pagamento',
+        'OrderAuthorized'          => 'pagamento',
+        'OrderAuthorizedWithDelay' => 'pagamento',
+        'order_approved'              => 'pagamento',
+        'order_paid'                  => 'pagamento',
+        'order_paid_by_pix'           => 'pagamento',
+        'order_integrated'            => 'pagamento',
+        'order_authorized'            => 'pagamento',
+        'order_authorized_with_delay' => 'pagamento',
+
+        // Recusa / expiração: cancela e devolve estoque (se não pago).
+        'PaymentNotAuthorized'          => 'recusa',
+        'PaymentNotAuthorizedWithDelay' => 'recusa',
+        'OrderRefusedByRisk'            => 'recusa',
+        'payment_not_authorized'        => 'recusa',
+        'OrderPixExpired'               => 'expiracao',
+        'OrderBilletOverdue'            => 'expiracao',
+        'order_pix_expired'             => 'expiracao',
+        'order_billet_overdue'          => 'expiracao',
+
+        // Estorno total e chargeback.
+        'OrderRefund'                   => 'estorno',
+        'order_refund'                  => 'estorno',
+        'OrderChargeBackInTreatment'    => 'chargeback',
+        'order_chargeback_in_treatment' => 'chargeback',
+
+        // Só registro (incidente no pedido, sem mudar status).
+        'OrderPartialRefund'  => 'estorno_parcial',
+        'OrderChargeBackGain' => 'chargeback_ganho',
+
+        // Nomes antigos que este controller aceitava (compatibilidade).
+        'PixExpired'        => 'expiracao',
+        'BoletoExpired'     => 'expiracao',
+        'ChargebackDispute' => 'chargeback',
+    ];
+
+    public function __construct(
+        protected OrderService $orders,
+        protected AppmaxService $appmax,
+    ) {
     }
 
     public function handle(Request $request, string $token): JsonResponse
@@ -43,21 +99,32 @@ class AppmaxWebhookController extends Controller
         $event = (string) $request->input('event', '');
         $data  = (array) $request->input('data', []);
 
-        // O id do pedido Appmax: o payload varia por evento (doc 1.2) —
-        // procura nas posições conhecidas.
+        // O id do pedido Appmax: data.id no painel; as outras posições
+        // cobrem as variações da Appstore.
         $appmaxOrderId = (int) (
-            $data['order']['id']
+            $data['id']
+            ?? $data['order']['id']
             ?? $data['order_id']
-            ?? $data['id']
             ?? $request->input('order.id')
             ?? $request->input('order_id')
             ?? 0
         );
 
-        Log::info('Appmax webhook recebido', ['event' => $event, 'appmax_order_id' => $appmaxOrderId]);
+        Log::info('Appmax webhook recebido', [
+            'event'           => $event,
+            'appmax_order_id' => $appmaxOrderId,
+            'user_agent'      => $request->userAgent(),
+        ]);
 
         if (! $event || ! $appmaxOrderId) {
             return response()->json(['ok' => true, 'ignored' => 'payload sem event/data.id']);
+        }
+
+        $acao = self::ACOES[$event] ?? null;
+        if (! $acao) {
+            Log::info('Appmax webhook: evento sem tratamento', ['event' => $event]);
+
+            return response()->json(['ok' => true, 'ignored' => 'evento sem tratamento']);
         }
 
         // 2) Localiza o pedido local vinculado.
@@ -68,35 +135,50 @@ class AppmaxWebhookController extends Controller
             return response()->json(['ok' => true, 'ignored' => 'pedido não encontrado']);
         }
 
-        // 3) Aplica o evento (idempotente: reprocessar não duplica efeito).
-        // Eventos oficiais em snake_case (doc 1.2); nomes PascalCase antigos
-        // mantidos por compatibilidade.
-        match (true) {
-            in_array($event, [
-                'order_approved', 'order_paid', 'order_paid_by_pix',
-                'order_authorized', 'order_authorized_with_delay', 'order_integrated',
-                'OrderApproved', 'OrderPaid', 'OrderPaidByPix', 'OrderAuthorized', 'OrderIntegrated',
-            ], true) => $this->markPaid($order),
+        // 3) Eventos só de registro não precisam de confirmação.
+        if (in_array($acao, ['estorno_parcial', 'chargeback_ganho'], true)) {
+            $this->registrar($order, $acao, $data);
 
-            in_array($event, ['payment_not_authorized', 'PaymentNotAuthorized'], true)
-                => $this->markFailed($order),
+            return response()->json(['ok' => true]);
+        }
 
-            in_array($event, ['order_pix_expired', 'order_billet_overdue', 'PixExpired', 'BoletoExpired'], true)
-                => $this->markExpired($order),
+        // 4) Confirma na API antes de mudar status (entregas não são assinadas).
+        try {
+            $situacao = $this->appmax->consultarSituacao($order);
+        } catch (AppmaxException $e) {
+            Log::warning('Appmax webhook: confirmação na API falhou, pedindo retentativa', [
+                'event'    => $event,
+                'order_id' => $order->id,
+                'detalhe'  => $e->detalhe,
+            ]);
 
-            in_array($event, ['order_refund', 'order_chargeback_in_treatment', 'OrderRefund', 'ChargebackDispute'], true)
-                => $this->markRefunded($order, $event),
+            return response()->json(['ok' => false, 'retry' => true], 503);
+        }
 
-            default => Log::info('Appmax webhook: evento sem tratamento', ['event' => $event]),
+        // 5) Aplica (idempotente: reprocessar não duplica efeito).
+        $aplicado = match ($acao) {
+            'pagamento'  => $situacao === 'pago' && $this->markPaid($order),
+            'recusa'     => in_array($situacao, ['recusado', 'pendente'], true) && $this->markFailed($order, $situacao),
+            'expiracao'  => in_array($situacao, ['recusado', 'pendente'], true) && $this->markExpired($order),
+            'estorno'    => $situacao === 'estornado' && $this->markRefunded($order, false),
+            'chargeback' => $situacao === 'estornado' && $this->markRefunded($order, true),
         };
 
-        return response()->json(['ok' => true]);
+        if (! $aplicado) {
+            Log::info('Appmax webhook: evento não confirmado pela API, nada mudou', [
+                'event'    => $event,
+                'order_id' => $order->id,
+                'situacao' => $situacao,
+            ]);
+        }
+
+        return response()->json(['ok' => true, 'situacao' => $situacao]);
     }
 
-    protected function markPaid(Order $order): void
+    protected function markPaid(Order $order): bool
     {
         if ($order->isPaid()) {
-            return; // reentrega do evento: nada a fazer, nada a re-enfileirar
+            return true; // reentrega do evento: nada a fazer, nada a re-enfileirar
         }
 
         if ($order->status === 'cancelled') {
@@ -104,7 +186,7 @@ class AppmaxWebhookController extends Controller
             if (in_array($order->payment_status, ['refunded', 'chargeback'], true)) {
                 Log::warning('Appmax webhook: aprovação de pedido estornado ignorada', ['order_id' => $order->id]);
 
-                return;
+                return false;
             }
 
             // Cancelado aqui, pago lá (timeout na cobrança, cartão preso
@@ -128,7 +210,7 @@ class AppmaxWebhookController extends Controller
 
             $this->enfileiraEnvioErp($order, 'confirmar');
 
-            return;
+            return true;
         }
 
         $order->update([
@@ -141,22 +223,37 @@ class AppmaxWebhookController extends Controller
         // ÚLTIMA coisa do tratamento, e nunca derruba a resposta: sem o 200
         // rápido a Appmax retenta e o evento chega duplicado.
         $this->enfileiraEnvioErp($order, 'confirmar');
+
+        return true;
     }
 
-    protected function markFailed(Order $order): void
+    protected function markFailed(Order $order, string $situacao): bool
     {
-        // Cartão recusado em análise posterior: cancela e devolve estoque.
-        if (! $order->isPaid()) {
-            $this->orders->cancelAndRestoreStock($order, 'failed');
+        if ($order->isPaid()) {
+            // Recusado pelo antifraude DEPOIS de aprovado aqui: a Appmax
+            // estorna; o admin decide (o pedido pode já ter sido separado).
+            $order->registrarIncidente(
+                "Appmax recusou o pagamento (situação \"{$situacao}\") com o pedido já pago aqui. Conferir no painel antes de enviar."
+            );
+            Log::warning('Appmax webhook: INCIDENTE — recusa de pedido já pago', ['order_id' => $order->id]);
+
+            return true;
         }
+
+        // Cartão recusado em análise posterior: cancela e devolve estoque.
+        $this->orders->cancelAndRestoreStock($order, 'failed');
+
+        return true;
     }
 
-    protected function markExpired(Order $order): void
+    protected function markExpired(Order $order): bool
     {
         // Pix/boleto venceu sem pagamento: libera o estoque reservado.
         if (! $order->isPaid()) {
             $this->orders->cancelAndRestoreStock($order, 'expired');
         }
+
+        return true;
     }
 
     /** Enfileirar o espelho no ERP jamais pode quebrar a resposta do webhook. */
@@ -173,13 +270,30 @@ class AppmaxWebhookController extends Controller
         }
     }
 
-    protected function markRefunded(Order $order, string $event): void
+    protected function markRefunded(Order $order, bool $isChargeback): bool
     {
-        $isChargeback = in_array($event, ['order_chargeback_in_treatment', 'ChargebackDispute'], true);
-
         $order->update([
             'payment_status' => $isChargeback ? 'chargeback' : 'refunded',
             'status'         => 'cancelled',
         ]);
+
+        return true;
+    }
+
+    /** Estorno parcial e chargeback ganho: só trilha pro admin. */
+    protected function registrar(Order $order, string $acao, array $data): void
+    {
+        $valor = $data['refund_amount'] ?? $data['total_refunded'] ?? null;
+
+        $texto = $acao === 'estorno_parcial'
+            ? 'Estorno PARCIAL feito na Appmax'.(is_numeric($valor) ? ' (R$ '.number_format((float) $valor, 2, ',', '.').')' : '').'. Status do pedido não mudou.'
+            : 'Chargeback ganho na Appmax: o valor voltou para a loja. Conferir o status do pedido.';
+
+        // Reentrega não duplica a trilha.
+        if (! collect($order->incidentes())->contains('texto', $texto)) {
+            $order->registrarIncidente($texto);
+        }
+
+        Log::info('Appmax webhook: '.$acao.' registrado', ['order_id' => $order->id]);
     }
 }

@@ -140,6 +140,12 @@ class AppmaxCheckoutTest extends TestCase
         });
     }
 
+    /** A consulta GET /v1/orders/20 passa a responder este status. */
+    protected function appmaxDiz(string $status): void
+    {
+        $this->rotas['GET /v1/orders/20'] = fn () => Http::response(['data' => ['order' => ['id' => 20, 'status' => $status]]]);
+    }
+
     protected function enviado(string $metodo, string $caminho): ?array
     {
         $req = collect(Http::recorded())
@@ -383,6 +389,7 @@ class AppmaxCheckoutTest extends TestCase
         $this->assertSame('cancelled', $order->status);
         $this->assertSame(5, $p->refresh()->size_stock['750 ml']);
 
+        $this->appmaxDiz('aprovado');
         Log::spy();
         $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_approved', 'data' => ['id' => 20]])->assertOk();
 
@@ -410,6 +417,7 @@ class AppmaxCheckoutTest extends TestCase
         $this->post('/checkout', $this->dados());
         $p->update(['size_stock' => ['375 ml' => 5, '750 ml' => 0]]); // outro cliente levou
 
+        $this->appmaxDiz('aprovado');
         $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_approved', 'data' => ['id' => 20]])->assertOk();
 
         $order = Order::sole();
@@ -426,6 +434,7 @@ class AppmaxCheckoutTest extends TestCase
         $order = Order::sole();
         $order->update(['status' => 'cancelled', 'payment_status' => 'refunded']);
 
+        $this->appmaxDiz('aprovado');
         $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_approved', 'data' => ['id' => 20]])->assertOk();
 
         $this->assertSame('refunded', $order->refresh()->payment_status);

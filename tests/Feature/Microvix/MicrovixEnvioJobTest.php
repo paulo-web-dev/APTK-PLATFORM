@@ -4,6 +4,7 @@ namespace Tests\Feature\Microvix;
 
 use App\Exceptions\MicrovixException;
 use App\Jobs\EnviarPedidoMicrovix;
+use App\Services\AppmaxService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -20,9 +21,16 @@ class MicrovixEnvioJobTest extends TestCase
     use MontaPedidoParaEnvio;
     use RefreshDatabase;
 
+    /** Situação que a consulta à Appmax devolve (o webhook confirma antes de agir). */
+    protected string $situacaoAppmax = 'pago';
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->partialMock(AppmaxService::class, fn ($m) => $m
+            ->shouldReceive('consultarSituacao')
+            ->andReturnUsing(fn () => $this->situacaoAppmax));
         $this->configuraMicrovixParaEnvio();
         config(['appmax.webhook_token' => 'tok-teste']);
     }
@@ -175,6 +183,7 @@ class MicrovixEnvioJobTest extends TestCase
             '*Importador.svc*' => Http::response($this->fixtureMicrovix('importa-sucesso')),
         ]);
 
+        $this->situacaoAppmax = 'recusado'; // Pix expirado: a API diz cancelado
         $this->webhook(['event' => 'order_pix_expired', 'data' => ['id' => 557]])->assertOk();
 
         $order->refresh();

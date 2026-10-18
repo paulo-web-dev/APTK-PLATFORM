@@ -387,6 +387,14 @@ conferir os 26 ativos, rodar sem `--dry-run`, e `config:cache`
   credenciais do APP (fluxo antigo). Com a prioridade nova elas passam a ser
   usadas como merchant e a autenticação falha — trocar pelo par de uma loja
   do sandbox (painel `breakingcode.sandboxappmax.com.br` → API) ou apagar.
+- **Webhook do painel** (painel → API → Webhooks, doc `guides/webhooks-painel`):
+  `{environment, event, data}`, `event` em PascalCase, `data.id` = pedido
+  Appmax, `User-Agent: apphook`. **Sem assinatura**: a defesa é o token no
+  caminho da URL + confirmação na API — o controller consulta
+  `GET /v1/orders/{id}` e só muda status se a situação bater com o evento.
+  Consulta falhou → responde 503 e a Appmax retenta (4 entregas: +10s, +100s,
+  +~17 min). `OrderAuthorized` (antifraude) não marca pago. Estorno parcial e
+  chargeback ganho só viram incidente no pedido. Formato Appstore segue aceito.
 
 ---
 

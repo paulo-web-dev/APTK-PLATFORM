@@ -7,6 +7,7 @@ use App\Models\MicrovixProduct;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\AppmaxService;
 use App\Services\CartService;
 use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,9 +27,16 @@ class MicrovixCheckoutEnvioTest extends TestCase
     use MontaPedidoParaEnvio;
     use RefreshDatabase;
 
+    /** Situação que a consulta à Appmax devolve (o webhook confirma antes de agir). */
+    protected string $situacaoAppmax = 'pago';
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->partialMock(AppmaxService::class, fn ($m) => $m
+            ->shouldReceive('consultarSituacao')
+            ->andReturnUsing(fn () => $this->situacaoAppmax));
         $this->configuraMicrovixParaEnvio();
         config(['appmax.webhook_token' => 'tok-teste']);
     }
