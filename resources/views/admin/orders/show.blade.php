@@ -57,11 +57,23 @@
         </div>
 
         <div>
-            @if ($order->appmax_order_id)
+            @if ($order->appmax_order_id || filled($order->payment_details['erro_gateway'] ?? null) || $order->incidentes())
             <div class="panel">
                 <div class="panel-head">Pagamento · Appmax</div>
                 <div class="panel-body">
-                    <div class="kv"><span class="k">Pedido Appmax</span><span class="v">#{{ $order->appmax_order_id }}</span></div>
+                    @foreach ($order->incidentes() as $incidente)
+                        <div class="alert-ok" style="color:var(--color-danger); border-left-color:var(--color-danger); margin-bottom:12px;">
+                            <strong>Incidente ({{ $incidente['em'] }}):</strong> {{ $incidente['texto'] }}
+                        </div>
+                    @endforeach
+                    @if ($order->pagamentoEmVerificacao())
+                        <div class="alert-ok" style="margin-bottom:12px;">
+                            Pagamento em verificação: a cobrança do cartão não teve resposta da Appmax. A consulta automática (a cada 15 min) ou o webhook resolve.
+                        </div>
+                    @endif
+                    @if ($order->appmax_order_id)
+                        <div class="kv"><span class="k">Pedido Appmax</span><span class="v">#{{ $order->appmax_order_id }}</span></div>
+                    @endif
                     @if ($order->appmax_pay_reference)
                         <div class="kv"><span class="k">Referência</span><span class="v">{{ $order->appmax_pay_reference }}</span></div>
                     @endif
@@ -71,6 +83,10 @@
                     @endif
                     @if (($order->payment_details['type'] ?? null) === 'cartao')
                         <div class="kv"><span class="k">Parcelas</span><span class="v">{{ $order->payment_details['installments'] ?? 1 }}×</span></div>
+                    @endif
+                    @if (filled($order->payment_details['erro_gateway'] ?? null))
+                        {{-- Texto cru da Appmax: só aqui, nunca na tela do cliente. --}}
+                        <div class="kv"><span class="k">Erro do gateway</span><span class="v" style="font-family:var(--font-mono); font-size:var(--text-xs); white-space:normal; text-align:right;">{{ $order->payment_details['erro_gateway'] }}</span></div>
                     @endif
 
                     @if ($order->isPaid())

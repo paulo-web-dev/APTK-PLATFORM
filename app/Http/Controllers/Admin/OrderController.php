@@ -76,7 +76,8 @@ class OrderController extends Controller
         try {
             $appmax->refund($order);
         } catch (AppmaxException $e) {
-            return back()->with('error', $e->getMessage());
+            // Admin vê o texto cru da Appmax junto (o cliente nunca vê).
+            return back()->with('error', $e->getMessage().($e->detalhe ? ' ('.$e->detalhe.')' : ''));
         }
 
         $order->update(['payment_status' => 'refunded', 'status' => 'cancelled']);

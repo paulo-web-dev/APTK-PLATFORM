@@ -260,6 +260,63 @@ class OrderService
     }
 
     /**
+     * Inverso do cancelAndRestoreStock: a Appmax aprovou um pedido que aqui
+     * já estava cancelado (timeout na cobrança, cartão preso cancelado antes
+     * do webhook). O dinheiro entrou — o pedido volta a valer e a reserva de
+     * estoque é retomada, com o mesmo lock da criação.
+     *
+     * Estoque não trava a reativação (a venda já aconteceu): se o saldo não
+     * cobre mais, baixa até zero e devolve a lista do que faltou, para o
+     * incidente avisar o admin.
+     *
+     * @return list<string>  itens sem saldo suficiente ("Nome (vol): pedia N, havia M")
+     */
+    public function reativarPago(Order $order): array
+    {
+        $faltas = [];
+
+        DB::transaction(function () use ($order, &$faltas) {
+            $produtos = Product::whereIn('id', $order->items->pluck('product_id')->filter()->unique())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($order->items as $item) {
+                $rotulo = $item->product_name.($item->size ? " ({$item->size})" : '');
+                $product = $produtos->get($item->product_id);
+
+                if (! $product) {
+                    $faltas[] = "{$rotulo}: produto não existe mais";
+
+                    continue;
+                }
+
+                if (($saldo = $product->stockForSize($item->size)) !== null) {
+                    if ($saldo < $item->qty) {
+                        $faltas[] = "{$rotulo}: pedia {$item->qty}, havia {$saldo}";
+                    }
+
+                    $porVolume = $product->size_stock;
+                    $porVolume[$item->size] = max(0, $saldo - (int) $item->qty);
+                    $product->size_stock = $porVolume;
+                }
+
+                $product->stock_qty = max(0, (int) $product->stock_qty - (int) $item->qty);
+                $product->save();
+            }
+
+            $order->update([
+                'status'         => 'processing',
+                'payment_status' => 'paid',
+                'paid_at'        => $order->paid_at ?? now(),
+            ]);
+        });
+
+        return $faltas;
+    }
+
+    /**
      * Devolve os itens de um pedido ao carrinho da sessão (produto + volume),
      * para o cliente tentar pagar de novo sem remontar a sacola.
      */

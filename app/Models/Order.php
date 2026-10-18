@@ -98,6 +98,37 @@ class Order extends Model
         return in_array($this->payment_status, ['pending', 'processing'], true);
     }
 
+    /**
+     * Cobrança de cartão com resultado indefinido (timeout/5xx): o pedido
+     * fica pending até a reconciliação pela consulta da Appmax ou o webhook.
+     */
+    public function pagamentoEmVerificacao(): bool
+    {
+        return ! $this->isPaid()
+            && $this->status !== 'cancelled'
+            && (bool) ($this->payment_details['em_verificacao'] ?? false);
+    }
+
+    /** Incidentes de pagamento (ex.: aprovado depois de cancelado) — o admin vê no pedido. */
+    public function incidentes(): array
+    {
+        return $this->payment_details['incidentes'] ?? [];
+    }
+
+    public function registrarIncidente(string $texto): void
+    {
+        $details = $this->payment_details ?? [];
+        $details['incidentes'][] = ['em' => now()->format('d/m/Y H:i'), 'texto' => $texto];
+
+        $this->update(['payment_details' => $details]);
+    }
+
+    /** Mescla chaves em payment_details sem perder as existentes. */
+    public function mesclarPaymentDetails(array $novos): void
+    {
+        $this->update(['payment_details' => array_merge($this->payment_details ?? [], $novos)]);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

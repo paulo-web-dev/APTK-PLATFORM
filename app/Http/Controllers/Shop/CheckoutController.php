@@ -9,10 +9,12 @@ use App\Models\Order;
 use App\Services\AppmaxService;
 use App\Services\CartService;
 use App\Models\Setting;
+use App\Services\FreteService;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 /**
@@ -24,15 +26,28 @@ use Illuminate\View\View;
  *   3. Appmax: cria cliente → cria pedido → processa o pagamento
  *      - pix    → guarda QR/copia-e-cola; pedido fica pendente até o webhook
  *      - boleto → guarda linha/PDF; idem
- *      - cartão → aprovação na hora; recusa cancela o pedido local, devolve
- *        estoque, devolve o carrinho e volta ao checkout com o erro
+ *      - cartão → aprovação na hora; recusa CLARA cancela o pedido local,
+ *        devolve estoque, devolve o carrinho e volta ao checkout com o erro.
+ *        Timeout/rede/5xx na cobrança NÃO cancela (pode ter cobrado): o
+ *        pedido fica pending "em verificação" até a consulta à Appmax
+ *        (pedidos:cancelar-cartao-preso) ou o webhook resolver.
+ *
+ * Cartão SÓ com token do Appmax JS: número e CVV nunca passam por aqui
+ * (sem PCI-DSS a doc não permite). Request que traga esses campos é
+ * rejeitado e logado, sem os valores.
  */
 class CheckoutController extends Controller
 {
+    /** Dados crus de cartão: nenhum deles pode chegar ao servidor. */
+    protected const CAMPOS_CARTAO_PROIBIDOS = ['card_number', 'card_cvv', 'card-number', 'cvv'];
+
+    public const MSG_CARTAO_NAO_VALIDADO = 'Não foi possível validar o cartão. Confira os dados e tente de novo, ou escolha Pix ou boleto.';
+
     public function __construct(
         protected CartService $cart,
         protected OrderService $orders,
         protected AppmaxService $appmax,
+        protected FreteService $frete,
     ) {
     }
 
@@ -42,12 +57,17 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
+        $env = config('appmax.environment', 'sandbox');
+
         return view('shop.checkout', [
-            'items'             => $this->cart->items(),
-            'total'             => $this->cart->total(),
-            'maxInstallments'   => (int) config('appmax.max_installments', 12),
-            // external_id da instalação — referenciado pela doc de tokenização (5.2.3).
-            'appmaxExternalId'  => Setting::get('appmax_install_external_id'),
+            'items'               => $this->cart->items(),
+            'total'               => $this->cart->total(),
+            'maxInstallments'     => max(1, (int) config('appmax.max_installments', 3)),
+            'minInstallmentValue' => (float) config('appmax.min_installment_value', 30.00),
+            // external_id da instalação: obrigatório pra tokenização (doc Appmax JS).
+            'appmaxExternalId'    => Setting::get('appmax_install_external_id'),
+            // Build do script por ambiente — tem que casar com o external_id.
+            'appmaxScriptUrl'     => config("appmax.script_urls.{$env}"),
         ]);
     }
 
@@ -57,7 +77,39 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
+        // Dado cru de cartão no request: o front nunca manda (tokeniza no
+        // navegador). Se chegou, é página velha ou request forjado — rejeita
+        // e loga só QUAIS campos vieram, nunca os valores.
+        $proibidos = array_values(array_filter(self::CAMPOS_CARTAO_PROIBIDOS, fn ($k) => filled($request->input($k))));
+        if ($proibidos) {
+            Log::warning('Checkout: request com dado cru de cartão rejeitado', [
+                'campos'  => $proibidos,
+                'user_id' => $request->user()?->id,
+                'ip'      => $request->ip(),
+            ]);
+
+            return redirect()
+                ->route('checkout.index')
+                ->withInput($request->except([...self::CAMPOS_CARTAO_PROIBIDOS, 'appmax_token']))
+                ->with('payment_error', self::MSG_CARTAO_NAO_VALIDADO);
+        }
+
         $data = $request->validate($this->rules($request), $this->messages());
+
+        // Parcelas: o limite depende do total COM frete (parcela mínima).
+        // Mesmo cálculo do OrderService, antes de gravar qualquer coisa.
+        if ($data['payment_method'] === 'cartao') {
+            $items = $this->cart->items();
+            $frete = $this->frete->opcao($items, (string) $data['zipcode'], $data['shipping_method']);
+            $max = AppmaxService::maxParcelas((float) $items->sum('subtotal') + (float) $frete['valor']);
+
+            if ((int) $data['installments'] > $max) {
+                return redirect()
+                    ->route('checkout.index')
+                    ->withInput($request->except(['appmax_token']))
+                    ->withErrors(['installments' => "Para este valor, parcelamos em até {$max}x sem juros."]);
+            }
+        }
 
         // 1) Pedido local (endereço + itens + baixa de estoque + limpa carrinho).
         //    A revalidação de estoque acontece DENTRO da transação; se algo
@@ -98,13 +150,16 @@ class CheckoutController extends Controller
             };
         } catch (AppmaxException $e) {
             // Falha no gateway: cancela o pedido local, devolve estoque e
-            // devolve os itens ao carrinho pro cliente tentar de novo.
+            // devolve os itens ao carrinho pro cliente tentar de novo. (A
+            // incerteza na cobrança do cartão nem chega aqui — ver
+            // handleCreditCard.) Texto cru da API só no pedido, pro admin.
             $this->orders->cancelAndRestoreStock($order, 'failed');
+            $order->mesclarPaymentDetails(['erro_gateway' => $e->detalhe ?? $e->getMessage()]);
             $this->orders->restoreCartFromOrder($order);
 
             return redirect()
                 ->route('checkout.index')
-                ->withInput($request->except(['card_number', 'card_cvv']))
+                ->withInput($request->except([...self::CAMPOS_CARTAO_PROIBIDOS, 'appmax_token']))
                 ->with('payment_error', $e->getMessage());
         }
     }
@@ -147,32 +202,22 @@ class CheckoutController extends Controller
 
     protected function handleCreditCard(Order $order, array $data): RedirectResponse
     {
-        [$month, $year] = $this->parseExpiry($data['card_expiry']);
+        try {
+            // Token do Appmax JS: o onTokenize({ token }) do front grava no
+            // hidden appmax_token (doc Appmax JS).
+            $charge = $this->appmax->payWithCreditCard($order, [
+                'token'           => $data['appmax_token'],
+                'name'            => $data['card_name'],
+                'document_number' => $data['cpf'],
+                'installments'    => (int) $data['installments'],
+            ]);
+        } catch (AppmaxException $e) {
+            if (! $e->isIndefinido()) {
+                throw $e; // recusa clara: o catch do store() cancela
+            }
 
-        $request = request();
-
-        // Token gerado pelo Appmax JS no navegador (doc 5.2.3). O nome exato
-        // do campo injetado não está documentado — testamos os candidatos e
-        // logamos as chaves recebidas (NUNCA valores) pra confirmar no sandbox.
-        $token = collect(['token', 'appmax_token', 'card_token', 'payment_token'])
-            ->map(fn ($k) => $request->input($k))
-            ->first(fn ($v) => filled($v));
-
-        \Illuminate\Support\Facades\Log::info('Appmax JS: campos do POST de cartão', [
-            'keys'      => array_keys($request->except(['card_number', 'card_cvv', 'card_name', 'card_expiry', '_token'])),
-            'tem_token' => filled($token),
-        ]);
-
-        $charge = $this->appmax->payWithCreditCard($order, [
-            'token'           => $token,
-            'number'          => $data['card_number'] ?? '',
-            'name'            => $data['card_name'],
-            'month'           => $month,
-            'year'            => $year,
-            'cvv'             => $data['card_cvv'] ?? '',
-            'document_number' => $data['cpf'],
-            'installments'    => (int) $data['installments'],
-        ]);
+            return $this->cobrancaIndefinida($order, $data, $e);
+        }
 
         // Sem exceção = cobrança aceita pela Appmax (antifraude pode revisar
         // depois; o webhook ajusta o status se algo mudar).
@@ -187,6 +232,57 @@ class CheckoutController extends Controller
                 'upsell_hash'  => $charge['upsell_hash'],
             ],
         ]);
+
+        return redirect()->route('checkout.success', $order);
+    }
+
+    /**
+     * Timeout, rede ou 5xx na cobrança: a Appmax PODE ter cobrado. Nada de
+     * cancelar. Uma consulta imediata resolve o caso comum (cobrou e só a
+     * resposta se perdeu); sem resposta conclusiva o pedido fica pending
+     * "em verificação" — o webhook ou o pedidos:cancelar-cartao-preso
+     * (que consulta a Appmax antes de qualquer coisa) fecham a conta.
+     */
+    protected function cobrancaIndefinida(Order $order, array $data, AppmaxException $e): RedirectResponse
+    {
+        Log::warning('Checkout: cobrança de cartão indefinida, pedido em verificação', [
+            'order_id'        => $order->id,
+            'appmax_order_id' => $order->appmax_order_id,
+            'detalhe'         => $e->detalhe,
+        ]);
+
+        try {
+            $situacao = $this->appmax->consultarSituacao($order);
+        } catch (AppmaxException) {
+            $situacao = 'desconhecido';
+        }
+
+        if ($situacao === 'recusado') {
+            // Agora é recusa clara: segue o caminho normal de cancelamento.
+            throw new AppmaxException(AppmaxService::MSG_CARTAO_RECUSADO, null, AppmaxException::RECUSADO,
+                ($e->detalhe ?? '').' | consulta posterior: recusado');
+        }
+
+        $details = [
+            'type'         => 'cartao',
+            'installments' => (int) $data['installments'],
+        ];
+
+        if ($situacao === 'pago') {
+            $order->update([
+                'status'          => 'processing',
+                'payment_status'  => 'paid',
+                'paid_at'         => now(),
+                'payment_details' => $details,
+            ]);
+        } else {
+            $order->update([
+                'payment_details' => $details + [
+                    'em_verificacao' => true,
+                    'erro_gateway'   => $e->detalhe,
+                ],
+            ]);
+        }
 
         return redirect()->route('checkout.success', $order);
     }
@@ -238,19 +334,18 @@ class CheckoutController extends Controller
             'notes'           => ['nullable', 'string', 'max:1000'],
         ];
 
-        if ($request->input('payment_method') === 'cartao') {
-            // Se o Appmax JS tokenizou no navegador, os dados brutos do cartão
-            // podem nem chegar (é o comportamento desejado) — só exigimos os
-            // campos crus quando NÃO houver token.
-            $hasToken = collect(['token', 'appmax_token', 'card_token', 'payment_token'])
-                ->contains(fn ($k) => filled($request->input($k)));
+        // Número/CVV crus são proibidos em qualquer método (o store() já
+        // barra antes; isto é o cinto).
+        foreach (self::CAMPOS_CARTAO_PROIBIDOS as $campo) {
+            $rules[$campo] = ['prohibited'];
+        }
 
+        if ($request->input('payment_method') === 'cartao') {
             $rules += [
-                'card_number'  => [$hasToken ? 'nullable' : 'required', 'string', 'regex:/^[\d\s]{16,19}$/'],
+                'appmax_token' => ['required', 'string', 'max:255'],
                 'card_name'    => ['required', 'string', 'max:100'],
-                'card_expiry'  => ['required', 'string', 'regex:/^(0[1-9]|1[0-2])\/?\d{2}$/'],
-                'card_cvv'     => [$hasToken ? 'nullable' : 'required', 'string', 'regex:/^\d{3,4}$/'],
-                'installments' => ['required', 'integer', 'min:1', 'max:'.config('appmax.max_installments', 12)],
+                // Teto fixo aqui; o limite pela parcela mínima vem no store().
+                'installments' => ['required', 'integer', 'min:1', 'max:'.max(1, (int) config('appmax.max_installments', 3))],
             ];
         }
 
@@ -264,17 +359,8 @@ class CheckoutController extends Controller
             'zipcode.regex'     => 'Informe um CEP válido (00000-000).',
             'shipping_method.required' => 'Escolha uma opção de frete.',
             'shipping_method.in'       => 'Escolha uma opção de frete.',
-            'card_number.regex' => 'Informe o número do cartão (16 dígitos).',
-            'card_expiry.regex' => 'Validade no formato MM/AA.',
-            'card_cvv.regex'    => 'CVV com 3 ou 4 dígitos.',
+            'appmax_token.required' => self::MSG_CARTAO_NAO_VALIDADO,
+            'installments.max'      => 'Parcelamos em até '.max(1, (int) config('appmax.max_installments', 3)).'x sem juros.',
         ];
-    }
-
-    /** "09/28" → [9, 2028] */
-    protected function parseExpiry(string $expiry): array
-    {
-        $digits = preg_replace('/\D+/', '', $expiry);
-
-        return [(int) substr($digits, 0, 2), 2000 + (int) substr($digits, 2, 2)];
     }
 }

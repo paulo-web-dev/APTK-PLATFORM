@@ -23,12 +23,35 @@ use Illuminate\Support\Facades\Log;
  *   2. POST /v1/orders     → data.order.id   (⚠️ VALORES EM CENTAVOS, int)
  *   3. POST /v1/payments/{pix|credit-card|boleto}
  *
- * Erros: 422 vem como {errors:{message:{campo:[msgs]}}};
- *        4xx pode vir como {error:{message}} ou {message}.
+ * Erros: 422 vem como {errors:{message:{campo:[msgs]}}} ou {errors:{campo:[msgs]}};
+ *        4xx pode vir como {error:{message}} ou {message}. O texto cru vai
+ *        pro log/admin (AppmaxException::$detalhe); o cliente só vê as
+ *        mensagens amigáveis abaixo.
  */
 class AppmaxService
 {
     protected const TOKEN_CACHE_KEY = 'appmax_merchant_access_token';
+
+    public const MSG_INDISPONIVEL = 'O pagamento está indisponível no momento. Tente novamente em instantes.';
+    public const MSG_DADOS_INVALIDOS = 'Alguns dados não foram aceitos pelo processador de pagamento. Confira nome, CPF, telefone e endereço e tente de novo.';
+    public const MSG_CARTAO_RECUSADO = 'Pagamento não autorizado pela operadora do cartão. Confira os dados ou tente outro cartão.';
+
+    /** Status da Appmax (doc "Status de pedidos") → situação do pagamento aqui. */
+    protected const SITUACAO_POR_STATUS = [
+        'aprovado'                       => 'pago',
+        'integrado'                      => 'pago',
+        'pendente_integracao'            => 'pago',
+        'pendente_integracao_em_analise' => 'pago',
+        'autorizado'                     => 'em_analise', // antifraude, ainda pode ir pra aprovado
+        'pendente'                       => 'pendente',
+        'cancelado'                      => 'recusado',
+        'recusado_por_risco'             => 'recusado',
+        'estornado'                      => 'estornado',
+        'chargeback_em_tratativa'        => 'estornado',
+        'chargeback_em_disputa'          => 'estornado',
+        'chargeback_perdido'             => 'estornado',
+        'chargeback_vencido'             => 'estornado',
+    ];
 
     /* -----------------------------------------------------------------
      | Credenciais e autenticação do merchant
@@ -64,7 +87,8 @@ class AppmaxService
         $c = $this->merchantCredentials();
 
         if (! filled($c['client_id']) || ! filled($c['client_secret'])) {
-            throw new AppmaxException('Pagamento indisponível: credenciais do merchant Appmax ausentes (instalação do app não concluída?).');
+            throw new AppmaxException(self::MSG_INDISPONIVEL, null, AppmaxException::INDISPONIVEL,
+                'Credenciais do merchant Appmax ausentes (instalação do app não concluída?).');
         }
 
         $env     = config('appmax.environment', 'sandbox');
@@ -80,14 +104,17 @@ class AppmaxService
                 ]);
         } catch (\Throwable $e) {
             Log::error('Appmax: falha ao autenticar merchant', ['erro' => $e->getMessage()]);
-            throw new AppmaxException('Não conseguimos falar com o processador de pagamento. Tente novamente em instantes.');
+            // Sem token nenhuma cobrança saiu: indisponível, não indefinido.
+            throw new AppmaxException(self::MSG_INDISPONIVEL, null, AppmaxException::INDISPONIVEL,
+                'Falha de conexão na autenticação: '.$e->getMessage());
         }
 
         $json = $response->json();
 
         if (! $response->successful() || empty($json['access_token'])) {
             Log::error('Appmax: autenticação do merchant recusada', ['status' => $response->status(), 'body' => $json]);
-            throw new AppmaxException('Pagamento indisponível no momento (falha de autenticação com o gateway).');
+            throw new AppmaxException(self::MSG_INDISPONIVEL, null, AppmaxException::INDISPONIVEL,
+                'Autenticação do merchant recusada (HTTP '.$response->status().').');
         }
 
         $ttl = max(60, (int) ($json['expires_in'] ?? 3600) - 120);
@@ -108,41 +135,73 @@ class AppmaxService
             ->timeout(config('appmax.http_timeout', 30));
     }
 
+    /** POST autenticado (ver request()). */
+    protected function post(string $endpoint, array $body, string $friendlyError): array
+    {
+        return $this->request('post', $endpoint, $body, $friendlyError);
+    }
+
     /**
-     * POST autenticado. Se o Bearer expirou no meio do caminho (401),
+     * Requisição autenticada. Se o Bearer expirou no meio do caminho (401),
      * renova uma vez e repete — padrão da doc 1.1.5 (sem refresh token).
+     *
+     * Classifica a falha (AppmaxException::$tipo):
+     *   - timeout, rede, 5xx, 408, 2xx ilegível → INDEFINIDO (pode ter processado)
+     *   - 4xx no cartão                         → RECUSADO (mensagem de recusa)
+     *   - 422                                   → DADOS_INVALIDOS
+     *   - demais 4xx                            → INDISPONIVEL (nada processado)
      *
      * @throws AppmaxException
      */
-    protected function post(string $endpoint, array $body, string $friendlyError): array
+    protected function request(string $method, string $endpoint, array $body, string $friendlyError): array
     {
         try {
-            $response = $this->client()->post($endpoint, $body);
+            $response = $this->client()->{$method}($endpoint, $body);
 
             if ($response->status() === 401) {
                 Cache::forget(self::TOKEN_CACHE_KEY);
-                $response = $this->client()->post($endpoint, $body);
+                $response = $this->client()->{$method}($endpoint, $body);
             }
         } catch (AppmaxException $e) {
             throw $e;
         } catch (\Throwable $e) {
             Log::error('Appmax: falha de conexão', ['endpoint' => $endpoint, 'erro' => $e->getMessage()]);
-            throw new AppmaxException('Não conseguimos falar com o processador de pagamento. Tente novamente em instantes.');
+            throw new AppmaxException(self::MSG_INDISPONIVEL, null, AppmaxException::INDEFINIDO,
+                'Falha de conexão/timeout em '.$endpoint.': '.$e->getMessage());
         }
 
         $json = $response->json();
+        $status = $response->status();
 
-        if (! $response->successful() || ! is_array($json)) {
-            Log::warning('Appmax: resposta com erro', [
-                'endpoint' => $endpoint,
-                'status'   => $response->status(),
-                'body'     => $this->safeErrorBody($endpoint, $json),
-            ]);
-
-            throw new AppmaxException($this->extractErrorMessage($json) ?? $friendlyError, is_array($json) ? $json : null);
+        if ($response->successful() && is_array($json)) {
+            return $json['data'] ?? $json;
         }
 
-        return $json['data'] ?? $json;
+        $detalhe = 'HTTP '.$status.' em '.$endpoint.($this->extractErrorMessage($json) ? ': '.$this->extractErrorMessage($json) : '');
+
+        Log::warning('Appmax: resposta com erro', [
+            'endpoint' => $endpoint,
+            'status'   => $status,
+            'body'     => $this->safeErrorBody($endpoint, $json),
+        ]);
+
+        $apiResponse = is_array($json) ? $json : null;
+        $isCartao = str_contains($endpoint, 'credit-card');
+
+        [$mensagem, $tipo] = match (true) {
+            $response->successful(), $status >= 500, $status === 408
+                => [self::MSG_INDISPONIVEL, AppmaxException::INDEFINIDO],
+            $isCartao && ! in_array($status, [401, 403, 429], true)
+                => [$friendlyError, AppmaxException::RECUSADO],
+            $status === 422
+                => [self::MSG_DADOS_INVALIDOS, AppmaxException::DADOS_INVALIDOS],
+            in_array($status, [401, 403, 429], true)
+                => [self::MSG_INDISPONIVEL, AppmaxException::INDISPONIVEL],
+            default
+                => [$friendlyError, AppmaxException::INDISPONIVEL],
+        };
+
+        throw new AppmaxException($mensagem, $apiResponse, $tipo, $detalhe, $status);
     }
 
     /** Nunca logar corpo de resposta de cartão (pode ecoar dados sensíveis). */
@@ -151,25 +210,36 @@ class AppmaxService
         return str_contains($endpoint, 'credit-card') ? '[omitido - endpoint de cartão]' : $json;
     }
 
-    /** Mensagem legível dos formatos de erro da v4. */
+    /**
+     * Texto CRU do erro da v4, para log/admin (nunca para o cliente).
+     * Formatos: {errors:{message:{campo:[...]}}}, {errors:{campo:[...]}},
+     * {errors:{message:"..."}}, {error:{message}} e {message}.
+     */
     protected function extractErrorMessage(mixed $json): ?string
     {
         if (! is_array($json)) {
             return null;
         }
 
-        // {errors:{message:{campo:["msg", ...], ...}}}
-        if (isset($json['errors']['message']) && is_array($json['errors']['message'])) {
-            $first = collect($json['errors']['message'])->flatten()->first();
-            if (is_string($first)) {
-                return 'Pagamento não concluído: '.$first;
+        if (isset($json['errors']) && is_array($json['errors'])) {
+            $porCampo = is_array($json['errors']['message'] ?? null)
+                ? $json['errors']['message']
+                : $json['errors'];
+
+            $partes = collect($porCampo)
+                ->map(fn ($msgs, $campo) => (is_string($campo) && $campo !== 'message' ? $campo.': ' : '')
+                    .implode(' ', array_filter((array) $msgs, 'is_string')))
+                ->filter(fn ($linha) => trim($linha) !== '' && ! str_ends_with($linha, ': '))
+                ->values();
+
+            if ($partes->isNotEmpty()) {
+                return $partes->implode('; ');
             }
         }
 
-        // {error:{message}} ou {message}
         $msg = $json['error']['message'] ?? $json['message'] ?? null;
 
-        return is_string($msg) && $msg !== '' ? 'Pagamento não concluído: '.$msg : null;
+        return is_string($msg) && $msg !== '' ? $msg : null;
     }
 
     /* -----------------------------------------------------------------
@@ -259,13 +329,25 @@ class AppmaxService
      | 3) Pagamentos  —  POST /v1/payments/*  (docs 5.2/5.3/5.4)
      ------------------------------------------------------------------ */
 
-    /** Pix: QR Code + copia-e-cola (EMV) + expiração. */
+    /**
+     * Pix: QR Code + copia-e-cola (EMV) + expiração.
+     * Resposta em data.payment: pix_qrcode (PNG base64 sem prefixo), pix_emv,
+     * pix_expiration_date ("Y-m-d H:i:s", horário de Brasília).
+     */
     public function payWithPix(Order $order, string $cpf): array
     {
+        // Vencimento por transação: Y-m-d H:i:s no fuso de Brasília, futuro.
+        $expiracao = now('America/Sao_Paulo')
+            ->addMinutes(max(1, (int) config('appmax.pix_expiration_minutes', 60)))
+            ->format('Y-m-d H:i:s');
+
         $data = $this->post('/v1/payments/pix', [
             'order_id'     => $order->appmax_order_id,
             'payment_data' => [
-                'pix' => ['document_number' => $this->digits($cpf)],
+                'pix' => [
+                    'document_number' => $this->digits($cpf),
+                    'expiration_date' => $expiracao,
+                ],
             ],
         ], 'Não foi possível gerar a chave Pix. Tente novamente.');
 
@@ -278,37 +360,34 @@ class AppmaxService
     }
 
     /**
-     * Cartão de crédito (cobrança imediata; 400 = recusa → AppmaxException).
+     * Cartão de crédito (cobrança imediata; 4xx = recusa → AppmaxException).
      *
-     * @param array $card number, name, month, year(4 díg.), cvv,
-     *                    document_number, installments
+     * SÓ com token do Appmax JS: número, CVV e validade nunca passam pelo
+     * nosso servidor (sem PCI-DSS a doc não permite). Validade vai dentro
+     * do token — o payload é o do exemplo de checkout completo da doc.
+     *
+     * @param array $card token, name, document_number, installments
      */
     public function payWithCreditCard(Order $order, array $card): array
     {
-        // Com tokenização Appmax JS (obrigatória p/ homologação sem PCI),
-        // o front envia 'token' e os dados brutos do cartão nem chegam aqui.
-        $cardData = filled($card['token'] ?? null)
-            ? ['token' => $card['token']]
-            : [
-                'number' => $this->digits($card['number']),
-                'cvv'    => (string) $card['cvv'],
-            ];
+        if (blank($card['token'] ?? null)) {
+            throw new AppmaxException(self::MSG_CARTAO_RECUSADO, null, AppmaxException::DADOS_INVALIDOS,
+                'Cobrança de cartão sem token do Appmax JS — bloqueada antes de chamar a API.');
+        }
 
         $data = $this->post('/v1/payments/credit-card', [
             'order_id'     => $order->appmax_order_id,
             'customer_id'  => $order->appmax_customer_id,
             'payment_data' => [
-                'credit_card' => $cardData + [
-                    // Doc 5.2: mês sem zero à esquerda, ano com 2 dígitos ("25").
-                    'expiration_month'       => (string) ((int) $card['month']),
-                    'expiration_year'        => str_pad((string) (((int) $card['year']) % 100), 2, '0', STR_PAD_LEFT),
+                'credit_card' => [
+                    'token'                  => (string) $card['token'],
                     'holder_document_number' => $this->digits($card['document_number']),
                     'holder_name'            => strtoupper($card['name']),
                     'installments'           => (int) ($card['installments'] ?? 1),
                     'soft_descriptor'        => substr((string) config('appmax.soft_descriptor', 'APTKSPIRITS'), 0, 13),
                 ],
             ],
-        ], 'Pagamento não autorizado pela operadora do cartão. Confira os dados ou tente outro cartão.');
+        ], self::MSG_CARTAO_RECUSADO);
 
         return [
             'pay_reference' => $this->findKey($data, ['pay_reference', 'reference', 'payment_id']),
@@ -335,6 +414,35 @@ class AppmaxService
     }
 
     /* -----------------------------------------------------------------
+     | Consulta  —  GET /v1/orders/{id}  (reconciliação)
+     ------------------------------------------------------------------ */
+
+    /**
+     * Situação do pagamento na Appmax: pago | em_analise | pendente |
+     * recusado | estornado | inexistente | desconhecido. Usada quando a
+     * cobrança ficou indefinida (timeout/5xx) e pelo pedidos:cancelar-cartao-preso.
+     *
+     * @throws AppmaxException  se a consulta falhar (aí NADA se decide)
+     */
+    public function consultarSituacao(Order $order): string
+    {
+        try {
+            $data = $this->request('get', '/v1/orders/'.(int) $order->appmax_order_id, [],
+                'Não foi possível consultar o pedido na Appmax.');
+        } catch (AppmaxException $e) {
+            if ($e->httpStatus === 404) {
+                return 'inexistente'; // "Order not found": nada foi cobrado
+            }
+
+            throw $e;
+        }
+
+        $status = (string) ($data['order']['status'] ?? '');
+
+        return self::SITUACAO_POR_STATUS[$status] ?? 'desconhecido';
+    }
+
+    /* -----------------------------------------------------------------
      | Estorno  —  POST /v1/orders/refund-request  (doc 6)
      | type: "total" | "partial" (value em centavos, obrigatório se partial).
      | 201 → {data:{message:"Refund request accepted"}}
@@ -354,6 +462,30 @@ class AppmaxService
         $this->post('/v1/orders/refund-request', $payload, 'Não foi possível processar o estorno na Appmax.');
 
         return true;
+    }
+
+    /* -----------------------------------------------------------------
+     | Parcelamento sem juros (a loja absorve)
+     ------------------------------------------------------------------ */
+
+    /**
+     * Máximo de parcelas para um total: até appmax.max_installments, sem
+     * parcela abaixo de appmax.min_installment_value. Nunca menos que 1.
+     * A Appmax não calcula juros: cobra o total enviado, dividido.
+     */
+    public static function maxParcelas(float $total): int
+    {
+        $max = max(1, (int) config('appmax.max_installments', 3));
+        $minimo = (float) config('appmax.min_installment_value', 30.00);
+
+        if ($minimo <= 0) {
+            return $max;
+        }
+
+        // Em centavos, pra 90,00 / 30,00 dar 3 e não 2,999...
+        $porValor = intdiv((int) round($total * 100), (int) round($minimo * 100));
+
+        return max(1, min($max, $porValor));
     }
 
     /* -----------------------------------------------------------------

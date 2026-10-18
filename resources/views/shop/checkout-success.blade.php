@@ -36,6 +36,9 @@
     .emv-box { display: flex; gap: 8px; align-items: stretch; margin-top: 10px; }
     .emv-box input { flex: 1; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); padding: 10px 12px; font-family: var(--font-mono); font-size: var(--text-xs); }
     .pp-exp { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 12px; }
+    .pp-timer { font-family: var(--font-mono); font-size: var(--text-lg); color: var(--color-text); margin-top: 14px; }
+    .pp-timer.is-expired { color: var(--color-danger); font-size: var(--text-sm); }
+    .pix-panel-expired .pix-qr, .pix-panel-expired .emv-box { opacity: 0.35; pointer-events: none; }
     .boleto-line { background: var(--color-bg); border: 1px dashed var(--color-border); border-radius: var(--radius-sm); padding: 14px 16px; font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-text); word-break: break-all; margin-bottom: 14px; }
     @media (max-width: 640px) { .pix-grid { grid-template-columns: 1fr; } .pix-qr { margin-inline: auto; } }
 </style>
@@ -49,11 +52,26 @@
 <section class="ok">
     <div class="container-aptk">
 
-        @php $details = $order->payment_details ?? []; @endphp
+        @php
+            $details = $order->payment_details ?? [];
+
+            // Pix: pix_qrcode é PNG base64 sem prefixo (doc); se vier URL ou
+            // data URI, usa direto.
+            $qr = $details['qrcode'] ?? null;
+            $qrSrc = blank($qr) ? null
+                : (\Illuminate\Support\Str::startsWith($qr, ['http://', 'https://', 'data:']) ? $qr : 'data:image/png;base64,'.$qr);
+
+            // pix_expiration_date vem em horário de Brasília (o app roda em UTC).
+            $pixExpira = blank($details['expiration'] ?? null) ? null
+                : \Carbon\Carbon::parse($details['expiration'], 'America/Sao_Paulo');
+        @endphp
 
         @if ($order->isPaid())
             <span class="ok-badge">✓ Pagamento aprovado</span>
             <h1 class="ok-title">Obrigado pela sua compra!</h1>
+        @elseif ($order->pagamentoEmVerificacao())
+            <span class="ok-badge" style="color:var(--color-primary);">Pedido recebido</span>
+            <h1 class="ok-title">Pagamento em verificação</h1>
         @else
             <span class="ok-badge" style="color:var(--color-primary);">Pedido recebido</span>
             <h1 class="ok-title">Falta só o pagamento</h1>
@@ -62,13 +80,13 @@
 
         {{-- ================= PAGAMENTO (Appmax) ================= --}}
         @if ($order->payment_method === 'pix' && ! $order->isPaid() && ! empty($details['emv']))
-            <div class="ok-card pay-panel" id="pixPanel">
+            <div class="ok-card pay-panel" id="pixPanel" data-poll="1" @if ($pixExpira) data-expira="{{ $pixExpira->toIso8601String() }}" @endif>
                 <span class="pp-status waiting" id="ppStatus"><span class="dot"></span> Aguardando pagamento Pix</span>
                 <h3>Pague com Pix para confirmar</h3>
                 <div class="pix-grid">
                     <div class="pix-qr">
-                        @if (! empty($details['qrcode']))
-                            <img src="data:image/png;base64,{{ $details['qrcode'] }}" alt="QR Code Pix">
+                        @if ($qrSrc)
+                            <img src="{{ $qrSrc }}" alt="QR Code Pix">
                         @endif
                     </div>
                     <div>
@@ -79,8 +97,9 @@
                             <input type="text" id="pixEmv" value="{{ $details['emv'] }}" readonly onclick="this.select()">
                             <button type="button" class="btn-aptk" id="copyEmv">Copiar</button>
                         </div>
-                        @if (! empty($details['expiration']))
-                            <p class="pp-exp">Chave válida até {{ \Carbon\Carbon::parse($details['expiration'])->format('d/m/Y H:i') }}. A confirmação aparece aqui automaticamente após o pagamento.</p>
+                        @if ($pixExpira)
+                            <p class="pp-timer" id="pixTimer" aria-live="polite"></p>
+                            <p class="pp-exp">Chave válida até {{ $pixExpira->format('d/m/Y H:i') }}. A confirmação aparece aqui automaticamente após o pagamento.</p>
                         @else
                             <p class="pp-exp">A confirmação aparece aqui automaticamente após o pagamento.</p>
                         @endif
@@ -101,6 +120,14 @@
                 @if (! empty($details['due_date']))
                     <p class="pp-exp">Vencimento: {{ \Carbon\Carbon::parse($details['due_date'])->format('d/m/Y') }}. Boletos compensam em até 3 dias úteis.</p>
                 @endif
+            </div>
+        @elseif ($order->payment_method === 'cartao' && $order->pagamentoEmVerificacao())
+            <div class="ok-card pay-panel" data-poll="1">
+                <span class="pp-status waiting"><span class="dot"></span> Pagamento em verificação</span>
+                <h3>Estamos confirmando seu pagamento</h3>
+                <p style="color:var(--color-text-muted); font-size:var(--text-sm); margin:0;">
+                    Estamos confirmando seu pagamento, você recebe a confirmação em instantes.
+                </p>
             </div>
         @elseif ($order->payment_method === 'cartao' && $order->isPaid())
             <div class="ok-card pay-panel">
@@ -166,21 +193,44 @@
     bindCopy('copyEmv', function () { return document.getElementById('pixEmv').value; });
     bindCopy('copyBoleto', function () { return document.getElementById('copyBoleto').getAttribute('data-line'); });
 
-    // Polling do Pix: consulta o status a cada 8s; ao confirmar, recarrega
-    // a página (o webhook da Appmax atualiza o pedido no servidor).
-    var pixPanel = document.getElementById('pixPanel');
-    if (pixPanel) {
+    // Polling (Pix pendente ou cartão em verificação): consulta o status a
+    // cada 8s; ao confirmar, recarrega (o webhook da Appmax atualiza o
+    // pedido no servidor). No Pix, para quando a chave expira.
+    var painel = document.querySelector('[data-poll]');
+    if (painel) {
       var url = @json(route('checkout.payment-status', $order));
-      var timer = setInterval(function () {
+      var poll = setInterval(function () {
         fetch(url, { headers: { 'Accept': 'application/json' } })
           .then(function (r) { return r.json(); })
           .then(function (d) {
-            if (d.paid) { clearInterval(timer); window.location.reload(); }
+            if (d.paid) { clearInterval(poll); window.location.reload(); }
           })
           .catch(function () {});
       }, 8000);
-      // Para de consultar depois de 30 min (chave já terá expirado).
-      setTimeout(function () { clearInterval(timer); }, 30 * 60 * 1000);
+
+      // Cronômetro do Pix: SEMPRE a partir do pix_expiration_date da
+      // resposta (doc: não fixar tempo no código).
+      var expira = painel.dataset.expira ? new Date(painel.dataset.expira).getTime() : null;
+      var timerEl = document.getElementById('pixTimer');
+      if (expira && !isNaN(expira)) {
+        var dois = function (n) { return (n < 10 ? '0' : '') + n; };
+        var tick = function () {
+          var resta = Math.max(0, Math.floor((expira - Date.now()) / 1000));
+          if (resta === 0) {
+            clearInterval(relogio);
+            clearInterval(poll);
+            painel.classList.add('pix-panel-expired');
+            var st = document.getElementById('ppStatus');
+            if (st) st.innerHTML = 'Chave Pix expirada';
+            if (timerEl) { timerEl.classList.add('is-expired'); timerEl.textContent = 'Esta chave expirou. Se você já pagou, a confirmação ainda chega por aqui.'; }
+            return;
+          }
+          var h = Math.floor(resta / 3600), m = Math.floor((resta % 3600) / 60), s = resta % 60;
+          if (timerEl) timerEl.textContent = 'Expira em ' + (h ? h + ':' + dois(m) : m) + ':' + dois(s);
+        };
+        var relogio = setInterval(tick, 1000);
+        tick();
+      }
     }
   })();
 </script>

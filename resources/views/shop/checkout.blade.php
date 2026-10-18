@@ -61,12 +61,15 @@
         @endif
 
 
-        <form id="checkoutForm" data-appmax-checkout data-appmax-customer action="{{ route('checkout.store') }}" method="POST">
+        {{-- Só data-appmax-customer (coleta de IP). A tokenização roda no
+             form separado #appmaxCardForm, no fim da página: os dados crus
+             do cartão nunca fazem parte DESTE form. --}}
+        <form id="checkoutForm" data-appmax-customer action="{{ route('checkout.store') }}" method="POST">
             @csrf
             {{-- IP coletado pelo Appmax JS (obrigatório p/ homologação — doc 3.1).
                  Preenchido pelo AppmaxScripts.init; fallback: IP do request no servidor. --}}
             <input type="hidden" name="appmax_ip" id="appmax_ip" value="">
-            {{-- Token do cartão gerado pelo Appmax JS (callback do init). --}}
+            {{-- Token do cartão: vem do onTokenize({ token }) do Appmax JS. --}}
             <input type="hidden" name="appmax_token" id="appmax_token" value="">
             <div class="cko-layout">
 
@@ -166,13 +169,14 @@
                         </div>
                         @error('payment_method') <span class="err" style="margin-top:10px;">{{ $message }}</span> @enderror
 
-                        {{-- Dados do cartão — só aparecem com "Cartão de crédito" marcado. --}}
+                        {{-- Dados do cartão — só aparecem com "Cartão de crédito" marcado.
+                             Número, validade e CVV SEM name: nunca vão no submit. --}}
                         <div id="cardFields" class="card-fields" hidden>
+                            <span class="err" id="cardError" role="alert" @if (! $errors->has('appmax_token')) hidden @endif>{{ $errors->first('appmax_token') }}</span>
                             <div class="grid-2">
                                 <div class="field">
                                     <label for="card_number">Número do cartão</label>
-                                    <input type="text" id="card_number" name="card_number" value="{{ old('card_number') }}" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19" autocomplete="cc-number">
-                                    @error('card_number') <span class="err">{{ $message }}</span> @enderror
+                                    <input type="text" id="card_number" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19" autocomplete="cc-number">
                                 </div>
                                 <div class="field">
                                     <label for="card_name">Nome impresso no cartão</label>
@@ -183,33 +187,25 @@
                             <div class="grid-3">
                                 <div class="field">
                                     <label for="card_expiry">Validade (MM/AA)</label>
-                                    <input type="text" id="card_expiry" name="card_expiry" value="{{ old('card_expiry') }}" placeholder="09/28" inputmode="numeric" maxlength="5" autocomplete="cc-exp">
-                                    {{-- Espelhos com os names que o Appmax JS lê via FormData
-                                         (card-number, card-holder-name, exp-month, exp-year, cvv).
-                                         Sincronizados via JS; LIMPOS antes do envio quando há token. --}}
-                                    <input type="hidden" name="card-number" id="mx_card_number" value="">
-                                    <input type="hidden" name="card-holder-name" id="mx_card_holder" value="">
-                                    <input type="hidden" name="exp-month" id="mx_exp_month" value="">
-                                    <input type="hidden" name="exp-year" id="mx_exp_year" value="">
-                                    <input type="hidden" name="cvv" id="mx_cvv" value="">
-                                    @error('card_expiry') <span class="err">{{ $message }}</span> @enderror
+                                    <input type="text" id="card_expiry" placeholder="09/28" inputmode="numeric" maxlength="5" autocomplete="cc-exp">
                                 </div>
                                 <div class="field">
                                     <label for="card_cvv">CVV</label>
-                                    <input type="text" id="card_cvv" name="card_cvv" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc">
-                                    @error('card_cvv') <span class="err">{{ $message }}</span> @enderror
+                                    <input type="text" id="card_cvv" placeholder="123" inputmode="numeric" maxlength="4" autocomplete="cc-csc">
                                 </div>
                                 <div class="field">
                                     <label for="installments">Parcelas</label>
-                                    <select id="installments" name="installments">
-                                        @for ($i = 1; $i <= $maxInstallments; $i++)
-                                            <option value="{{ $i }}" data-parcelas="{{ $i }}" {{ (int) old('installments', 1) === $i ? 'selected' : '' }}>
-                                                {{ $i }}× de R$ {{ number_format($total / $i, 2, ',', '.') }}{{ $i === 1 ? ' à vista' : '' }}
+                                    {{-- Sem juros (a loja absorve). As opções são remontadas pelo
+                                         JS quando o frete muda o total; o servidor revalida. --}}
+                                    <select id="installments" name="installments" data-max="{{ $maxInstallments }}" data-minimo="{{ number_format($minInstallmentValue, 2, '.', '') }}" data-old="{{ old('installments', 1) }}">
+                                        @for ($i = 1; $i <= \App\Services\AppmaxService::maxParcelas($total); $i++)
+                                            <option value="{{ $i }}" {{ (int) old('installments', 1) === $i ? 'selected' : '' }}>
+                                                {{ $i }}x de R$ {{ number_format($total / $i, 2, ',', '.') }}{{ $i === 1 ? ' à vista' : ' sem juros' }}
                                             </option>
                                         @endfor
                                     </select>
                                     @error('installments') <span class="err">{{ $message }}</span> @enderror
-                                    <span class="pay-hint">Juros do parcelamento conforme condições no fechamento.</span>
+                                    <span class="pay-hint">Até {{ $maxInstallments }}x sem juros, parcela mínima de R$ {{ number_format($minInstallmentValue, 2, ',', '.') }}.</span>
                                 </div>
                             </div>
                         </div>
@@ -246,91 +242,127 @@
             </div>
         </form>
 
+        {{-- Form SÓ da tokenização (data-appmax-checkout): o Appmax JS lê estes
+             names via FormData (card-number, card-holder-name, exp-month,
+             exp-year, cvv). Nunca é enviado ao nosso servidor — o submit dele
+             é sempre cancelado; quem vai pro servidor é o #checkoutForm, só
+             com o token. --}}
+        <form id="appmaxCardForm" data-appmax-checkout action="#" method="POST" hidden aria-hidden="true">
+            <input type="hidden" name="card-number" id="mx_card_number" value="">
+            <input type="hidden" name="card-holder-name" id="mx_card_holder" value="">
+            <input type="hidden" name="exp-month" id="mx_exp_month" value="">
+            <input type="hidden" name="exp-year" id="mx_exp_year" value="">
+            <input type="hidden" name="cvv" id="mx_cvv" value="">
+        </form>
+
     </div>
 </section>
 @endsection
 
 @push('scripts')
-{{-- Appmax JS (obrigatório — doc 1.3): coleta de IP + tokenização do cartão.
-     CONTRATO REAL (extraído do fonte do appmax.min.js):
-       · AppmaxScripts.init(onSuccess, onError, EXTERNAL_ID)
-       · data-appmax-customer no form → o script injeta <input name="ip">
-       · data-appmax-checkout no form → o script intercepta o submit,
-         tokeniza lendo FormData pelos names card-number / card-holder-name /
-         exp-month / exp-year / cvv e entrega o TOKEN no onSuccess — quem
-         reenvia o formulário somos nós (form.submit() nativo não redispara
-         o listener deles).
-       · Pix/boleto: nosso listener (registrado ANTES do init) corta a
-         propagação, e o submit segue normal sem tokenização. --}}
-<script src="https://scripts.appmax.com.br/appmax.min.js"></script>
+{{-- Appmax JS (obrigatório — doc "Appmax JS"): coleta de IP + tokenização.
+       · Script por AMBIENTE (config appmax.script_urls), casando com o
+         external_id da instalação — misturar dá 404 Merchant not found.
+       · init({ externalId, onIp, onTokenize, onError }): onIp recebe { ip },
+         onTokenize recebe { token }.
+       · data-appmax-checkout fica no #appmaxCardForm (só os espelhos com os
+         names que o SDK lê); o #checkoutForm vai ao servidor só com o token.
+       · Script fora do ar ou tokenização falhou: NÃO envia. Sem fallback
+         com dado cru — o servidor recusa cartão sem token. --}}
+<script src="{{ $appmaxScriptUrl }}"></script>
 <script>
   (function () {
     var form = document.getElementById('checkoutForm');
-    if (!form) return;
+    var cardForm = document.getElementById('appmaxCardForm');
+    if (!form || !cardForm) return;
+
+    var MSG_FALHA = 'Não foi possível validar o cartão. Confira os dados e tente de novo, ou escolha Pix ou boleto.';
+    var errEl = document.getElementById('cardError');
+    var tokenEl = document.getElementById('appmax_token');
+    var pronto = false;      // init da Appmax rodou
+    var aguardando = false;  // tokenização em andamento
+    var prazo = null;
 
     function currentMethod() {
       var m = document.querySelector('input[name="payment_method"]:checked');
       return m ? m.value : null;
     }
 
-    function clearSensitive() {
-      // Com o token em mãos, os dados reais do cartão NÃO vão pro servidor.
-      ['card_number', 'card_cvv', 'mx_card_number', 'mx_cvv', 'mx_exp_month', 'mx_exp_year', 'mx_card_holder'].forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) el.value = '';
-      });
+    function mostrarErro(texto) {
+      if (!errEl) return;
+      errEl.textContent = texto || '';
+      errEl.hidden = !texto;
+      if (texto) errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    function nativeSubmit() {
-      // form.submit() nativo NÃO dispara listeners de submit — sem loop.
-      if (typeof form.reportValidity !== 'function' || form.reportValidity()) {
-        form.submit();
-      }
+    function falhou(motivo) {
+      if (motivo) console.error('Appmax JS:', motivo);
+      aguardando = false;
+      clearTimeout(prazo);
+      if (tokenEl) tokenEl.value = '';
+      mostrarErro(MSG_FALHA);
     }
 
-    // 1) NOSSO listener primeiro (antes do init): Pix/boleto passam reto,
-    //    sem deixar o interceptador da Appmax tocar no submit.
+    // Submit do checkout: Pix/boleto seguem direto. Cartão nunca segue
+    // daqui — só depois do token, pelo form.submit() nativo.
     form.addEventListener('submit', function (e) {
-      if (currentMethod() !== 'cartao') {
-        e.stopImmediatePropagation(); // o listener deles nunca roda
-        // o submit padrão segue normalmente
+      if (currentMethod() !== 'cartao') return;
+      e.preventDefault();
+      if (aguardando) return;
+      if (typeof form.reportValidity === 'function' && !form.reportValidity()) return;
+
+      mostrarErro('');
+      if (tokenEl) tokenEl.value = '';
+      if (!pronto) { falhou('AppmaxScripts não carregado/iniciado'); return; }
+
+      aguardando = true;
+      prazo = setTimeout(function () { if (aguardando) falhou('tokenização sem resposta em 30s'); }, 30000);
+
+      if (typeof cardForm.requestSubmit === 'function') {
+        cardForm.requestSubmit();
+      } else {
+        cardForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
       }
-      // cartão: deixa o evento chegar ao listener da Appmax (tokenização)
     });
 
-    // 2) Init da Appmax: o MESMO callback recebe {ip} no load e o TOKEN
-    //    (string) após tokenizar o cartão.
-    var externalId = @json($appmaxExternalId ?? null);
-    var falledBack = false;
-
-    function onAppmax(data) {
-      if (data && typeof data === 'object' && data.ip) {
-        var ip = document.getElementById('appmax_ip');
-        if (ip) ip.value = data.ip;
-        return;
-      }
-      if (typeof data === 'string' && data.length) {
-        // Token do cartão: envia o form com o token e SEM os dados reais.
-        var tk = document.getElementById('appmax_token');
-        if (tk) tk.value = data;
-        clearSensitive();
-        nativeSubmit();
-      }
+    function onIp(data) {
+      var ip = document.getElementById('appmax_ip');
+      if (ip && data && data.ip) ip.value = data.ip;
     }
 
-    function onAppmaxError(err) {
-      console.error('Appmax JS:', err);
-      // Tokenização falhou num submit de cartão: segue com envio direto
-      // (fallback do servidor) pra não travar a compra — uma vez só.
-      if (currentMethod() === 'cartao' && !falledBack) {
-        falledBack = true;
-        nativeSubmit();
-      }
+    function onTokenize(data) {
+      if (!aguardando) return;
+      var token = data && data.token;
+      if (!token) { falhou('onTokenize sem token'); return; }
+      aguardando = false;
+      clearTimeout(prazo);
+      tokenEl.value = token;
+      form.submit(); // nativo: não redispara o listener acima
+    }
+
+    function onError(err) {
+      // IP_FETCH_FAILED etc. fora de um submit não bloqueiam nada aqui.
+      if (aguardando) falhou(err && (err.code + ' ' + (err.message || '')));
+      else console.error('Appmax JS:', err);
     }
 
     function boot() {
       if (!window.AppmaxScripts) { console.error('AppmaxScripts não carregado.'); return; }
-      window.AppmaxScripts.init(onAppmax, onAppmaxError, externalId);
+      try {
+        window.AppmaxScripts.init({
+          externalId: @json($appmaxExternalId ?? null),
+          onIp: onIp,
+          onTokenize: onTokenize,
+          onError: onError,
+        });
+        pronto = true;
+      } catch (e) {
+        console.error('Appmax JS: init falhou', e);
+      }
+
+      // Registrado DEPOIS do init: o listener da Appmax já leu o FormData;
+      // aqui só garantimos que este form nunca navega.
+      cardForm.addEventListener('submit', function (e) { e.preventDefault(); });
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', boot);
@@ -411,15 +443,34 @@
       msg.hidden = !texto;
     }
 
+    // Parcelas sem juros: até data-max, nenhuma abaixo de data-minimo
+    // (mesma regra do AppmaxService::maxParcelas, que revalida no servidor).
+    var parcelasEl = document.getElementById('installments');
+
+    function montarParcelas(total) {
+      if (!parcelasEl) return;
+      var max = parseInt(parcelasEl.dataset.max, 10) || 1;
+      var minimoCent = Math.round((parseFloat(parcelasEl.dataset.minimo) || 0) * 100);
+      var permitidas = minimoCent > 0 ? Math.floor(Math.round(total * 100) / minimoCent) : max;
+      permitidas = Math.max(1, Math.min(max, permitidas));
+      var escolhida = parseInt(parcelasEl.value || parcelasEl.dataset.old, 10) || 1;
+
+      parcelasEl.innerHTML = '';
+      for (var n = 1; n <= permitidas; n++) {
+        var op = document.createElement('option');
+        op.value = n;
+        op.textContent = n + 'x de ' + brl(total / n) + (n === 1 ? ' à vista' : ' sem juros');
+        op.selected = n === Math.min(escolhida, permitidas);
+        parcelasEl.appendChild(op);
+      }
+    }
+
     function atualizarTotais(valor, nome) {
       var total = subtotal + (valor || 0);
       freteEl.textContent = valor === null ? 'a calcular' : brl(valor);
       freteNomeEl.textContent = nome ? 'Frete (' + nome + ')' : 'Frete';
       totalEl.textContent = brl(total);
-      document.querySelectorAll('#installments option[data-parcelas]').forEach(function (op) {
-        var n = parseInt(op.dataset.parcelas, 10);
-        op.textContent = n + '× de ' + brl(total / n) + (n === 1 ? ' à vista' : '');
-      });
+      montarParcelas(total);
     }
 
     function render(opcoes) {

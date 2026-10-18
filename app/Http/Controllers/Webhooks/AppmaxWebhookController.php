@@ -99,6 +99,38 @@ class AppmaxWebhookController extends Controller
             return; // reentrega do evento: nada a fazer, nada a re-enfileirar
         }
 
+        if ($order->status === 'cancelled') {
+            // Estorno/chargeback já tratados: aprovação atrasada não ressuscita.
+            if (in_array($order->payment_status, ['refunded', 'chargeback'], true)) {
+                Log::warning('Appmax webhook: aprovação de pedido estornado ignorada', ['order_id' => $order->id]);
+
+                return;
+            }
+
+            // Cancelado aqui, pago lá (timeout na cobrança, cartão preso
+            // cancelado antes do webhook, Pix pago no limite): o dinheiro
+            // entrou, então o pedido volta a valer e o estoque é retomado.
+            $anterior = $order->payment_status;
+            $faltas = $this->orders->reativarPago($order);
+
+            $order->registrarIncidente(
+                "Pagamento aprovado pela Appmax com o pedido já cancelado aqui (status de pagamento era \"{$anterior}\"). "
+                .'Pedido reativado e estoque retomado.'
+                .($faltas ? ' ATENÇÃO, estoque insuficiente: '.implode('; ', $faltas).'.' : '')
+            );
+
+            Log::warning('Appmax webhook: INCIDENTE — pedido cancelado reativado por aprovação', [
+                'order_id'        => $order->id,
+                'appmax_order_id' => $order->appmax_order_id,
+                'status_anterior' => $anterior,
+                'faltas'          => $faltas,
+            ]);
+
+            $this->enfileiraEnvioErp($order, 'confirmar');
+
+            return;
+        }
+
         $order->update([
             'payment_status' => 'paid',
             'status'         => $order->status === 'pending' ? 'processing' : $order->status,
