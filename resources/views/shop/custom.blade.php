@@ -55,7 +55,8 @@
   .chip-opt input:focus-visible + span, .style-opt input:focus-visible + .so-tile { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 
   /* Estilo do rótulo: miniaturas */
-  .style-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .style-group { display: flex; flex-wrap: wrap; gap: 12px; }
+  .style-group .style-opt { flex: 1 1 110px; max-width: 170px; }
   .style-opt { margin: 0 !important; cursor: pointer; text-transform: none !important; letter-spacing: 0 !important; }
   .so-tile { display: grid; place-items: center; aspect-ratio: 1 / 1; background: var(--color-cream); border: 2px solid transparent; border-radius: var(--radius-md); padding: 10px; text-align: center; transition: border-color .2s ease; }
   .style-opt:hover .so-tile { border-color: var(--color-primary-muted); }
@@ -64,7 +65,9 @@
   .so-name { display: block; text-align: center; font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text); margin-top: 8px; }
 
   /* Fontes de exemplo. PP Rader e Amithen são reais (auto-hospedadas);
-     Blackword AINDA NÃO chegou — fallback serif itálico até o arquivo vir. */
+     Blackword AINDA NÃO chegou: o estilo "Clássico" fica fora do seletor
+     (CustomController::FONTES). A classe abaixo fica pronta pra quando o
+     @font-face dela entrar em aptk-tokens.css. */
   .f-pprader { font-family: var(--font-display); font-weight: 700; }
   .f-amithen { font-family: var(--font-amithen); }
   .f-blackword { font-family: var(--font-script), serif; font-style: italic; }
@@ -103,8 +106,9 @@
 
 @section('content')
   @php
-    // Leva 10: estilos na tela (Clássico / Editorial / Autoral); o lead
-    // continua gravando a fonte (CustomController::FONTES).
+    // Leva 10: estilos na tela; o lead continua gravando a fonte. Só aparece
+    // estilo de fonte que está em CustomController::FONTES — Blackword
+    // ("Clássico") fica fora até o arquivo da fonte chegar.
     $estilos = [
       'Blackword' => ['nome' => 'Clássico',  'cls' => 'f-blackword', 'ex' => "Feliz\n50"],
       'PP Rader'  => ['nome' => 'Editorial', 'cls' => 'f-pprader',   'ex' => "Bia &\nEduardo"],

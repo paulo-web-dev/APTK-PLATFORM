@@ -31,7 +31,6 @@
   .hx-label { margin: 8px 0 20px; }
   .hx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: clamp(48px, 6vw, 72px); }
   .hx-card { --mc-ratio: 4 / 5; }
-  .hx-media--produto > img { object-fit: contain; padding: 8% 0; }
   .hx-eco { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .hx-eco-card { flex-direction: row; }
   .hx-eco-card .mc-media { flex: 0 0 42%; aspect-ratio: auto; min-height: 260px; }
@@ -95,7 +94,14 @@
   .nvh-date .m { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-primary); }
   .nvh-body { padding: 16px 18px 20px; }
   .nvh-body h3 { font-family: var(--font-display); font-size: var(--text-lg); color: var(--color-text); margin: 0; }
-  @media (max-width: 980px) { .nvh-grid { grid-template-columns: 1fr; } .shw-arrow--prev { left: 4px; } .shw-arrow--next { right: 4px; } }
+  @media (max-width: 980px) {
+    .nvh-grid { grid-template-columns: 1fr; }
+    /* Slide empilhado: as setas ficam no meio da foto (4:3, largura do
+       container), longe do texto. top = padding do slide + metade da foto. */
+    .shw-arrow { top: calc(clamp(36px, 5vw, 56px) + (100vw - 48px) * 0.375); width: 38px; height: 38px; font-size: 20px; background: color-mix(in srgb, var(--color-bg) 82%, transparent); }
+    .shw-arrow--prev { left: 6px; }
+    .shw-arrow--next { right: 6px; }
+  }
 
   /* ---- Home: animação de entrada do hero ---- */
   @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
@@ -249,8 +255,9 @@
       // FOTO: coquetel pronto servido (provisória: Cosmopolitan da casa no balcão).
       ['href' => route('catalog'), 'img' => asset('img/aptk/cat-cosmopolitan.jpg'), 'alt' => 'Garrafa de Cosmopolitan da APTK servida no balcão',
        'h' => 'Coquetéis Prontos', 'p' => 'A excelência da alta coquetelaria, pronta para servir.', 'cls' => ''],
-      ['href' => route('catalog', ['categoria' => 'bases']), 'img' => \Illuminate\Support\Facades\Storage::url('products/aptk-gin-2-750ml-frente.jpg'), 'alt' => 'Garrafa do APTK Gin Nº2 Neutral',
-       'h' => 'Crie Seu Drink', 'p' => 'Ingredientes e bases para explorar sua criatividade.', 'cls' => 'hx-media--produto'],
+      // FOTO: bases e ingredientes para criar em casa (provisória: Fitzgerald com limões; a foto do Neutral Gin já está no carrossel).
+      ['href' => route('catalog', ['categoria' => 'bases']), 'img' => asset('img/aptk/cat-fitzgerald.jpg'), 'alt' => 'Garrafa da APTK com limões',
+       'h' => 'Crie Seu Drink', 'p' => 'Ingredientes e bases para explorar sua criatividade.', 'cls' => ''],
       // FOTO: kit/presente APTK com embalagem (provisória: Negroni em garrafas da casa). Leva pro Custom até existir categoria de kits.
       ['href' => route('custom'), 'img' => asset('img/aptk/featured-negroni.jpg'), 'alt' => 'Garrafas de Negroni da APTK',
        'h' => 'Arte de Presentear', 'p' => 'Presentes que transformam gestos em histórias.', 'cls' => ''],
@@ -347,9 +354,9 @@
             <span class="link-arrow">Encontre uma loja <span class="btn-arrow">↗</span></span>
           </div>
         </a>
-        {{-- FOTO: close de garrafa personalizada com acabamento premium e embalagem de presente (provisória: Fitzgerald da casa). --}}
+        {{-- FOTO: close de garrafa personalizada com acabamento premium e embalagem de presente (provisória: Dry Martini da casa). --}}
         <a href="{{ route('custom') }}" class="media-card hv-card hv-card--wide">
-          <div class="mc-media"><img src="{{ asset('img/aptk/cat-fitzgerald.jpg') }}" alt="Garrafa de Fitzgerald da APTK com limões" loading="lazy"></div>
+          <div class="mc-media"><img src="{{ asset('img/aptk/cat-dry-martini.jpg') }}" alt="Garrafa de Dry Martini da APTK com taça" loading="lazy"></div>
           <div class="mc-body">
             <span class="mc-eyebrow">Custom APTK</span>
             <h3 class="title-editorial">Sua história, nossa alquimia.</h3>

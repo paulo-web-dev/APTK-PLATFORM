@@ -50,7 +50,9 @@ public/css/          aptk-tokens.css é a fonte única de tokens de design
 **Páginas institucionais** passam por uma whitelist de slug no final do `web.php`:
 `clube|assinantes|collabs|eventos|quem-somos` → `PageController@show`. Rota nova
 literal precisa vir ANTES desse catch-all. As LPs de marca `/barin` e `/ice4pros`
-são `Route::view` diretas.
+são `Route::view` diretas. Quem Somos, Clube e Eventos têm view própria
+(`shop.eventos` desde a leva 10, portfólio em `PageController::PORTFOLIO_EVENTOS`,
+seção só aparece com ≥ 1 item); Collabs e Assinantes usam o template `shop.page`.
 
 **Preço por volume.** `Product` tem `sizes` (array JSON de volumes, ex. `["375ml","750ml"]`)
 e `size_prices` (mapa volume→preço). Use `priceForSize()`, `sizeOptions()`,
@@ -81,6 +83,22 @@ com toggle global — não tratar como opcional.
 
 **Componentes de marca:** `<x-brand.symbol>`, `<x-brand.logo>`, `<x-brand.sunburst>`,
 `<x-brand.divider>`.
+
+**Componentes editoriais (leva 10, `aptk.css`):** `.title-editorial` (Neue World nos
+títulos grandes — heroes e títulos das seções editoriais; nav, botões, eyebrows e
+cards seguem em PP Rader), `.btn-arrow` (seta dentro do `.btn-aptk`), `.link-arrow`,
+`.num-steps` ("01 — título / texto"; `--stack` em coluna), `.media-card` (foto +
+eyebrow/título/texto/link, proporção via `--mc-ratio`) e `<x-photo-slot ratio="4/3">`
+(bloco reservado pra foto que não chegou — só em bloco secundário, com
+`{{-- FOTO: ... --}}` ao lado). Títulos de seção em caixa de frase.
+
+**Links das marcas** nos cards do ecossistema (Quem Somos): `config/marcas.php`
+→ `links` (url + label). Mudou → `config:cache` em produção.
+
+**Custom Simples:** `CustomController::FONTES` só lista fonte que existe no projeto
+(a prévia não pode mostrar fonte diferente da impressa). Na tela aparecem como
+estilos (PP Rader = Editorial, Amithen = Autoral); o lead grava a fonte. Formulário:
+coquetel → rótulo → dados → prévia e envio, botão "Solicitar minha personalização".
 
 **Imagem de produto:** sempre via `<x-product.image :image="..." :alt="...">` (foto ou
 `<x-product.placeholder>`, moldura 2:3 "Produto ainda sem foto"). CSS em
@@ -201,6 +219,8 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
 4. Foto fundo preto nova não tem caminho automático: precisa de um manifesto
    (`fundo=preto`) apontando pro `FUNDO PRETO/` e `produtos:aplicar-fotos` sem
    `--sem-galeria`. Ver ESTADO-ATUAL §10.
+5. Leva 10: fotos e textos provisórios, links das marcas, pontos do Clube "em breve"
+   e estilo "Clássico" (fonte Blackword) do Custom — lista em ESTADO-ATUAL §11.
 
 ## Deploy
 
@@ -230,4 +250,4 @@ qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 - Não rodar `migrate:fresh` sem avisar — apaga dados locais.
 - Depois de mexer em rota, rodar `php artisan route:clear`.
 - Mudanças do cliente vêm agrupadas em "levas" numeradas, cada uma com escopo fechado
-  antes da execução. As levas 01 a 08 já foram concluídas.
+  antes da execução. As levas 01 a 10 já foram concluídas.

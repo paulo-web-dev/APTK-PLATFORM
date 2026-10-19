@@ -4,8 +4,9 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-19** (§10 — ativação só com preço e foto no padrão,
-importador sem `active`/galeria, `produtos:aplicar-fotos`). Antes: 2026-10-18
+Última revisão: **2026-10-19** (§11 — leva 10, texto e layout de 6 páginas pelo
+briefing da gestão; §10 — ativação só com preço e foto no padrão, importador sem
+`active`/galeria, `produtos:aplicar-fotos`). Antes: 2026-10-18
 (§9 — Appmax com credenciais do painel, loja própria) e 2026-10-11 (leva 08,
 §8 — frete estimado PAC/SEDEX, catálogo completo, admin; Microvix fora, §8.4).
 
@@ -458,6 +459,103 @@ quadrado — decisão: **não vai pro site** (dark fixo). O padrão segue o paco
 **Deploy:** depois do `reset --hard`, `php artisan produtos:aplicar-fotos
 --sem-galeria --dry-run`, conferir 9 ativos / 17 desativados, rodar sem
 `--dry-run`. Não rodar o importador.
+
+---
+
+## 11. Leva 10 — texto e layout pelo briefing da gestão (19/10/2026)
+
+Briefing: `docs/briefing/2026-10-site-copy.pdf` (fora do git). As imagens do PDF
+são só referência de composição — nenhuma foi usada no site. Um commit por página
+(0 base, 1 Quem Somos, 2 Home, 3 Loja, 4 Custom, 5 Clube, 6 Eventos).
+
+- **Base:** componentes editoriais em `aptk.css` e `<x-photo-slot>` (ver
+  CLAUDE.md). Banda antes do rodapé com o texto novo ("Os melhores encontros se
+  transformam em histórias."), sem CTA. Rodapé intocado.
+- **Quem Somos:** texto da Small Batches (veio em caixa alta, publicado em caixa
+  normal), hero com a citação, trajetória 2016/2021 com foto, "No que
+  acreditamos", ecossistema com cards de foto. Âncora `#onde-encontrar`.
+- **Home:** vídeo do Negroni vira o fundo do hero (poster =
+  `img/aptk/hero-negroni-poster.jpg`, frame do próprio vídeo); faixa 2016 /
+  Brasil / Autoral / Feito para compartilhar no lugar dos números provisórios;
+  "Um universo de possibilidades" (Explore a APTK + Nosso ecossistema); vitrine
+  editorial no lugar do carrossel promocional; saiu o modal do Clube. Setas do
+  carrossel de produtos no meio da foto no celular.
+- **Loja:** capa nova; migration renomeia só `name` das categorias (Clássicos,
+  Criações Autorais, Bases & Ingredientes, Barín, Ice4Pros); slugs iguais.
+- **Custom:** hero "Sua história. Nossa alquimia.", jornada 01/02/03, seção
+  "Crie seu APTK" com o formulário reordenado (mesmos campos e validação), Full
+  Custom com texto + foto. Rótulos em Espumante/Cuba Libre (tokens).
+- **Clube:** hero novo com `clube-hero.jpg`, CTA → `#planos`, 01/02/03.
+- **Eventos:** view própria `shop.eventos` (ocasiões, soluções, processo,
+  fechamento sem "Ver a carta"); portfólio vazio, não aparece.
+- **Imagem nova:** `img/aptk/ice4pros-cubo.jpg` (frame de 4,6 s do
+  `video/ice4pros-cubo.mp4`, liberado pelo Paulo).
+
+### 11.1 Provisórios (voltar quando a gestão mandar)
+
+**Fotos** (comentário `{{-- FOTO: ... --}}` em cada lugar):
+
+| página / bloco | foto provisória | o que o briefing pede |
+|---|---|---|
+| Quem Somos · 2016 | `featured-negroni.jpg` | garrafa/balcão da era Apothek |
+| Quem Somos · card Barín | `cat-cosmopolitan.jpg` | garrafa ou serviço da Barín |
+| Home · Coquetéis Prontos | `cat-cosmopolitan.jpg` | coquetel pronto servido |
+| Home · Crie Seu Drink | `cat-fitzgerald.jpg` | bases e ingredientes |
+| Home · Arte de Presentear | `featured-negroni.jpg` | kit/presente com embalagem |
+| Home · ecossistema Barín | `hero-bartender.jpg` | garrafa ou serviço da Barín |
+| Home · vitrine Collabs | `cat-evento.jpg` | fotos das collabs / vídeo Montblanc |
+| Home · vitrine Clube | `cat-pessoas.jpg` | encontro real do Clube |
+| Home · vitrine Lojas | `loja-aptk.jpg` | foto arquitetônica autoral |
+| Home · vitrine Custom | `cat-dry-martini.jpg` | close de garrafa personalizada + embalagem |
+| Custom · hero (2 fotos) | `featured-negroni.jpg`, `about-loja-3.jpg` | Presentes & Celebrações / Marcas & Projetos Especiais |
+| Custom · Full Custom | `cat-dry-martini.jpg` | garrafa com rótulo de marca parceira + embalagem premium |
+| Eventos · Gifting | `featured-negroni.jpg` | kit/presente de evento |
+| Eventos · Brand Experiences | `cat-evento.jpg` | ativação de marca em evento |
+| Eventos · Customização | `cat-fitzgerald.jpg` | garrafa com rótulo personalizado de evento |
+
+Nenhuma foto aparece duas vezes na mesma página (incluindo os arquivos
+duplicados com nome diferente: `loja-aptk`=`sobre-loja`,
+`cat-pessoas`=`eventos-hero`=`sobre-pessoas`, `hero-bartender`=`sobre-barman`,
+`about-loja-2`=`parceiros-hero`, `about-loja-3`=`franquias-hero`,
+`cat-loja`=`sobre-interior`). As views `shop.about` e `shop.sobre` não têm rota.
+
+**Textos que não vieram no texto do briefing:**
+- Da imagem de referência (aprovados pelo Paulo): banda do rodapé, título da
+  trajetória, CTAs do hero da Home, faixa 2016/Brasil/Autoral, os 4 cards da
+  vitrine editorial, CTA "Faça parte do clube", legendas "Presentes &
+  Celebrações" / "Marcas & Projetos Especiais" do Custom.
+- Inventados (confirmar): link "Explorar" dos cards da Home; "Conhecer a Barín" /
+  "Conhecer a Ice4Pros"; título do portfólio "Eventos que já levaram a nossa
+  assinatura."; eyebrows "Eventos", "Portfólio", "Full Custom".
+- Caixa de frase onde o briefing tinha Title Case: "Feito para o ritmo do bar",
+  "O gelo faz a diferença", "Alquimia de histórias". Nomes de card ficaram como
+  no briefing.
+- Confirmação pendente: papel de "Descubra a APTK" (p.10) e "Clássicos Autorais"
+  (p.16 — hoje a categoria se chama "Clássicos"; mudar é uma migration de uma
+  linha).
+
+**Links das marcas** (`config/marcas.php` → `links`): APTK → Instagram
+@aptkspirits; Barín → `/barin` e Ice4Pros → `ice4pros.com.br` até chegarem os
+Instagrams.
+
+**Clube — pontos "em breve":** o sistema não tem pontos. Onde o briefing (e a
+página antiga) prometia pontos/10%, texto "em breve" sem número: passos 01 e 02
+da página e perks do Explorer e do Collector (seeder + migration
+`2026_10_19_100001`, com down). Voltar quando a gestão decidir.
+
+**Custom — estilo "Clássico":** depende da fonte Blackword, que não está no
+projeto. Fora do seletor e recusada no POST (`CustomController::FONTES`). Quando
+a fonte chegar: WOFF2 em `public/fonts/`, `@font-face` em `aptk-tokens.css` e
+'Blackword' de volta em `FONTES` (o mapeamento pra "Clássico" já está na view).
+
+**Eventos — portfólio:** `PageController::PORTFOLIO_EVENTOS` vazio. Falta da
+gestão: nome, cliente, data, local, foto e autorização de uso.
+
+**Local:** os planos antigos do Clube (Admirador, Bronze, Prata, Ouro) seguem
+ativos no banco local porque o `ClubePlanos2026Seeder` não rodou aqui.
+
+**Deploy da leva 10:** `migrate --force` (nomes das categorias + perks do
+Clube), `config:cache` (`config/marcas.php`), `view:clear`.
 
 ---
 

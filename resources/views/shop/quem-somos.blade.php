@@ -210,9 +210,10 @@
       ],
       [
         'link'  => $links['barin'],
-        // FOTO: garrafa ou serviço da Barín no balcão. Provisória: bartender da APTK.
-        'img'   => asset('img/aptk/hero-bartender.jpg'),
-        'alt'   => 'Bartender preparando um drink no balcão',
+        // FOTO: garrafa ou serviço da Barín no balcão. Provisória: drink servido no balcão
+        // (o bartender já está na galeria desta página).
+        'img'   => asset('img/aptk/cat-cosmopolitan.jpg'),
+        'alt'   => 'Drink servido no balcão ao lado da garrafa',
         'name'  => 'Barín',
         'sub'   => 'Qualidade e eficiência em cada serviço.',
         'text'  => 'Coquetelaria desenvolvida para o ritmo de bares, restaurantes e eventos. Receitas de qualidade, padronização e praticidade para operações que exigem consistência e escala.',

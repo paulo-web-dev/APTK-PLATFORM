@@ -29,9 +29,12 @@ class CustomPedidoTest extends TestCase
         $this->assertTrue($coquetel < $fonte && $fonte < $mensagem && $mensagem < $nome && $nome < $botao);
         $this->assertStringNotContainsString('>Comprar</button>', $html);
 
-        foreach (['Clássico', 'Editorial', 'Autoral'] as $estilo) {
+        foreach (['Editorial', 'Autoral'] as $estilo) {
             $this->assertStringContainsString($estilo, $html);
         }
+        // Blackword ("Clássico") fora do seletor até a fonte existir no projeto.
+        $this->assertStringNotContainsString('value="Blackword"', $html);
+        $this->assertStringNotContainsString('>Clássico<', $html);
     }
 
     public function test_pedido_grava_lead_com_a_fonte(): void
@@ -49,6 +52,19 @@ class CustomPedidoTest extends TestCase
         $this->assertSame('custom', $lead->type);
         $this->assertStringContainsString('Fonte: Amithen', $lead->message);
         $this->assertStringContainsString('Coquetel: Negroni', $lead->message);
+    }
+
+    public function test_fonte_que_nao_existe_no_projeto_e_recusada(): void
+    {
+        $this->post('/custom/pedido', [
+            'coquetel' => 'Negroni',
+            'fonte'    => 'Blackword',
+            'mensagem' => 'Feliz 50',
+            'name'     => 'Bia',
+            'email'    => 'bia@exemplo.test',
+        ])->assertSessionHasErrors('fonte');
+
+        $this->assertSame(0, Lead::count());
     }
 
     public function test_mensagem_com_mais_de_8_palavras_e_recusada(): void

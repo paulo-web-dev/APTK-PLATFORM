@@ -20,8 +20,13 @@ use Illuminate\View\View;
  */
 class CustomController extends Controller
 {
-    /** Fontes disponíveis no Custom Simples (modelos de referência). */
-    public const FONTES = ['PP Rader', 'Amithen', 'Blackword'];
+    /**
+     * Fontes disponíveis no Custom Simples (modelos de referência).
+     * Leva 10: só fonte que existe no projeto — a prévia não pode mostrar
+     * uma fonte diferente da impressa. Blackword (estilo "Clássico") volta
+     * aqui quando o arquivo da fonte chegar em public/fonts/ (PENDENTE).
+     */
+    public const FONTES = ['PP Rader', 'Amithen'];
 
     /** Coquetéis disponíveis para personalização (lista do comercial). */
     public const COQUETEIS = [
