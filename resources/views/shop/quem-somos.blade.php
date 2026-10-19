@@ -270,8 +270,8 @@
     </div>
   </section>
 
-  {{-- ONDE ENCONTRAR --}}
-  <section class="section" style="padding-top:0;">
+  {{-- ONDE ENCONTRAR (âncora usada pela vitrine da home) --}}
+  <section class="section" id="onde-encontrar" style="padding-top:0;">
     <div class="container-aptk">
       <div class="section-head">
         <span class="eyebrow">Onde encontrar</span>

@@ -4,50 +4,38 @@
 
 @push('styles')
 <style>
-  /* ---- Home: hero retangular (texto à esquerda + vídeo à direita) ---- */
-  .hero { position: relative; overflow: hidden; background: var(--color-ink); border-bottom: 1px solid var(--color-border); }
-  .hero::before { content: ""; position: absolute; top: -30%; right: -8%; width: 560px; height: 560px; background: radial-gradient(circle, var(--gold-faint) 0%, transparent 65%); pointer-events: none; }
-  .hero-inner { position: relative; z-index: 1; padding-block: clamp(40px, 6vw, 64px); display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 5vw, 64px); align-items: center; }
-  .hero-copy { max-width: 560px; }
-  .hero .script-line { font-family: var(--font-script); font-size: clamp(1.5rem, 3.5vw, var(--text-3xl)); color: var(--color-primary); margin-bottom: 12px; }
-  .hero h1 { font-size: clamp(2rem, 4.5vw, 3.1rem); letter-spacing: -0.01em; color: var(--color-cream); margin-bottom: 20px; }
-  .hero p { font-size: clamp(var(--text-base), 2vw, var(--text-lg)); color: color-mix(in srgb, var(--color-cream) 78%, transparent); max-width: 500px; margin: 0 0 30px; }
+  /* ---- Home: hero com o vídeo de fundo (leva 10) ---- */
+  .hero { position: relative; overflow: hidden; background: var(--color-ink); border-bottom: 1px solid var(--color-border); min-height: min(86vh, 820px); display: flex; flex-direction: column; }
+  .hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% center; }
+  .hero-shade { position: absolute; inset: 0; background:
+      linear-gradient(90deg, var(--color-ink) 0%, color-mix(in srgb, var(--color-ink) 82%, transparent) 34%, color-mix(in srgb, var(--color-ink) 18%, transparent) 70%, transparent 100%),
+      linear-gradient(0deg, var(--color-ink) 0%, transparent 38%); }
+  .hero-inner { position: relative; z-index: 1; flex: 1; display: flex; align-items: center; padding-block: clamp(56px, 9vw, 110px) clamp(40px, 6vw, 72px); }
+  .hero-copy { max-width: 600px; }
+  .hero-copy .eyebrow { margin-bottom: 18px; }
+  .hero h1 { font-size: clamp(2.5rem, 5.6vw, 4.4rem); color: var(--color-cream); margin: 0 0 22px; }
+  .hero p { font-size: clamp(var(--text-base), 1.6vw, var(--text-lg)); color: color-mix(in srgb, var(--color-cream) 80%, transparent); max-width: 520px; margin: 0 0 32px; }
   .hero-ctas { display: flex; flex-wrap: wrap; gap: 14px; }
-  .hero-meta { margin-top: 40px; display: flex; gap: 40px; flex-wrap: wrap; }
-  .hero-meta div { display: flex; flex-direction: column; gap: 2px; }
-  .hero-meta .num { font-family: var(--font-mono); font-size: var(--text-2xl); color: var(--color-primary); }
-  .hero-meta .lbl { font-size: var(--text-xs); color: color-mix(in srgb, var(--color-cream) 65%, transparent); letter-spacing: 0.1em; text-transform: uppercase; }
 
-  /* Vídeo do hero (Ale envasando). Formato retangular 16:10.
-     Arquivo esperado: public/video/hero-negroni.mp4 — enquanto não chega,
-     o poster + marcação seguram o lugar. */
-  .hero-media { position: relative; }
-  .hero-media video,
-  .hero-media .video-placeholder { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); background: #0D0A06; }
-  .hero-media .photo-tag { position: absolute; left: 16px; bottom: 16px; background: color-mix(in srgb, var(--color-ink) 70%, transparent); color: var(--color-cream); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.14em; text-transform: uppercase; padding: 7px 12px; border-radius: var(--radius-sm); backdrop-filter: blur(4px); }
+  /* Faixa de marca no pé do hero */
+  .hero-facts { position: relative; z-index: 1; border-top: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-ink) 70%, transparent); backdrop-filter: blur(6px); }
+  .hero-facts-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); }
+  .hero-facts-list li { display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-left: 1px solid var(--color-border); }
+  .hero-facts-list li:first-child { border-left: 0; padding-left: 0; }
+  .hf-big { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.4rem, 2.4vw, 1.9rem); color: var(--color-primary); line-height: 1; }
+  .hf-lbl { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-muted); line-height: 1.5; max-width: 15ch; }
+  .hf-line { width: 34px; height: 1px; background: var(--color-primary); flex-shrink: 0; }
+  .hf-last .hf-lbl { color: var(--color-text); }
 
-  /* ---- Home: carta de coquetéis (categorias) ---- */
-  .category-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .category-card { padding: 0; display: flex; flex-direction: column; min-height: 200px; text-decoration: none; overflow: hidden; }
-  .category-card .cat-img { display: block; width: 100%; height: 180px; object-fit: cover; }
-  .category-card .cat-body { padding: 22px 24px 26px; display: flex; flex-direction: column; flex: 1; }
-  .category-card h3 { font-family: var(--font-display); font-size: var(--text-xl); margin-bottom: 6px; transition: color .2s ease; }
-  .category-card:hover h3 { color: var(--color-primary); }
-  .category-card p { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0; }
-  .category-card .cat-link { margin-top: auto; padding-top: 16px; font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-primary); display: inline-flex; align-items: center; gap: 8px; }
-  .category-card--brand { border-color: var(--color-primary-muted); }
-  .category-card--brand h3 { color: var(--color-primary); }
-
-  /* ---- Modal do Clube ---- */
-  .clube-modal .modal-content { background: var(--color-bg-elevated); border: 1px solid var(--color-primary-muted); border-radius: var(--radius-lg); color: var(--color-text); text-align: center; padding: 12px 8px 20px; }
-  .clube-modal .modal-header { border: none; padding-bottom: 0; }
-  .clube-modal .btn-close { filter: invert(0.5); }
-  .clube-modal .cm-sun { width: 96px; color: var(--color-primary); margin: 0 auto 14px; }
-  .clube-modal h3 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0 0 6px; }
-  .clube-modal .cm-soon { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-primary); display: inline-block; margin-bottom: 14px; }
-  .clube-modal p { color: var(--color-text-muted); margin: 0 0 24px; }
-  .clube-modal .cm-ctas { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin-inline: auto; }
-  .clube-modal .cm-hint { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 6px; }
+  /* ---- Home: um universo de possibilidades (leva 10) ---- */
+  .hx-label { margin: 8px 0 20px; }
+  .hx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: clamp(48px, 6vw, 72px); }
+  .hx-card { --mc-ratio: 4 / 5; }
+  .hx-media--produto > img { object-fit: contain; padding: 8% 0; }
+  .hx-eco { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .hx-eco-card { flex-direction: row; }
+  .hx-eco-card .mc-media { flex: 0 0 42%; aspect-ratio: auto; min-height: 260px; }
+  .hx-eco-card .mc-body { justify-content: center; padding: 28px; }
 
   /* ---- Home: produto em destaque (retangular, imagem à esquerda) ---- */
   .featured-band { background: var(--color-ink); border-block: 1px solid var(--color-border); }
@@ -67,23 +55,16 @@
   .featured-buy { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
   .featured-buy .price-tag { font-family: var(--font-mono); font-size: var(--text-2xl); color: var(--color-cream); }
 
-  /* ---- Home: carrossel promocional (lojas, collabs, custom, clube) ---- */
-  .promo-band { border-block: 1px solid var(--color-border); background: var(--color-bg-card); }
-  .promo-slide { display: grid; grid-template-columns: 1fr minmax(280px, 480px); gap: clamp(28px, 5vw, 56px); align-items: center; padding-block: clamp(36px, 5vw, 56px); }
-  .promo-copy { max-width: 520px; }
-  .promo-copy .eyebrow { margin-bottom: 14px; }
-  .promo-copy h2 { font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 14px; }
-  .promo-copy p { color: var(--color-text-muted); font-size: var(--text-base); line-height: 1.7; margin: 0 0 26px; }
-  .promo-media { position: relative; }
-  .promo-media img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); }
-  .promo-media .photo-tag { position: absolute; left: 14px; bottom: 14px; background: color-mix(in srgb, var(--color-ink) 70%, transparent); color: var(--color-cream); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; padding: 6px 10px; border-radius: var(--radius-sm); backdrop-filter: blur(4px); }
-  .promo-band .carousel-indicators { position: static; margin: 0 0 28px; }
-  .promo-band .carousel-indicators [data-bs-target] { width: 34px; height: 3px; border-radius: 2px; background: var(--color-border); border: none; opacity: 1; transition: background-color .2s ease; }
-  .promo-band .carousel-indicators .active { background: var(--color-primary); }
-  .promo-band .carousel-control-prev, .promo-band .carousel-control-next { width: 44px; height: 44px; top: 50%; transform: translateY(-50%); background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: 50%; opacity: 1; color: var(--color-text); }
-  .promo-band .carousel-control-prev { left: -8px; }
-  .promo-band .carousel-control-next { right: -8px; }
-  .promo-band .carousel-control-prev-icon, .promo-band .carousel-control-next-icon { filter: invert(0.4) sepia(0.2); width: 18px; height: 18px; }
+  /* ---- Home: vitrine editorial (leva 10) — proporções alternadas:
+         1ª linha larga | estreita, 2ª linha estreita | larga ---- */
+  .hv { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
+  .hv-grid { display: grid; gap: 20px; grid-template-columns: 1fr 0.45fr 1fr; grid-template-areas: "a a b" "c d d"; }
+  .hv-grid > :nth-child(1) { grid-area: a; }
+  .hv-grid > :nth-child(2) { grid-area: b; }
+  .hv-grid > :nth-child(3) { grid-area: c; }
+  .hv-grid > :nth-child(4) { grid-area: d; }
+  .hv-card { background: var(--color-bg); }
+  .hv-card .mc-media { aspect-ratio: auto; height: clamp(240px, 26vw, 380px); }
 
   /* ---- Home: clube (teaser) ---- */
   .club { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
@@ -118,61 +99,70 @@
 
   /* ---- Home: animação de entrada do hero ---- */
   @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
-  .hero-copy > *, .hero-media { animation: riseIn .7s ease both; }
+  .hero-copy > * { animation: riseIn .7s ease both; }
   .hero-copy > *:nth-child(2) { animation-delay: .08s; }
   .hero-copy > *:nth-child(3) { animation-delay: .16s; }
   .hero-copy > *:nth-child(4) { animation-delay: .24s; }
-  .hero-media { animation-delay: .18s; }
 
   /* ---- Home: responsivo ---- */
   @media (max-width: 980px) {
-    .hero-inner { grid-template-columns: 1fr; gap: 32px; }
     .featured-grid { grid-template-columns: 1fr; gap: 28px; }
-    .promo-slide { grid-template-columns: 1fr; gap: 24px; }
-    .promo-media { order: -1; }
-    .promo-band .carousel-control-prev, .promo-band .carousel-control-next { display: none; }
+    .hx-grid { grid-template-columns: repeat(2, 1fr); }
+    .hx-eco { grid-template-columns: 1fr; }
+    .hero-facts-list { grid-template-columns: repeat(2, 1fr); }
+    .hero-facts-list li { border-top: 1px solid var(--color-border); }
+    .hero-facts-list li:nth-child(-n+2) { border-top: 0; }
+    .hero-facts-list li:nth-child(3) { border-left: 0; padding-left: 0; }
   }
   @media (max-width: 820px) {
-    .category-grid { grid-template-columns: repeat(2, 1fr); }
-    .hero-meta { gap: 28px; }
+    .hv-grid { grid-template-columns: 1fr; grid-template-areas: "a" "b" "c" "d"; }
+    /* No celular o texto fica embaixo, com o gradiente de baixo pra cima */
+    .hero-shade { background: linear-gradient(0deg, var(--color-ink) 0%, color-mix(in srgb, var(--color-ink) 78%, transparent) 55%, color-mix(in srgb, var(--color-ink) 35%, transparent) 100%); }
+    .hero-inner { align-items: flex-end; }
   }
   @media (max-width: 520px) {
-    .category-grid { grid-template-columns: 1fr; }
+    .hx-grid { gap: 12px; }
+    .hx-card .mc-body { padding: 14px 14px 16px; }
+    .hx-card h3 { font-size: var(--text-base); }
+    .hx-card p { font-size: var(--text-xs); }
+    .hx-eco-card { flex-direction: column; }
+    .hx-eco-card .mc-media { flex-basis: auto; aspect-ratio: 16 / 10; min-height: 0; }
     .hero-ctas .btn-aptk { width: 100%; }
+    .hero-facts-list li { padding: 16px 12px; gap: 10px; }
   }
 </style>
 @endpush
 
 @section('content')
 
-  {{-- HERO — retangular: texto à esquerda, vídeo à direita (leva 01) --}}
+  {{-- HERO (leva 10, briefing p.9–10): o vídeo do Negroni vira o fundo do
+       hero inteiro; texto à esquerda sobre o gradiente. Poster = frame do
+       próprio vídeo (img/aptk/hero-negroni-poster.jpg). --}}
   <section class="hero on-dark">
-    <div class="container-aptk">
-      <div class="hero-inner">
-        <div class="hero-copy">
-          {{-- Leva 06: copy oficial do hero. --}}
-          <p class="script-line">Feito por humanos inquietos.</p>
-          <h1>Criamos tendências, engarrafamos histórias e transformamos grandes momentos em rituais.</h1>
-          <p>Dos clássicos aos drinks autorais, bases e edições limitadas, um lugar perfeito para quem leva bebida a sério.</p>
-          <div class="hero-ctas">
-            <a href="{{ route('catalog') }}" class="btn-aptk">Comprar agora</a>
-            <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--outline">Seja membro</a>
-          </div>
-          {{-- Infos numéricas PROVISÓRIAS (cliente ainda decidindo — manter o asterisco). --}}
-          <div class="hero-meta">
-            <div><span class="num">03</span><span class="lbl">Marcas na holding*</span></div>
-            <div><span class="num">100%</span><span class="lbl">Produção nacional*</span></div>
-          </div>
+    <video class="hero-video" autoplay muted loop playsinline poster="{{ asset('img/aptk/hero-negroni-poster.jpg') }}" aria-hidden="true">
+      <source src="{{ asset('video/hero-negroni.mp4') }}" type="video/mp4">
+    </video>
+    <div class="hero-shade"></div>
+    <div class="container-aptk hero-inner">
+      <div class="hero-copy">
+        <span class="eyebrow">Feito por humanos inquietos.</span>
+        <h1 class="title-editorial">Não seguimos tendências. Criamos novos caminhos.</h1>
+        <p>Pioneiros na alta coquetelaria engarrafada no Brasil. Unimos criatividade, técnica e alma brasileira para transformar a maneira de brindar, celebrar e compartilhar histórias.</p>
+        <div class="hero-ctas">
+          <a href="{{ route('catalog') }}" class="btn-aptk">Explore nossos coquetéis <span class="btn-arrow">→</span></a>
+          <a href="{{ route('pages.show', 'quem-somos') }}" class="btn-aptk btn-aptk--outline">Conheça nossa história</a>
         </div>
-        <div class="hero-media">
-          {{-- Vídeo do Negroni (leva 02). Soltar o arquivo
-               "APTK - NEGRONI.mp4" renomeado para
-               public/video/hero-negroni.mp4 e ele entra no lugar do poster. --}}
-          <video autoplay muted loop playsinline poster="{{ asset('img/aptk/hero-bartender.jpg') }}">
-            <source src="{{ asset('video/hero-negroni.mp4') }}" type="video/mp4">
-          </video>
-          <span class="photo-tag">Negroni — no balcão APTK</span>
-        </div>
+      </div>
+    </div>
+    {{-- Faixa de marca (substitui os números provisórios 03 / 100%). --}}
+    <div class="hero-facts">
+      <div class="container-aptk">
+        <ul class="hero-facts-list">
+          <li><span class="hf-big">2016</span><span class="hf-lbl">Pioneiros na categoria</span></li>
+          <li><span class="hf-big">Brasil</span><span class="hf-lbl">Alma brasileira em cada receita</span></li>
+          <li><span class="hf-big">Autoral</span><span class="hf-lbl">Coquetelaria com identidade</span></li>
+          <li class="hf-last"><span class="hf-line" aria-hidden="true"></span><span class="hf-lbl">Feito para compartilhar</span></li>
+        </ul>
       </div>
     </div>
   </section>
@@ -251,170 +241,122 @@
   </section>
   @endif
 
-  {{-- CARTA DE COQUETÉIS (categorias — nomes da leva 01) --}}
-  <section class="section">
+  {{-- UM UNIVERSO DE POSSIBILIDADES (leva 10, briefing p.11–12): substitui
+       "Carta de Coquetéis / O que você procura". Dois blocos: Explore a APTK
+       e Nosso ecossistema. --}}
+  @php
+    $explore = [
+      // FOTO: coquetel pronto servido (provisória: Cosmopolitan da casa no balcão).
+      ['href' => route('catalog'), 'img' => asset('img/aptk/cat-cosmopolitan.jpg'), 'alt' => 'Garrafa de Cosmopolitan da APTK servida no balcão',
+       'h' => 'Coquetéis Prontos', 'p' => 'A excelência da alta coquetelaria, pronta para servir.', 'cls' => ''],
+      ['href' => route('catalog', ['categoria' => 'bases']), 'img' => \Illuminate\Support\Facades\Storage::url('products/aptk-gin-2-750ml-frente.jpg'), 'alt' => 'Garrafa do APTK Gin Nº2 Neutral',
+       'h' => 'Crie Seu Drink', 'p' => 'Ingredientes e bases para explorar sua criatividade.', 'cls' => 'hx-media--produto'],
+      // FOTO: kit/presente APTK com embalagem (provisória: Negroni em garrafas da casa). Leva pro Custom até existir categoria de kits.
+      ['href' => route('custom'), 'img' => asset('img/aptk/featured-negroni.jpg'), 'alt' => 'Garrafas de Negroni da APTK',
+       'h' => 'Arte de Presentear', 'p' => 'Presentes que transformam gestos em histórias.', 'cls' => ''],
+      ['href' => route('pages.show', 'clube'), 'img' => asset('img/aptk/clube-hero.jpg'), 'alt' => 'Convidada do Clube APTK com um drink',
+       'h' => 'Clube APTK', 'p' => 'Seleções especiais, descobertas e edições limitadas.', 'cls' => ''],
+    ];
+  @endphp
+  <section class="section hx">
     <div class="container-aptk">
       <div class="section-head">
-        <span class="eyebrow">Carta de Coquetéis</span>
-        <h2 class="section-title">O que você procura</h2>
-        <p>Do drink pronto para servir aos lotes limitados que saem só uma vez.</p>
+        <h2 class="section-title title-editorial">Um universo de possibilidades.</h2>
+        <p>Dos clássicos da coquetelaria às criações autorais. Descubra diferentes formas de brindar, presentear e celebrar.</p>
       </div>
-      <div class="category-grid">
-        <a href="{{ route('catalog', ['categoria' => 'classicos']) }}" class="card-aptk category-card">
-          <img src="{{ asset('img/aptk/cat-dry-martini.jpg') }}" class="cat-img" alt="Dry Martini servido" loading="lazy">
-          <div class="cat-body">
-            <h3>Coquetéis</h3>
-            <p>Negroni, dry martini e clássicos, prontos para servir.</p>
-            <span class="cat-link">Ver categoria →</span>
+
+      <span class="eyebrow hx-label">Explore a APTK</span>
+      <div class="hx-grid">
+        @foreach ($explore as $card)
+          <a href="{{ $card['href'] }}" class="media-card hx-card">
+            <div class="mc-media {{ $card['cls'] }}">
+              <img src="{{ $card['img'] }}" alt="{{ $card['alt'] }}" loading="lazy">
+            </div>
+            <div class="mc-body">
+              <h3>{{ $card['h'] }}</h3>
+              <p>{{ $card['p'] }}</p>
+              <span class="link-arrow">Explorar <span class="btn-arrow">→</span></span>
+            </div>
+          </a>
+        @endforeach
+      </div>
+
+      <span class="eyebrow hx-label">Nosso ecossistema</span>
+      <div class="hx-eco">
+        {{-- FOTO: garrafa ou serviço da Barín (provisória: bartender da APTK). --}}
+        <a href="{{ route('barin') }}" class="media-card hx-eco-card">
+          <div class="mc-media"><img src="{{ asset('img/aptk/hero-bartender.jpg') }}" alt="Bartender preparando um drink no balcão" loading="lazy"></div>
+          <div class="mc-body">
+            <span class="mc-eyebrow">Barín</span>
+            <h3 class="title-editorial">Feito para o ritmo do bar</h3>
+            <p>Qualidade, praticidade e consistência em cada serviço.</p>
+            <span class="link-arrow">Conhecer a Barín <span class="btn-arrow">→</span></span>
           </div>
         </a>
-        <a href="{{ route('catalog', ['categoria' => 'bases']) }}" class="card-aptk category-card">
-          <img src="{{ asset('img/aptk/cat-fitzgerald.jpg') }}" class="cat-img" alt="Garrafa de gin da APTK" loading="lazy">
-          <div class="cat-body">
-            <h3>Bases</h3>
-            <p>Nossas bases autorais para criar em casa.</p>
-            <span class="cat-link">Ver categoria →</span>
-          </div>
-        </a>
-        <a href="{{ route('catalog') }}" class="card-aptk category-card">
-          <img src="{{ asset('img/aptk/cat-evento.jpg') }}" class="cat-img" alt="Mesa posta com drinks em um evento APTK" loading="lazy">
-          <div class="cat-body">
-            <h3>Kits &amp; Presentes</h3>
-            <p>Combos curados com embalagem especial.</p>
-            <span class="cat-link">Ver categoria →</span>
-          </div>
-        </a>
-        {{-- O CLUBE — abre o pop-up do Clube --}}
-        <a href="#" class="card-aptk category-card" data-bs-toggle="modal" data-bs-target="#clubeModal">
-          <img src="{{ asset('img/aptk/cat-cosmopolitan.jpg') }}" class="cat-img" alt="Drink autoral servido ao lado da garrafa" loading="lazy">
-          <div class="cat-body">
-            <h3>O Clube</h3>
-            <p>Edições limitadas e lotes que não se repetem.</p>
-            <span class="cat-link">Área reservada →</span>
-          </div>
-        </a>
-        {{-- Leva 03: as marcas abrem a LP institucional; a loja fica pro CTA da LP. --}}
-        <a href="{{ route('barin') }}" class="card-aptk category-card category-card--brand">
-          <img src="{{ asset('img/aptk/cat-pessoas.jpg') }}" class="cat-img" alt="Pessoas brindando com drinks da APTK" loading="lazy">
-          <div class="cat-body">
-            <h3>BARIN</h3>
-            <p>As marcas da holding, num só lugar.</p>
-            <span class="cat-link">Ver categoria →</span>
-          </div>
-        </a>
-        <a href="{{ route('ice4pros') }}" class="card-aptk category-card category-card--brand">
-          <img src="{{ asset('img/aptk/cat-loja.jpg') }}" class="cat-img" alt="Balcão da loja física da APTK" loading="lazy">
-          <div class="cat-body">
-            <h3>ICE4PROS</h3>
-            <p>Coqueteleira, copos e linha para empresas.</p>
-            <span class="cat-link">Ver categoria →</span>
+        <a href="https://ice4pros.com.br" class="media-card hx-eco-card" target="_blank" rel="noopener noreferrer">
+          <div class="mc-media"><img src="{{ asset('img/aptk/ice4pros-cubo.jpg') }}" alt="Cubo de gelo cristal Ice4Pros iluminado" loading="lazy"></div>
+          <div class="mc-body">
+            <span class="mc-eyebrow">Ice4Pros</span>
+            <h3 class="title-editorial">O gelo faz a diferença</h3>
+            <p>Gelo profissional para elevar cada detalhe do coquetel.</p>
+            <span class="link-arrow">Conhecer a Ice4Pros <span class="btn-arrow">→</span></span>
           </div>
         </a>
       </div>
     </div>
   </section>
 
-  {{-- MODAL — Clube APTK --}}
-  <div class="modal fade clube-modal" id="clubeModal" tabindex="-1" aria-labelledby="clubeModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-        </div>
-        <div class="modal-body">
-          <x-brand.sunburst class="cm-sun" />
-          <h3 id="clubeModalLabel">O Clube APTK está aberto</h3>
-          <span class="cm-soon">Círculo privado</span>
-          <p>Hospitalidade, cultura, gastronomia e coquetelaria — do Explorer, grátis, ao Le Cercle, por convite.</p>
-          <div class="cm-ctas">
-            {{-- Leva 05: clube lançado com a mecânica oficial. --}}
-            <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk btn-aptk--block">Conhecer o Clube</a>
-            <p class="cm-hint">Comece grátis e evolua no seu ritmo.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {{-- PRODUTO EM DESTAQUE — retangular, imagem à esquerda + seletor de volume --}}
-
-  {{-- CARROSSEL PROMOCIONAL — lojas · collabs · custom · clube (leva 01)
-       Imagens provisórias com marcação — trocar quando o cliente enviar. --}}
-  <section class="section promo-band">
+  {{-- VITRINE EDITORIAL (leva 10, briefing p.13): substitui o carrossel
+       promocional. Quatro cards de proporções diferentes. Textos das imagens
+       de referência. Todas as fotos são PROVISÓRIAS — ver os FOTO: abaixo. --}}
+  <section class="section hv">
     <div class="container-aptk">
-      <div id="promoCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="6000">
-        <div class="carousel-indicators">
-          <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Lojas"></button>
-          <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="1" aria-label="Collabs"></button>
-          <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="2" aria-label="Custom"></button>
-          <button type="button" data-bs-target="#promoCarousel" data-bs-slide-to="3" aria-label="Clube"></button>
-        </div>
-        <div class="carousel-inner">
-          <div class="carousel-item active">
-            <div class="promo-slide">
-              <div class="promo-copy">
-                <span class="eyebrow">Flagship</span>
-                <h2>Onde a alquimia acontece</h2>
-                <p>Visite o balcão APTK: drinks engarrafados, edições limitadas e a curadoria completa da casa — para levar para casa ou viver ali mesmo.</p>
-                <a href="{{ route('pages.show', 'quem-somos') }}" class="btn-aptk">Visite nossas lojas</a>
-              </div>
-              <div class="promo-media">
-                <img src="{{ asset('img/aptk/loja-aptk.jpg') }}" alt="Loja física da APTK Spirits" loading="lazy">
-                <span class="photo-tag">Imagem provisória</span>
-              </div>
-            </div>
+      <div class="section-head">
+        <span class="eyebrow">Além do coquetel</span>
+        <h2 class="section-title title-editorial">Histórias que vão além da garrafa.</h2>
+        <p>Colaborações, encontros e criações que traduzem o universo APTK.</p>
+      </div>
+      <div class="hv-grid">
+        {{-- FOTO: fotos das nossas collabs / vídeo Montblanc (provisória: encontro com comida e drinks). --}}
+        <a href="{{ route('pages.show', 'collabs') }}" class="media-card hv-card hv-card--wide">
+          <div class="mc-media"><img src="{{ asset('img/aptk/cat-evento.jpg') }}" alt="Encontro com drinks e gastronomia" loading="lazy"></div>
+          <div class="mc-body">
+            <span class="mc-eyebrow">Collabs</span>
+            <h3 class="title-editorial">Encontros que criam o extraordinário.</h3>
+            <p>Projetos autorais que conectam marcas, criatividade e coquetelaria.</p>
+            <span class="link-arrow">Explore as collabs <span class="btn-arrow">↗</span></span>
           </div>
-          <div class="carousel-item">
-            <div class="promo-slide">
-              <div class="promo-copy">
-                <span class="eyebrow">Collabs</span>
-                <h2>Criações assinadas com quem a gente admira</h2>
-                <p>Do Limoncello Braz ao Gin Gurumê: produtos exclusivos criados em parceria com bares, hotéis e marcas de todo o Brasil.</p>
-                <a href="{{ route('pages.show', 'collabs') }}" class="btn-aptk">Ver as collabs</a>
-              </div>
-              <div class="promo-media">
-                <img src="{{ asset('img/aptk/parceiros-hero.jpg') }}" alt="Collabs da APTK com o trade" loading="lazy">
-                <span class="photo-tag">Imagem provisória</span>
-              </div>
-            </div>
+        </a>
+        {{-- FOTO: encontro real do Clube, atmosfera de exclusividade e conexão (provisória: amigos brindando). --}}
+        <a href="{{ route('pages.show', 'clube') }}" class="media-card hv-card">
+          <div class="mc-media"><img src="{{ asset('img/aptk/cat-pessoas.jpg') }}" alt="Amigos brindando com drinks da APTK" loading="lazy"></div>
+          <div class="mc-body">
+            <span class="mc-eyebrow">Clube APTK</span>
+            <h3 class="title-editorial">Pertencer é só o começo.</h3>
+            <p>Um universo de conexões, cultura e encontros exclusivos.</p>
+            <span class="link-arrow">Conheça o clube <span class="btn-arrow">↗</span></span>
           </div>
-          <div class="carousel-item">
-            <div class="promo-slide">
-              <div class="promo-copy">
-                <span class="eyebrow">Custom</span>
-                <h2>Sua marca na nossa garrafa</h2>
-                <p>Casamentos, presentes corporativos e datas especiais: personalizamos o rótulo e a curadoria do drink, do lote pequeno ao grande volume.</p>
-                <a href="{{ route('custom') }}" class="btn-aptk">Personalizar rótulo</a>
-              </div>
-              <div class="promo-media">
-                <img src="{{ asset('img/aptk/featured-negroni.jpg') }}" alt="Garrafa personalizada da APTK" loading="lazy">
-                <span class="photo-tag">Imagem provisória</span>
-              </div>
-            </div>
+        </a>
+        {{-- FOTO: foto arquitetônica autoral da loja, materiais, iluminação e detalhes (provisória: fachada da loja). --}}
+        <a href="{{ route('pages.show', 'quem-somos') }}#onde-encontrar" class="media-card hv-card">
+          <div class="mc-media"><img src="{{ asset('img/aptk/loja-aptk.jpg') }}" alt="Fachada da loja APTK Spirits" loading="lazy"></div>
+          <div class="mc-body">
+            <span class="mc-eyebrow">Nossas lojas</span>
+            <h3 class="title-editorial">A alquimia ganha endereço.</h3>
+            <p>Descubra nossos espaços e mergulhe no universo da marca.</p>
+            <span class="link-arrow">Encontre uma loja <span class="btn-arrow">↗</span></span>
           </div>
-          <div class="carousel-item">
-            <div class="promo-slide">
-              <div class="promo-copy">
-                <span class="eyebrow">Clube APTK</span>
-                <h2>Um círculo privado para quem é da casa</h2>
-                <p>Hospitalidade, cultura, gastronomia e coquetelaria — pontos, acesso antecipado e experiências que não chegam ao público. Do Explorer, grátis, ao Le Cercle, por convite.</p>
-                <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk">Conhecer o Clube</a>
-              </div>
-              <div class="promo-media">
-                <img src="{{ asset('img/aptk/clube-hero.jpg') }}" alt="Experiência do Clube APTK" loading="lazy">
-                <span class="photo-tag">Imagem provisória</span>
-              </div>
-            </div>
+        </a>
+        {{-- FOTO: close de garrafa personalizada com acabamento premium e embalagem de presente (provisória: Fitzgerald da casa). --}}
+        <a href="{{ route('custom') }}" class="media-card hv-card hv-card--wide">
+          <div class="mc-media"><img src="{{ asset('img/aptk/cat-fitzgerald.jpg') }}" alt="Garrafa de Fitzgerald da APTK com limões" loading="lazy"></div>
+          <div class="mc-body">
+            <span class="mc-eyebrow">Custom APTK</span>
+            <h3 class="title-editorial">Sua história, nossa alquimia.</h3>
+            <p>Personalização de coquetéis para marcas, presentes e celebrações.</p>
+            <span class="link-arrow">Personalize seu APTK <span class="btn-arrow">↗</span></span>
           </div>
-        </div>
-        <button class="carousel-control-prev" type="button" data-bs-target="#promoCarousel" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Anterior</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#promoCarousel" data-bs-slide="next">
-          <span class="carousel-control-next-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Próximo</span>
-        </button>
+        </a>
       </div>
     </div>
   </section>
