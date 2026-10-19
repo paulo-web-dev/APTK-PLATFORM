@@ -85,13 +85,27 @@ com toggle global — não tratar como opcional.
 **Imagem de produto:** sempre via `<x-product.image :image="..." :alt="...">` (foto ou
 `<x-product.placeholder>`, moldura 2:3 "Produto ainda sem foto"). CSS em
 `public/css/aptk-produto.css` (linkado também no layout admin, que não carrega o
-`aptk.css`). Foto do pacote: `products/{grupo}-{vol}-{frente|verso}.jpg` (import);
+`aptk.css`). Foto do pacote fundo preto: `products/{grupo}-{vol}-{frente|verso}.jpg`;
 upload do admin: nome hash de 40 caracteres (`ProductImage::isUploadDoAdmin()`) — só
 esse arquivo o admin apaga do disco. Upload ADICIONA como principal.
 
-**Catálogo** vem de `catalogo:importar-planilha` (CSV em `database/data/`): ativo =
-ao menos 1 volume com preço; foto antiga do site sai da galeria; upload do admin
-nunca é tocado. Admin não deixa ativar produto sem preço (`Product::temPreco()`).
+**Catálogo: responsabilidade dividida em dois comandos.**
+- `catalogo:importar-planilha` (CSV em `database/data/`) cuida SÓ de nome,
+  volumes, preços, SKU e categoria. Nunca mexe em `active` nem em
+  `product_images`; produto novo nasce inativo. Rodar só quando a planilha mudar
+  (não faz parte do deploy).
+- `produtos:aplicar-fotos` é o dono da ativação (e da galeria). Ativo =
+  `Product::podeAtivar()`: tem preço E tem foto no padrão
+  (`Product::ehFotoNoPadrao`: pacote fundo preto `{grupo}-{N}ml-{lado}.jpg`,
+  `foto-preto-{sku}-{lado}.jpg` de manifesto fundo preto, ou upload do admin).
+  Foto antiga do site e fundo branco não contam; só placeholder = inativo.
+  `--sem-galeria` só aplica a ativação; sem ela, monta galeria a partir de
+  `public/img/fotos_produtos/manifesto.json` e recusa manifesto que não seja
+  `fundo=preto`. Salva backup em `storage/app/fotos-manifesto/` antes de gravar;
+  `--reverter=ultimo` volta. `--dry-run`.
+- O admin usa a mesma regra: sem preço ou sem foto no padrão não ativa ("Envie
+  uma foto do produto antes de ativar."). Foto enviada no mesmo salvar conta.
+
 `catalogo:produto-teste [--remover]`: produto "Teste" (slug `teste`, 100 ml a
 R$ 1,00, Bases) para teste de pagamento real; o importador nunca toca nele.
 
@@ -184,6 +198,9 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
 1. Frete é estimativa por tabela (+20%) — cotação real depende de conta na SuperFrete.
 2. Portal B2B é só fachada: middleware + role + um `/ping`. Sem controllers nem views.
 3. Microvix fora de operação (`MICROVIX_ENVIA_PEDIDO=false`); ver ESTADO-ATUAL §8.4.
+4. Foto fundo preto nova não tem caminho automático: precisa de um manifesto
+   (`fundo=preto`) apontando pro `FUNDO PRETO/` e `produtos:aplicar-fotos` sem
+   `--sem-galeria`. Ver ESTADO-ATUAL §10.
 
 ## Deploy
 

@@ -147,6 +147,8 @@
                         @else
                             @if ($editing && ! $product->temPreco())
                                 <p class="td-muted" style="font-size:var(--text-xs); margin:-4px 0 10px;">Sem preço: só pode ser ativado depois de ter preço.</p>
+                            @elseif ($editing && ! $product->temFotoNoPadrao())
+                                <p class="td-muted" style="font-size:var(--text-xs); margin:-4px 0 10px;">Sem foto: envie uma foto do produto antes de ativar.</p>
                             @endif
                         @enderror
                         <label class="check" style="margin-bottom:0;">

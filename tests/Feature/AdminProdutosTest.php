@@ -205,6 +205,51 @@ class AdminProdutosTest extends TestCase
         $this->assertFalse($p->fresh()->active);
     }
 
+    public function test_produto_sem_foto_no_padrao_nao_pode_ser_ativado(): void
+    {
+        $p = $this->importado(['active' => false]);
+        $p->images()->delete();
+        // Foto antiga do site não conta.
+        ProductImage::create(['product_id' => $p->id, 'path' => 'products/negroni-classico.jpg', 'sort_order' => 0, 'is_primary' => true]);
+
+        $this->actingAs($this->admin)
+            ->put("/admin/produtos/{$p->id}", ['active' => '1'] + $this->camposDoForm($p))
+            ->assertSessionHasErrors(['active' => 'Envie uma foto do produto antes de ativar.']);
+
+        $this->assertFalse($p->fresh()->active);
+    }
+
+    public function test_foto_enviada_no_mesmo_salvar_libera_a_ativacao(): void
+    {
+        $p = $this->importado(['active' => false]);
+        $p->images()->delete();
+
+        $campos = ['active' => '1', 'image' => UploadedFile::fake()->image('nova.jpg', 800, 1200)] + $this->camposDoForm($p);
+        $this->actingAs($this->admin)
+            ->put("/admin/produtos/{$p->id}", $campos)
+            ->assertSessionHasNoErrors();
+
+        $p = $p->fresh('images');
+        $this->assertTrue($p->active);
+        $this->assertTrue($p->images->first()->isUploadDoAdmin());
+        $this->assertTrue($p->podeAtivar());
+    }
+
+    public function test_criar_produto_ativo_sem_foto_e_recusado_e_com_foto_passa(): void
+    {
+        $campos = ['name' => 'Novo', 'price' => '150', 'stock_qty' => '10', 'active' => '1'];
+
+        $this->actingAs($this->admin)
+            ->post('/admin/produtos', $campos)
+            ->assertSessionHasErrors(['active' => 'Envie uma foto do produto antes de ativar.']);
+        $this->assertSame(0, Product::count());
+
+        $this->actingAs($this->admin)
+            ->post('/admin/produtos', $campos + ['image' => UploadedFile::fake()->image('nova.jpg', 800, 1200)])
+            ->assertSessionHasNoErrors();
+        $this->assertTrue(Product::sole()->active);
+    }
+
     public function test_criar_produto_ativo_sem_preco_e_recusado(): void
     {
         $this->actingAs($this->admin)

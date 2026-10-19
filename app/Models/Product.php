@@ -140,6 +140,43 @@ class Product extends Model
         return $this->menorPreco() !== null;
     }
 
+    /* -----------------------------------------------------------------
+     | Ativação
+     | Ativo = tem preço E tem foto no padrão. Regra única do admin e do
+     | produtos:aplicar-fotos (o importador da planilha não ativa nada).
+     ------------------------------------------------------------------ */
+
+    /**
+     * Foto no padrão: pacote fundo preto ({grupo}-{N}ml-{frente|verso}.jpg),
+     * foto de manifesto marcado fundo preto (foto-preto-{sku}-{lado}.jpg) ou
+     * upload do admin. Foto antiga do site ({slug}.jpg) e fundo branco não contam.
+     */
+    public static function ehFotoNoPadrao(string $path): bool
+    {
+        return (bool) preg_match('#^products/([a-z0-9-]+-\d+ml|foto-preto-[a-z0-9-]+)-(frente|verso)\.jpg$#', $path)
+            || (new ProductImage(['path' => $path]))->isUploadDoAdmin();
+    }
+
+    /** @param  array|null  $galeria  paths a considerar (padrão: a galeria gravada) */
+    public function temFotoNoPadrao(?array $galeria = null): bool
+    {
+        $galeria ??= $this->images->pluck('path')->all();
+
+        foreach ($galeria as $path) {
+            if (self::ehFotoNoPadrao($path)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param  array|null  $galeria  paths a considerar (padrão: a galeria gravada) */
+    public function podeAtivar(?array $galeria = null): bool
+    {
+        return $this->temPreco() && $this->temFotoNoPadrao($galeria);
+    }
+
     /** Volume padrão pré-selecionado (o maior — normalmente o preço "cheio"). */
     public function defaultSize(): ?string
     {

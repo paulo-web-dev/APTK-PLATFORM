@@ -56,7 +56,7 @@ class ProductController extends Controller
         $data['active']   = $request->boolean('active');
         $data['featured'] = $request->boolean('featured');
 
-        $this->exigePrecoParaAtivar(new Product($data));
+        $this->exigePodeAtivar($request, new Product($data), []);
 
         $product = Product::create($data);
 
@@ -102,7 +102,7 @@ class ProductController extends Controller
         $data['active']   = $request->boolean('active');
         $data['featured'] = $request->boolean('featured');
 
-        $this->exigePrecoParaAtivar($product->replicate()->fill($data));
+        $this->exigePodeAtivar($request, $product->replicate()->fill($data), $product->images()->pluck('path')->all());
 
         $product->update($data);
 
@@ -182,14 +182,30 @@ class ProductController extends Controller
         return $data;
     }
 
-    /** Produto sem preço não fica ativo (leva 08) — vale no criar e no editar. */
-    private function exigePrecoParaAtivar(Product $candidato): void
+    /**
+     * Ativo só com preço e foto no padrão (Product::podeAtivar) — vale no
+     * criar e no editar. A foto enviada neste mesmo salvar já conta: o
+     * hashName() é o nome que o store() vai usar.
+     */
+    private function exigePodeAtivar(Request $request, Product $candidato, array $galeria): void
     {
-        if ($candidato->active && ! $candidato->temPreco()) {
-            throw ValidationException::withMessages([
-                'active' => 'Produto sem preço não pode ser ativado. Preencha o preço (ou os preços por volume) e salve de novo.',
-            ]);
+        if (! $candidato->active) {
+            return;
         }
+
+        if ($request->hasFile('image')) {
+            $galeria[] = $request->file('image')->hashName('products');
+        }
+
+        if ($candidato->podeAtivar($galeria)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'active' => ! $candidato->temPreco()
+                ? 'Produto sem preço não pode ser ativado. Preencha o preço (ou os preços por volume) e salve de novo.'
+                : 'Envie uma foto do produto antes de ativar.',
+        ]);
     }
 
     /** Mesmo conteúdo, na mesma ordem, comparando número como número (80 == 80.0). */

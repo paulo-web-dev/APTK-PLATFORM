@@ -4,6 +4,7 @@ namespace Tests\Feature\Microvix;
 
 use App\Models\MicrovixProduct;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -41,6 +42,8 @@ class AdminErpLockTest extends TestCase
             'size_prices' => ['375 ml' => 123.44],
             'active'      => true,
         ]);
+        // Ativo exige foto no padrão (Product::podeAtivar).
+        ProductImage::create(['product_id' => $this->product->id, 'path' => 'products/negroni-classico-375ml-frente.jpg', 'sort_order' => 0, 'is_primary' => true]);
     }
 
     protected function vincula(): void

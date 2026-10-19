@@ -4,8 +4,9 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-18** (§9 — Appmax com credenciais do painel, loja
-própria; rotas do fluxo de instalação fora de uso). Antes: 2026-10-11 (leva 08,
+Última revisão: **2026-10-19** (§10 — ativação só com preço e foto no padrão,
+importador sem `active`/galeria, `produtos:aplicar-fotos`). Antes: 2026-10-18
+(§9 — Appmax com credenciais do painel, loja própria) e 2026-10-11 (leva 08,
 §8 — frete estimado PAC/SEDEX, catálogo completo, admin; Microvix fora, §8.4).
 
 ---
@@ -279,7 +280,8 @@ Comando `catalogo:importar-planilha [--dry-run]`, idempotente.
 --dry-run`, conferir, e rodar sem `--dry-run`.
 
 **Pendência — admin apaga imagens:** resolvida na leva 08 (§8.3). As regras
-de ativação e de foto antiga desta seção foram substituídas pela §8.2.
+de ativação e de foto antiga desta seção foram substituídas pela §8.2 e
+depois pela §10 (o importador não ativa nem mexe em galeria).
 
 ---
 
@@ -311,6 +313,9 @@ Três commits, um por bloco (`f8acf17` frete, `8d2c270` placeholder/import,
 - Quando a SuperFrete entrar: trocar só a implementação do `FreteService`.
 
 ### 8.2 Catálogo completo com placeholder
+
+> Substituído pela §10: o importador não decide mais `active` nem galeria, e
+> produto só com placeholder fica inativo.
 
 - `catalogo:importar-planilha`: **ativo = ao menos 1 volume com preço**; foto
   deixou de ser condição. A foto antiga do site (`products/{slug}.jpg` e
@@ -395,6 +400,64 @@ conferir os 26 ativos, rodar sem `--dry-run`, e `config:cache`
   Consulta falhou → responde 503 e a Appmax retenta (4 entregas: +10s, +100s,
   +~17 min). `OrderAuthorized` (antifraude) não marca pago. Estorno parcial e
   chargeback ganho só viram incidente no pedido. Formato Appstore segue aceito.
+
+---
+
+## 10. Ativação só com foto no padrão (19/10/2026)
+
+A gestão quis na loja só produto com foto. Chegou um acervo novo em
+`public/img/fotos_produtos/375ML|750ML` com `manifesto.json` (SKU → frente/verso),
+mas é outra sessão (Canon 7D, dez/2023–jan/2024), **fundo branco**, quase tudo
+quadrado — decisão: **não vai pro site** (dark fixo). O padrão segue o pacote
+**FUNDO PRETO** (3000x4500) da leva 07, que já está na galeria.
+
+- **Divisão de responsabilidade:**
+  - `catalogo:importar-planilha`: só nome, volumes, preços, SKU e categoria.
+    Saíram `--fotos`, geração de imagem, galeria, `active` e a desativação das
+    cachaças. Produto novo nasce inativo. Preço que some de produto ativo só
+    gera aviso ("Ativos e sem preço"). Colunas `foto_*` do CSV ignoradas.
+    **Fora do deploy**: rodar só quando a planilha mudar.
+  - `produtos:aplicar-fotos`: dono da ativação e da galeria. Ativo =
+    `Product::podeAtivar()` = `temPreco()` E `temFotoNoPadrao()`. Foto no
+    padrão: pacote fundo preto `{grupo}-{N}ml-{lado}.jpg`,
+    `foto-preto-{sku}-{lado}.jpg` (manifesto fundo preto) ou upload do admin.
+    `--sem-galeria` só ativa/desativa. Sem a opção, monta galeria do manifesto
+    (recorte central 2:3, 800x1200, JPG 82) e **recusa manifesto que não seja
+    `fundo=preto`** (campo `fundo` da entrada ou `--fundo=preto`). SKU casa
+    com `products.sku` ou com o SKU do volume na planilha; `G750.`/`G2750.`
+    são aliases (ponto final ignorado). Produto `teste` intocado. Backup de
+    ativo + galeria em `storage/app/fotos-manifesto/backup-*.json` (fora do
+    git) antes de gravar; `--reverter=ultimo` (ou nome do arquivo). Relatório:
+    SKU sem produto, entradas sem SKU (só lista, não cria), com foto e sem preço.
+  - Admin: mesma regra. Sem preço → mensagem de sempre; sem foto no padrão →
+    "Envie uma foto do produto antes de ativar." A foto enviada no mesmo
+    salvar conta (`hashName()` do upload).
+- **Resultado local** (`--sem-galeria`): **9 ativos** (boulevardier,
+  cosmopolitan, dry-martini, fitzgerald, negroni-classico, neutral-gin,
+  old-fashioned, sur-lorange, vermute-circollo-rosso); **17 desativados** por
+  falta de foto (vodka-vdk, caipirinha-arazul, caju-amigo, cajuzaco-barin,
+  canarinha, coffee-negroni, espresso-martini, squadra-amendoas, squadra-coco,
+  limoncello, limoncello-barin, manhattan, moscow-mule, negroni-aged,
+  negroni-barin, negroni-piselli, penicillin). Com foto e sem preço, seguem
+  inativos: aptk-gin-1, negroni-jerez, scarlatti, vermute-circollo-bianco,
+  ale-tonic, gallo-tropicalle, vermute-circollo-dry, voglio-apperitivo.
+  Galeria intocada (60 imagens). `--reverter=ultimo` testado (26 → 9 → 26 → 9).
+- **Manifesto (pasta fora do git):** marcado `fundo: "branco"` em todas as
+  entradas, com `obs` nas que existem só em FUNDO PRETO: Gin #1 375
+  (`Fundo Preto_028/029`), Gallo 750 (`037/038`), Ale Tonic 750 (`039/040`);
+  Drink Perfeito 375 (`034`) existe, mas fundo azul, fora do padrão. NC750 só
+  existe no manifesto branco. Detalhes no `CLAUDE.md` da pasta.
+- **Pendência — foto fundo preto nova:** com o importador fora da galeria,
+  nada gera foto do pacote sozinho. Foto fundo preto nova precisa de um
+  manifesto (`fundo=preto`) apontando pro `FUNDO PRETO/` e
+  `produtos:aplicar-fotos` sem `--sem-galeria` (os arquivos saem como
+  `foto-preto-{sku}-{lado}.jpg`). Atenção: nesse modo a galeria do produto
+  passa a ser só a do manifesto (+ upload do admin) — as fotos do pacote antigo
+  daquele produto saem da galeria (só a linha).
+
+**Deploy:** depois do `reset --hard`, `php artisan produtos:aplicar-fotos
+--sem-galeria --dry-run`, conferir 9 ativos / 17 desativados, rodar sem
+`--dry-run`. Não rodar o importador.
 
 ---
 
