@@ -10,6 +10,16 @@ use Illuminate\View\View;
 
 class PageController extends Controller
 {
+    /**
+     * Portfólio de eventos realizados (leva 10, view shop.eventos). A seção
+     * só aparece com ao menos 1 item. Cada evento:
+     *   ['titulo' => 'Nome do evento', 'quando' => '2025 · São Paulo',
+     *    'descricao' => 'Uma linha sobre o que a APTK fez',
+     *    'image' => 'img/aptk/arquivo.jpg' ou null (bloco reservado)]
+     * Aguardando a gestão: nome, cliente, data, local, foto e autorização de uso.
+     */
+    public const PORTFOLIO_EVENTOS = [];
+
     public function show(string $slug): View
     {
         // Páginas com layout próprio.
@@ -26,6 +36,14 @@ class PageController extends Controller
                 ->get();
 
             return view('shop.clube', compact('plans'));
+        }
+
+        if ($slug === 'eventos') {
+            // Leva 10: view própria (antes usava o template shop.page).
+            return view('shop.eventos', [
+                'portfolio' => self::PORTFOLIO_EVENTOS,
+                'proposta'  => $this->mailto('Evento — solicitar proposta — APTK'),
+            ]);
         }
 
         // Demais páginas institucionais — template único (hero + blocos + fechamento).
@@ -146,45 +164,6 @@ class PageController extends Controller
             /* Leva 04: página interna de Franquias APOSENTADA — o menu e a
                rota /franquias apontam pra LP do parceiro em
                https://lp.aptkspirits.com/ (form, GTM e vídeos mantidos lá). */
-
-            'eventos' => [
-                'eyebrow'  => 'Eventos',
-                'title'    => 'Cada celebração merece um brinde à altura',
-                'lead'     => 'A Small Batches desenvolve soluções personalizadas para eventos de diferentes tamanhos e ocasiões, combinando coquetelaria premium, hospitalidade e curadoria para transformar momentos especiais em memórias inesquecíveis.',
-                'image'    => 'img/aptk/eventos-hero.jpg',
-                'hero_cta' => ['label' => 'Solicitar proposta', 'href' => $this->mailto('Evento — solicitar proposta — APTK')],
-
-                // Ocasiões (doc leva 05).
-                'chips_eyebrow' => 'Ocasiões',
-                'chips' => ['Corporativos', 'Casamentos', 'Aniversários', 'Eventos sociais', 'Lançamentos de marca', 'Jantares e encontros exclusivos'],
-
-                // Formatos — como podemos fazer parte do seu evento (doc leva 05).
-                'features_eyebrow' => 'Como podemos fazer parte do seu evento?',
-                'features_title'   => 'Quatro formatos, uma assinatura',
-                'features' => [
-                    ['n' => '01', 'h' => 'Bar para eventos', 'p' => 'Leve a assinatura da APTK para o seu evento com uma operação completa de bar, carta autoral e equipe especializada.'],
-                    ['n' => '02', 'h' => 'Small Batches para presentear', 'p' => 'Garrafas e kits exclusivos para convidados, padrinhos, clientes, colaboradores ou ações especiais.'],
-                    ['n' => '03', 'h' => 'Patrocínio e apoio institucional', 'p' => 'Projetos em parceria com marcas, ativações e eventos alinhados ao universo Small Batches.'],
-                    ['n' => '04', 'h' => 'Customização de produtos', 'p' => 'Rótulos e embalagens personalizados para transformar sua celebração em algo verdadeiramente único.'],
-                ],
-
-                // Nosso processo (doc leva 05).
-                'steps_eyebrow' => 'Nosso processo',
-                'steps_title'   => 'Da primeira taça ao último brinde',
-                'steps' => [
-                    ['h' => 'Entendimento',  'p' => 'Ocasião e necessidades do evento.'],
-                    ['h' => 'Formato',       'p' => 'Bar, gifting, patrocínio ou customização.'],
-                    ['h' => 'Proposta',      'p' => 'Desenvolvimento da proposta e identidade visual.'],
-                    ['h' => 'Planejamento',  'p' => 'Produção e planejamento operacional.'],
-                    ['h' => 'Execução',      'p' => 'Execução e entrega — estamos presentes para tornar cada celebração memorável.'],
-                ],
-                'steps_note' => null,
-
-                'closing_title' => 'Tem um evento chegando?',
-                'closing_text'  => 'Conte a data, o local e o número de convidados — montamos a proposta.',
-                'closing_cta'   => ['label' => 'Solicitar proposta', 'href' => $this->mailto('Evento — solicitar proposta — APTK')],
-                'closing_cta2'  => ['label' => 'Ver a carta', 'href' => route('catalog')],
-            ],
 
             'assinantes' => [
                 'eyebrow'  => 'Área do assinante',
