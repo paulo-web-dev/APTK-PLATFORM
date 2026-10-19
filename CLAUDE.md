@@ -58,6 +58,16 @@ e `size_prices` (mapa volume→preço). Use `priceForSize()`, `sizeOptions()`,
 
 **Carrinho em sessão**, não em banco. `CartService`.
 
+**Checkout aberto a visitante** (leva 09): `GET /checkout` é público; sem login
+mostra o card "Identificação" (e-mail → senha ou cadastro, AJAX em
+`checkout.identificacao.*`, `CheckoutIdentificacaoController`) e o formulário
+oculto; `POST /checkout` exige login. Rate limiters nomeados
+(`checkout-email|entrar|cadastrar`) + latência fixa na verificação de e-mail.
+Declaração 18+ em `users.maior_idade_em` (cadastro, `/register` e, para conta
+antiga, checkbox no checkout). Pós-login de `/login` e `/register`:
+`DestinoPosLogin` (checkout → checkout; carrinho cheio → carrinho; senão
+intended/home — nunca `/dashboard`). Login migra a sessão: carrinho preservado.
+
 **Configurações** chave/valor na tabela `settings` via `Setting::get()` / `Setting::set()`.
 Usado inclusive para o UUID de instalação externa da Appmax.
 

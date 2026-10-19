@@ -36,6 +36,12 @@
             @error('password_confirmation') <div class="field-error">{{ $message }}</div> @enderror
         </div>
 
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" name="maior_idade" id="maior_idade" value="1" required {{ old('maior_idade') ? 'checked' : '' }}>
+            <label class="form-check-label" for="maior_idade" style="margin:0; color:var(--color-text);">Declaro ter 18 anos ou mais</label>
+            @error('maior_idade') <div class="field-error">{{ $message }}</div> @enderror
+        </div>
+
         <button type="submit" class="btn-aptk btn-aptk--block">Criar conta</button>
     </form>
 

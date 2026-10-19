@@ -48,5 +48,12 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
         });
+
+        // Identificação no checkout (leva 09). Limitadores NOMEADOS, cada um
+        // com a sua chave: o throttle:N,M genérico usa só domínio|IP e as
+        // rotas dividiriam o mesmo balde (verificar e-mail gastaria o login).
+        RateLimiter::for('checkout-email', fn (Request $request) => Limit::perMinute(10)->by('checkout-email|'.$request->ip()));
+        RateLimiter::for('checkout-entrar', fn (Request $request) => Limit::perMinute(10)->by('checkout-entrar|'.$request->ip()));
+        RateLimiter::for('checkout-cadastrar', fn (Request $request) => Limit::perMinute(5)->by('checkout-cadastrar|'.$request->ip()));
     }
 }

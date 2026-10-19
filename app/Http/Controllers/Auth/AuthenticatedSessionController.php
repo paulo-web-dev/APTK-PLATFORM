@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Providers\RouteServiceProvider;
+use App\Support\DestinoPosLogin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,8 +15,10 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
+        DestinoPosLogin::lembrar($request); // ?voltar=checkout|carrinho
+
         return view('auth.login');
     }
 
@@ -27,9 +29,10 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // regenerate() troca o id mas MIGRA os dados: o carrinho (sessão) fica.
         $request->session()->regenerate();
 
-        return redirect()->intended(RouteServiceProvider::HOME);
+        return DestinoPosLogin::redirecionar($request);
     }
 
     /**

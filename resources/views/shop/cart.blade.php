@@ -95,6 +95,13 @@
                     <div class="summary-total"><span>Total</span><span>R$ {{ number_format($total, 2, ',', '.') }}</span></div>
 
                     <a href="{{ route('checkout.index') }}" class="btn-aptk btn-aptk--block" style="margin-top:20px;">Finalizar compra</a>
+                    @guest
+                        {{-- Visitante compra sem login (identificação no checkout);
+                             quem já tem conta entra e volta pra cá. --}}
+                        <p style="margin:14px 0 0; text-align:center; font-size:var(--text-sm); color:var(--color-text-muted);">
+                            Já possui conta? <a href="{{ route('login', ['voltar' => 'carrinho']) }}" style="color:var(--color-primary);">Entrar</a>
+                        </p>
+                    @endguest
                     <a href="{{ route('catalog') }}" class="btn-aptk btn-aptk--outline btn-aptk--block" style="margin-top:10px;">Continuar comprando</a>
                 </aside>
             </div>

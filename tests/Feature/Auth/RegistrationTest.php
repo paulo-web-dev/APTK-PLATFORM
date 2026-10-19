@@ -24,9 +24,12 @@ class RegistrationTest extends TestCase
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'maior_idade' => '1',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(RouteServiceProvider::HOME);
+        // Carrinho vazio, sem ?voltar: home (leva 09 — não mais /dashboard).
+        $response->assertRedirect(route('home'));
+        $this->assertNotNull(auth()->user()->maior_idade_em);
     }
 }

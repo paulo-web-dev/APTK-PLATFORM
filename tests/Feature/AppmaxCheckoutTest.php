@@ -67,6 +67,7 @@ class AppmaxCheckoutTest extends TestCase
             'email'    => 'cliente@aptk.test',
             'password' => bcrypt('secret123'),
             'role'     => 'customer',
+            'maior_idade_em' => now(), // já declarou 18+ (leva 09)
         ]);
     }
 

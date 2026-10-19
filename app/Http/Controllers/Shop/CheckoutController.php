@@ -52,13 +52,23 @@ class CheckoutController extends Controller
     ) {
     }
 
-    public function index(): View|RedirectResponse
+    /**
+     * Aberto a visitante (leva 09): sem login, a página mostra a
+     * identificação (e-mail → senha ou cadastro, por AJAX) no lugar do
+     * formulário, que já vem renderizado e oculto. Logado sem a declaração
+     * de 18+ (conta antiga): a checkbox aparece antes do pagamento.
+     */
+    public function index(Request $request): View|RedirectResponse
     {
         if ($this->cart->isEmpty()) {
             return redirect()->route('cart.index');
         }
 
+        $user = $request->user();
+
         return view('shop.checkout', [
+            'identificar'         => $user === null,
+            'precisaMaiorIdade'   => $user === null || ! $user->declarouMaioridade(),
             'items'               => $this->cart->items(),
             'total'               => $this->cart->total(),
             'maxInstallments'     => max(1, (int) config('appmax.max_installments', 3)),
@@ -94,6 +104,12 @@ class CheckoutController extends Controller
         }
 
         $data = $request->validate($this->rules($request), $this->messages());
+
+        // Conta antiga sem a declaração de 18+: a checkbox veio marcada
+        // (validada acima) — grava a data ao finalizar.
+        if (! $request->user()->declarouMaioridade()) {
+            $request->user()->forceFill(['maior_idade_em' => now()])->save();
+        }
 
         // Parcelas: o limite depende do total COM frete (parcela mínima).
         // Mesmo cálculo do OrderService, antes de gravar qualquer coisa.
@@ -350,6 +366,11 @@ class CheckoutController extends Controller
             'notes'           => ['nullable', 'string', 'max:1000'],
         ];
 
+        // Venda de bebida alcoólica: quem ainda não declarou 18+ declara aqui.
+        if (! $request->user()?->declarouMaioridade()) {
+            $rules['maior_idade'] = ['accepted'];
+        }
+
         // Número/CVV crus são proibidos em qualquer método (o store() já
         // barra antes; isto é o cinto).
         foreach (self::CAMPOS_CARTAO_PROIBIDOS as $campo) {
@@ -376,6 +397,7 @@ class CheckoutController extends Controller
             'shipping_method.required' => 'Escolha uma opção de frete.',
             'shipping_method.in'       => 'Escolha uma opção de frete.',
             'appmax_token.required' => self::MSG_CARTAO_NAO_VALIDADO,
+            'maior_idade.accepted'  => 'Para finalizar, confirme que você tem 18 anos ou mais.',
             'installments.max'      => 'Parcelamos em até '.max(1, (int) config('appmax.max_installments', 3)).'x sem juros.',
         ];
     }

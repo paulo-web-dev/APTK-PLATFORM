@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CheckoutController;
+use App\Http\Controllers\Shop\CheckoutIdentificacaoController;
 use App\Http\Controllers\Shop\CustomController;
 use App\Http\Controllers\Shop\FreteController;
 use App\Http\Controllers\Shop\NovidadesController;
@@ -54,6 +55,23 @@ Route::post('/frete/cotar', [FreteController::class, 'cotar'])->name('frete.cota
 
 /*
 |--------------------------------------------------------------------------
+| Checkout aberto a visitante (leva 09) — compra por impulso
+|--------------------------------------------------------------------------
+| O GET mostra a identificação (e-mail → senha ou cadastro, AJAX) no lugar
+| do formulário. Fechar o pedido (POST /checkout) continua exigindo login.
+| E-mail: throttle por IP + latência fixa (não serve pra varrer quem tem
+| conta). Login: o rate limit do próprio LoginRequest do Breeze.
+*/
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout/identificacao/email', [CheckoutIdentificacaoController::class, 'email'])
+    ->middleware('throttle:checkout-email')->name('checkout.identificacao.email');
+Route::post('/checkout/identificacao/entrar', [CheckoutIdentificacaoController::class, 'entrar'])
+    ->middleware('throttle:checkout-entrar')->name('checkout.identificacao.entrar');
+Route::post('/checkout/identificacao/cadastrar', [CheckoutIdentificacaoController::class, 'cadastrar'])
+    ->middleware('throttle:checkout-cadastrar')->name('checkout.identificacao.cadastrar');
+
+/*
+|--------------------------------------------------------------------------
 | Landing pages das marcas (leva 03) — branding antes da venda
 |--------------------------------------------------------------------------
 */
@@ -82,8 +100,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Checkout (exige login: pedido precisa de user_id)
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    // Fechar o pedido exige login (pedido precisa de user_id). O GET
+    // /checkout é público — ver bloco "Checkout aberto a visitante".
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/pedido/{order}/confirmado', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/pedido/{order}/status-pagamento', [CheckoutController::class, 'paymentStatus'])->name('checkout.payment-status');

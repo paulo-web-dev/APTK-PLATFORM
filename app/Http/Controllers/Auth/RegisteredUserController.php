@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Providers\RouteServiceProvider;
+use App\Support\DestinoPosLogin;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,8 +18,10 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
+        DestinoPosLogin::lembrar($request); // ?voltar=checkout|carrinho
+
         return view('auth.register');
     }
 
@@ -34,18 +36,24 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            // Venda de bebida alcoólica: declaração obrigatória (leva 09).
+            'maior_idade' => ['accepted'],
+        ], [
+            'maior_idade.accepted' => 'Para criar a conta, confirme que você tem 18 anos ou mais.',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'maior_idade_em' => now(),
         ]);
 
         event(new Registered($user));
 
+        // Auth::login migra a sessão (novo id, mesmos dados): o carrinho fica.
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+        return DestinoPosLogin::redirecionar($request);
     }
 }

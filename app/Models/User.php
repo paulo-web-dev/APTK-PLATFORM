@@ -18,6 +18,7 @@ class User extends Authenticatable
         'role',
         'phone',
         'cpf',
+        'maior_idade_em',
     ];
 
     protected $hidden = [
@@ -28,7 +29,14 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password'          => 'hashed',
+        'maior_idade_em'    => 'datetime',
     ];
+
+    /** Já declarou ter 18 anos ou mais (cadastro ou checkout)? */
+    public function declarouMaioridade(): bool
+    {
+        return $this->maior_idade_em !== null;
+    }
 
     /* ---------------- Relações ---------------- */
 

@@ -28,7 +28,8 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(RouteServiceProvider::HOME);
+        // Carrinho vazio, sem ?voltar: intended ou home (leva 09).
+        $response->assertRedirect(route('home'));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
