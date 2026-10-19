@@ -10,8 +10,8 @@
     .cat-cover .cat-cover-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--color-ink) 52%, transparent), color-mix(in srgb, var(--color-ink) 84%, transparent)); }
     .cat-cover .cat-cover-inner { position: relative; z-index: 1; padding-block: clamp(48px, 9vw, 92px); }
     .cat-cover .eyebrow { margin-bottom: 14px; }
-    .cat-cover h1 { font-family: var(--font-display); font-size: clamp(2.2rem, 6vw, 3.5rem); color: var(--color-cream); margin: 0 0 12px; }
-    .cat-cover p { color: color-mix(in srgb, var(--color-cream) 82%, transparent); font-size: var(--text-lg); max-width: 560px; margin: 0; }
+    .cat-cover h1 { font-size: clamp(2.3rem, 5.6vw, 3.8rem); color: var(--color-cream); margin: 0 0 14px; max-width: 16ch; }
+    .cat-cover p { color: color-mix(in srgb, var(--color-cream) 82%, transparent); font-size: var(--text-lg); max-width: 600px; margin: 0; }
     .cat-filter { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 36px; }
     .cat-pill { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 16px; border-radius: 100px; border: 1px solid var(--color-border); color: var(--color-text-muted); transition: color .2s ease, border-color .2s ease, background-color .2s ease; }
     .cat-pill:hover { color: var(--color-text); border-color: var(--color-primary-muted); }
@@ -41,16 +41,17 @@
     $coverImage = ($activeCategory && $activeCategory->image)
         ? \Illuminate\Support\Facades\Storage::url($activeCategory->image)
         : asset('img/aptk/loja-aptk.jpg');
-    $coverTitle = $activeCategory?->name ?? 'Todos';
+    // Leva 10 (briefing p.16): capa de "Todos os produtos" com o texto novo.
+    $coverTitle = $activeCategory?->name ?? 'Alta coquetelaria. Novas possibilidades.';
     $coverText  = $activeCategory?->description
-        ?? 'Descubra nossa linha de coquetéis engarrafados e bases perfeitas para criar drinks inesquecíveis.';
+        ?? 'Dos clássicos às criações autorais, descubra um portfólio que combina técnica, criatividade e alma brasileira. Coquetéis prontos para servir e bases para criar, explorar e celebrar do seu jeito.';
 @endphp
 <section class="cat-cover on-dark">
     <img class="cat-cover-bg" src="{{ $coverImage }}" alt="{{ $coverTitle }}">
     <div class="cat-cover-overlay"></div>
     <div class="container-aptk cat-cover-inner">
-        <span class="eyebrow">Carta de Coquetéis</span>
-        <h1>{{ $coverTitle }}</h1>
+        <span class="eyebrow">Explore nossos coquetéis</span>
+        <h1 class="title-editorial">{{ $coverTitle }}</h1>
         @if ($coverText)
             <p>{{ $coverText }}</p>
         @endif
@@ -61,7 +62,7 @@
     <div class="container-aptk">
 
         <div class="cat-filter">
-            <a href="{{ route('catalog') }}" class="cat-pill {{ ! $activeCategory ? 'is-active' : '' }}">Todos</a>
+            <a href="{{ route('catalog') }}" class="cat-pill {{ ! $activeCategory ? 'is-active' : '' }}">Todos os produtos</a>
             @foreach ($categories as $cat)
                 <a href="{{ route('catalog', ['categoria' => $cat->slug]) }}"
                    class="cat-pill {{ $activeCategory?->id === $cat->id ? 'is-active' : '' }}">{{ $cat->name }}</a>
