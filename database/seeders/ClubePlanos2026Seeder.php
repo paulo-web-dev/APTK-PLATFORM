@@ -38,8 +38,8 @@ class ClubePlanos2026Seeder extends Seeder
                 'featured'    => false,
                 'sort_order'  => 1,
                 'perks'       => [
-                    'Ganhe pontos de boas-vindas ao entrar',
-                    '10% do valor das compras retorna em pontos',
+                    // Leva 10: pontos ainda não existem — "em breve", sem número.
+                    'Em breve: acumule pontos nas suas compras e troque por produtos e experiências da casa.',
                     'Newsletter com dicas de drinks pelo Alê',
                     'Novidades e lançamentos em primeira mão',
                 ],
@@ -54,7 +54,7 @@ class ClubePlanos2026Seeder extends Seeder
                 'featured'    => true,
                 'sort_order'  => 2,
                 'perks'       => [
-                    'Pontuação em dobro nas compras',
+                    'Em breve: pontuação em dobro nas compras',
                     '2 garrafas por mês (não cumulativo)',
                     'Pré-venda de lançamentos',
                     'Acesso antecipado às campanhas sazonais',

@@ -5,31 +5,31 @@
 @extends('layouts.public')
 
 @section('title', 'Clube APTK — Um círculo privado · APTK Spirits')
-@section('meta_description', 'O Clube APTK: um círculo privado para pessoas que compartilham do mesmo repertório — hospitalidade, cultura, gastronomia e coquetelaria. Conheça os níveis Explorer, Collector, Connoisseur e Le Cercle.')
+@section('meta_description', 'Clube APTK: mais do que benefícios, um universo para pertencer — coquetelaria, cultura, gastronomia e boas histórias. Conheça os níveis Explorer, Collector, Connoisseur e Le Cercle.')
 
 @push('styles')
 <style>
-  /* ---- Clube (dark) ---- */
-  .clb-hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--color-border); }
-  .clb-hero::before { content: ""; position: absolute; top: -22%; left: 50%; transform: translateX(-50%); width: 640px; height: 640px; background: radial-gradient(circle, var(--gold-faint) 0%, transparent 62%); pointer-events: none; }
-  .clb-hero .container-aptk { position: relative; z-index: 1; text-align: center; max-width: 820px; padding-block: clamp(56px, 8vw, 88px); display: flex; flex-direction: column; align-items: center; }
-  .clb-hero .script-line { font-family: var(--font-script); font-size: clamp(1.7rem, 4vw, 2.5rem); color: var(--color-primary); margin-bottom: 8px; }
-  .clb-hero h1 { font-size: clamp(2rem, 5vw, 3.1rem); letter-spacing: -0.01em; margin: 0 0 18px; max-width: 22ch; }
-  .clb-hero p.lead { font-size: var(--text-lg); color: var(--color-text-muted); line-height: 1.75; margin: 0; max-width: 640px; }
+  /* ---- Clube: hero com foto (leva 10) ---- */
+  .clb-hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--color-border); min-height: min(78vh, 720px); display: flex; align-items: center; background: var(--color-ink); }
+  .clb-hero-img { position: absolute; top: 0; right: 0; width: 62%; height: 100%; object-fit: cover; object-position: center 30%; }
+  .clb-hero-shade { position: absolute; inset: 0; background: linear-gradient(90deg, var(--color-ink) 0%, var(--color-ink) 38%, color-mix(in srgb, var(--color-ink) 55%, transparent) 62%, color-mix(in srgb, var(--color-ink) 10%, transparent) 100%); }
+  .clb-hero .container-aptk { position: relative; z-index: 1; padding-block: clamp(56px, 8vw, 96px); }
+  .clb-hero-copy { max-width: 620px; }
+  .clb-hero .eyebrow { margin-bottom: 18px; }
+  .clb-hero h1 { font-size: clamp(2.4rem, 5.4vw, 4rem); color: var(--color-cream); margin: 0 0 22px; }
+  .clb-hero p.lead { font-size: var(--text-lg); color: color-mix(in srgb, var(--color-cream) 80%, transparent); line-height: 1.75; margin: 0 0 14px; max-width: 560px; }
+  .clb-hero .btn-aptk { margin-top: 16px; }
 
-  /* Vantagens de quem entra (estrutura do clube) */
+  /* Como funciona (01/02/03) */
   .clb-base { border-bottom: 1px solid var(--color-border); background: var(--color-bg-card); }
-  .clb-base .container-aptk { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding-block: clamp(36px, 5vw, 56px); }
-  .clb-b-card { text-align: center; padding: 10px 18px; }
-  .clb-b-card .bi { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-primary); display: block; margin-bottom: 10px; }
-  .clb-b-card p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.7; margin: 0; }
+  .clb-base .container-aptk { padding-block: clamp(40px, 6vw, 64px); }
 
   /* Grade de planos */
   .plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
   .plan-card { position: relative; display: flex; flex-direction: column; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 30px 26px; transition: border-color .25s ease, transform .25s ease; }
   .plan-card:hover { border-color: var(--color-primary-muted); transform: translateY(-3px); }
   .plan-card.is-featured { border-color: var(--color-primary); }
-  .plan-card .p-flag { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--color-primary); color: var(--color-on-primary, #020203); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; border-radius: 100px; padding: 5px 14px; white-space: nowrap; }
+  .plan-card .p-flag { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--color-primary); color: var(--color-text-inverse); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; border-radius: 100px; padding: 5px 14px; white-space: nowrap; }
   .plan-card .p-kicker { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-primary); }
   .plan-card h3 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 10px 0 4px; }
   .plan-card .p-price { font-family: var(--font-mono); color: var(--color-text); font-size: var(--text-lg); margin-bottom: 18px; }
@@ -59,41 +59,60 @@
   .clb-ok { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-success); border: 1px solid var(--color-border); border-left: 3px solid var(--color-success); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 22px; text-align: center; }
   .clb-privacy { font-size: var(--text-xs); color: var(--color-text-muted); text-align: center; margin-top: 14px; }
 
-  @media (max-width: 980px) { .plans-grid { grid-template-columns: 1fr; } .clb-base .container-aptk { grid-template-columns: 1fr; } }
+  @media (max-width: 980px) { .plans-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) {
+    .clb-hero { align-items: flex-end; }
+    .clb-hero-img { width: 100%; }
+    .clb-hero-shade { background: linear-gradient(0deg, var(--color-ink) 0%, color-mix(in srgb, var(--color-ink) 82%, transparent) 50%, color-mix(in srgb, var(--color-ink) 30%, transparent) 100%); }
+  }
 </style>
 @endpush
 
 @section('content')
 
-  {{-- HERO — o conceito oficial --}}
+  {{-- HERO (leva 10, briefing p.23–24) --}}
   <section class="clb-hero">
+    <img class="clb-hero-img" src="{{ asset('img/aptk/clube-hero.jpg') }}" alt="Convidada do Clube APTK com um drink">
+    <div class="clb-hero-shade"></div>
     <div class="container-aptk">
-      <p class="script-line">Clube APTK</p>
-      <h1>Um círculo privado para quem compartilha do mesmo repertório</h1>
-      <p class="lead">Hospitalidade, cultura, gastronomia e coquetelaria. O Clube APTK aproxima a casa de quem vive esse universo — com acesso, pontos e experiências que não chegam ao público.</p>
+      <div class="clb-hero-copy">
+        <span class="eyebrow">Clube APTK</span>
+        <h1 class="title-editorial">Mais do que benefícios. Um universo para pertencer.</h1>
+        <p class="lead">Um espaço para quem compartilha nossa paixão pela coquetelaria, cultura, gastronomia e boas histórias.</p>
+        <p class="lead">No Clube APTK, cada escolha aproxima você de novas descobertas, benefícios exclusivos e oportunidades de viver o universo da marca de uma forma única.</p>
+        <a href="#planos" class="btn-aptk">Faça parte do clube <span class="btn-arrow">→</span></a>
+      </div>
     </div>
   </section>
 
-  {{-- ESTRUTURA — o que todo membro tem --}}
+  {{-- COMO FUNCIONA (briefing p.24). Pontos AINDA NÃO EXISTEM no sistema:
+       onde o briefing promete pontos/10%, texto "em breve" sem número até a
+       gestão decidir (leva 10). --}}
   <section class="clb-base">
     <div class="container-aptk">
-      <div class="clb-b-card">
-        <span class="bi">Boas-vindas</span>
-        <p>Você já entra pontuando: ganhe pontos de boas-vindas ao se juntar ao clube.</p>
-      </div>
-      <div class="clb-b-card">
-        <span class="bi">Pontos</span>
-        <p>10% do valor das suas compras retorna em pontos, pra trocar por produtos da casa.</p>
-      </div>
-      <div class="clb-b-card">
-        <span class="bi">Newsletter</span>
-        <p>Dicas de drinks pelo Alê, direto no seu e-mail — receitas, técnica e repertório.</p>
-      </div>
+      <ol class="num-steps">
+        <li>
+          <span class="ns-num">01</span>
+          <h3>Faça parte</h3>
+          <p>Entre para o Clube APTK e, em breve, comece a acumular pontos desde a sua primeira compra.</p>
+        </li>
+        <li>
+          <span class="ns-num">02</span>
+          <h3>Brinde às vantagens</h3>
+          <p>Em breve: acumule pontos nas suas compras e troque por produtos e experiências da casa.</p>
+        </li>
+        <li>
+          <span class="ns-num">03</span>
+          <h3>Descubra mais</h3>
+          <p>Tenha acesso a conteúdos especiais, receitas, novidades e inspirações do universo da coquetelaria, diretamente no seu e-mail.</p>
+        </li>
+      </ol>
     </div>
   </section>
 
-  {{-- PLANOS (Explorer · Collector · Connoisseur — Le Cercle tem bloco próprio) --}}
-  <section class="section">
+  {{-- PLANOS (Explorer · Collector · Connoisseur — Le Cercle tem bloco próprio).
+       Âncora do CTA "Faça parte do clube". --}}
+  <section class="section" id="planos">
     <div class="container-aptk">
       <div class="section-head">
         <span class="eyebrow">Os níveis</span>
