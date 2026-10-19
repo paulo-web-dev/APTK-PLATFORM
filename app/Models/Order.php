@@ -122,7 +122,7 @@ class Order extends Model
     public function registrarIncidente(string $texto): void
     {
         $details = $this->payment_details ?? [];
-        $details['incidentes'][] = ['em' => now()->format('d/m/Y H:i'), 'texto' => $texto];
+        $details['incidentes'][] = ['em' => data_br(now()), 'texto' => $texto];
 
         $this->update(['payment_details' => $details]);
     }

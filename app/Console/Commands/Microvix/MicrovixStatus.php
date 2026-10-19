@@ -26,7 +26,7 @@ class MicrovixStatus extends Command
             $states->map(fn (MicrovixSyncState $s) => [
                 $s->method,
                 (string) $s->last_timestamp,
-                $s->last_run_at?->format('d/m/Y H:i:s') ?? '-',
+                data_br($s->last_run_at, 'd/m/Y H:i:s'),
                 (string) ($s->records_synced ?? '-'),
                 $s->last_error ? mb_strimwidth($s->last_error, 0, 60, '...') : '-',
             ])->all(),

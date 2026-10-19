@@ -46,7 +46,7 @@
         <div class="metric-card"><div class="m-top"><span class="m-label">Tentativas</span></div><div class="m-value">{{ $order->microvix_envio_tentativas }}</div></div>
         <div class="metric-card">
             <div class="m-top"><span class="m-label">Última tentativa</span></div>
-            <div class="m-value" style="font-size:1.1em;">{{ $order->microvix_envio_em?->format('d/m H:i') ?? '—' }}</div>
+            <div class="m-value" style="font-size:1.1em;">{{ data_br($order->microvix_envio_em) }}</div>
         </div>
     </div>
 
@@ -82,7 +82,7 @@
                     @endif
                     <strong>{{ $log->method }}</strong>
                     <span class="td-muted">{{ $log->direction === 'out' ? 'consulta' : 'importa' }}</span>
-                    <span class="quando" style="margin-left:auto;">{{ $log->created_at->format('d/m/Y H:i:s') }} · HTTP {{ $log->http_status ?? '—' }} · {{ $log->duration_ms }} ms</span>
+                    <span class="quando" style="margin-left:auto;">{{ data_br($log->created_at, 'd/m/Y H:i:s') }} · HTTP {{ $log->http_status ?? '—' }} · {{ $log->duration_ms }} ms</span>
                 </summary>
 
                 @if ($log->error)

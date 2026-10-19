@@ -34,7 +34,7 @@
             @foreach ($orders as $o)
                 <a href="{{ route('orders.show', $o) }}" class="card-aptk ord-row">
                     <span class="num">APTK-{{ str_pad($o->id, 5, '0', STR_PAD_LEFT) }}</span>
-                    <span class="date">{{ $o->created_at->format('d/m/Y') }}</span>
+                    <span class="date">{{ data_br($o->created_at) }}</span>
                     @include('shop.partials.order-status', ['status' => $o->status])
                     <span class="date">· {{ $o->items_count }} {{ $o->items_count === 1 ? 'item' : 'itens' }}</span>
                     <span class="total">R$ {{ number_format($o->total, 2, ',', '.') }}</span>

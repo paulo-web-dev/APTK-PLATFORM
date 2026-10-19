@@ -14,7 +14,7 @@
     <div class="content-head" style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
         <div>
             <h1>Pedido {{ $num }}</h1>
-            <p>{{ $order->created_at->format('d/m/Y \à\s H:i') }}</p>
+            <p>{{ data_br($order->created_at) }}</p>
         </div>
         @include('admin.partials.status', ['status' => $order->status])
     </div>
@@ -79,7 +79,7 @@
                     @endif
                     <div class="kv"><span class="k">Status pgto.</span><span class="v">{{ ['pending' => 'Aguardando', 'paid' => 'Pago', 'failed' => 'Recusado', 'expired' => 'Expirado', 'refunded' => 'Estornado', 'chargeback' => 'Chargeback'][$order->payment_status] ?? ucfirst($order->payment_status) }}</span></div>
                     @if ($order->paid_at)
-                        <div class="kv"><span class="k">Pago em</span><span class="v">{{ $order->paid_at->format('d/m/Y H:i') }}</span></div>
+                        <div class="kv"><span class="k">Pago em</span><span class="v">{{ data_br($order->paid_at) }}</span></div>
                     @endif
                     @if (($order->payment_details['type'] ?? null) === 'cartao')
                         <div class="kv"><span class="k">Parcelas</span><span class="v">{{ $order->payment_details['installments'] ?? 1 }}×</span></div>

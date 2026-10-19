@@ -63,7 +63,7 @@
                 </div>
                 <div>
                     <p class="k">Início</p>
-                    <p class="v">{{ $sub->started_at?->format('d/m/Y') ?? '—' }}</p>
+                    <p class="v">{{ data_br($sub->started_at) }}</p>
                 </div>
                 <div>
                     <p class="k">Entrega</p>
@@ -101,7 +101,7 @@
             <h2>Histórico</h2>
             @foreach ($past as $sub)
                 <div class="sub-past-item">
-                    <span>{{ $sub->plan?->name ?? 'Plano' }} · cancelada em {{ $sub->cancelled_at?->format('d/m/Y') ?? '—' }}</span>
+                    <span>{{ $sub->plan?->name ?? 'Plano' }} · cancelada em {{ data_br($sub->cancelled_at) }}</span>
                     <span>R$ {{ number_format((float) $sub->price, 2, ',', '.') }}/mês</span>
                 </div>
             @endforeach

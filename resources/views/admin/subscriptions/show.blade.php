@@ -28,10 +28,10 @@
                     <div class="kv"><span class="k">Plano</span><span class="v">{{ $subscription->plan?->name ?? '—' }}</span></div>
                     <div class="kv"><span class="k">Valor</span><span class="v">R$ {{ number_format((float) $subscription->price, 2, ',', '.') }}/mês</span></div>
                     <div class="kv"><span class="k">Ciclo</span><span class="v">{{ $subscription->interval }}</span></div>
-                    <div class="kv"><span class="k">Início</span><span class="v">{{ $subscription->started_at?->format('d/m/Y') ?? '—' }}</span></div>
+                    <div class="kv"><span class="k">Início</span><span class="v">{{ data_br($subscription->started_at) }}</span></div>
                     <div class="kv"><span class="k">Próxima renovação</span><span class="v">{{ $subscription->isActive() && $subscription->next_renewal_at ? $subscription->next_renewal_at->format('d/m/Y') : '—' }}</span></div>
-                    @if ($subscription->paused_at)<div class="kv"><span class="k">Pausada em</span><span class="v">{{ $subscription->paused_at->format('d/m/Y') }}</span></div>@endif
-                    @if ($subscription->cancelled_at)<div class="kv"><span class="k">Cancelada em</span><span class="v">{{ $subscription->cancelled_at->format('d/m/Y') }}</span></div>@endif
+                    @if ($subscription->paused_at)<div class="kv"><span class="k">Pausada em</span><span class="v">{{ data_br($subscription->paused_at) }}</span></div>@endif
+                    @if ($subscription->cancelled_at)<div class="kv"><span class="k">Cancelada em</span><span class="v">{{ data_br($subscription->cancelled_at) }}</span></div>@endif
                 </div>
             </div>
 

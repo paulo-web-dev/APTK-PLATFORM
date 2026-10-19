@@ -4,7 +4,7 @@
 
 @php
     $meses = [1=>'janeiro',2=>'fevereiro',3=>'março',4=>'abril',5=>'maio',6=>'junho',7=>'julho',8=>'agosto',9=>'setembro',10=>'outubro',11=>'novembro',12=>'dezembro'];
-    $mesRef = $meses[(int) now()->format('n')] . ' de ' . now()->format('Y');
+    $mesRef = $meses[(int) now('America/Sao_Paulo')->format('n')] . ' de ' . now('America/Sao_Paulo')->format('Y');
     $leadLabels = ['new'=>'Novo','contacted'=>'Contatado','converted'=>'Convertido','archived'=>'Arquivado'];
 @endphp
 
@@ -106,7 +106,7 @@
                     <tr>
                         <td class="td-id" data-label="Pedido"><a href="{{ route('admin.orders.show', $o) }}" style="color:inherit;">APTK-{{ str_pad($o->id, 5, '0', STR_PAD_LEFT) }}</a></td>
                         <td data-label="Cliente"><div class="cust"><span class="cust-av">{{ strtoupper(mb_substr($o->user->name ?? '?', 0, 2)) }}</span>{{ $o->user->name ?? '—' }}</div></td>
-                        <td class="td-muted" data-label="Data">{{ $o->created_at->format('d/m/Y') }}</td>
+                        <td class="td-muted" data-label="Data">{{ data_br($o->created_at) }}</td>
                         <td class="td-num" data-label="Itens">{{ $o->items_count }}</td>
                         <td class="td-num" data-label="Total">R$ {{ number_format($o->total, 2, ',', '.') }}</td>
                         <td data-label="Status">@include('admin.partials.status', ['status' => $o->status])</td>
@@ -132,7 +132,7 @@
                     <tr>
                         <td data-label="Contato">{{ $lead->name ?: '—' }}<br><span class="td-muted" style="font-size:var(--text-xs);">{{ $lead->email }}</span></td>
                         <td class="td-muted" data-label="Tipo" style="text-transform:capitalize;">{{ $lead->type ?? '—' }}</td>
-                        <td class="td-muted" data-label="Data">{{ $lead->created_at->format('d/m/Y') }}</td>
+                        <td class="td-muted" data-label="Data">{{ data_br($lead->created_at) }}</td>
                         <td data-label="Status"><span class="td-muted">{{ $leadLabels[$lead->status] ?? ucfirst((string) $lead->status) }}</span></td>
                     </tr>
                 @empty

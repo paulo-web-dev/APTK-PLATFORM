@@ -47,7 +47,7 @@
                         </td>
                         <td class="td-muted" data-label="Tipo" style="text-transform:capitalize;">{{ $lead->type ?? '—' }}</td>
                         <td data-label="Mensagem"><div class="lead-msg" title="{{ $lead->message }}">{{ $lead->message ?: '—' }}</div></td>
-                        <td class="td-muted" data-label="Data">{{ $lead->created_at->format('d/m/Y') }}</td>
+                        <td class="td-muted" data-label="Data">{{ data_br($lead->created_at) }}</td>
                         <td data-label="Status">
                             <form method="POST" action="{{ route('admin.leads.update', $lead) }}">
                                 @csrf @method('PATCH')

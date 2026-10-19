@@ -30,7 +30,7 @@
                     <tr>
                         <td class="td-id" data-label="Pedido"><a href="{{ route('admin.orders.show', $o) }}" style="color:inherit;">APTK-{{ str_pad($o->id, 5, '0', STR_PAD_LEFT) }}</a></td>
                         <td data-label="Cliente"><div class="cust"><span class="cust-av">{{ strtoupper(mb_substr($o->user->name ?? '?', 0, 2)) }}</span>{{ $o->user->name ?? '—' }}</div></td>
-                        <td class="td-muted" data-label="Data">{{ $o->created_at->format('d/m/Y H:i') }}</td>
+                        <td class="td-muted" data-label="Data">{{ data_br($o->created_at) }}</td>
                         <td class="td-num" data-label="Itens">{{ $o->items_count }}</td>
                         <td class="td-muted" data-label="Frete">{{ $o->shippingName() ?? '—' }}@if ($o->shipping_cost > 0) <span class="td-num">· R$ {{ number_format($o->shipping_cost, 2, ',', '.') }}</span>@endif</td>
                         <td class="td-num" data-label="Total">R$ {{ number_format($o->total, 2, ',', '.') }}</td>

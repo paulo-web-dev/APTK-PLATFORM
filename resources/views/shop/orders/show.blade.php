@@ -37,7 +37,7 @@
                 <a href="{{ route('checkout.success', $order) }}" class="btn-aptk">{{ $order->payment_method === 'pix' ? 'Pagar com Pix' : 'Ver boleto' }}</a>
             </div>
         @endif
-        <p class="acc-sub">{{ $order->created_at->format('d/m/Y \à\s H:i') }} · @include('shop.partials.order-status', ['status' => $order->status])</p>
+        <p class="acc-sub">{{ data_br($order->created_at) }} · @include('shop.partials.order-status', ['status' => $order->status])</p>
     </x-slot>
 
     <div class="card-aptk od-card">

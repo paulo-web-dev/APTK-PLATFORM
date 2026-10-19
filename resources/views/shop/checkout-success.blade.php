@@ -99,7 +99,7 @@
                         </div>
                         @if ($pixExpira)
                             <p class="pp-timer" id="pixTimer" aria-live="polite"></p>
-                            <p class="pp-exp">Chave válida até {{ $pixExpira->format('d/m/Y H:i') }}. A confirmação aparece aqui automaticamente após o pagamento.</p>
+                            <p class="pp-exp">Chave válida até {{ data_br($pixExpira) }}. A confirmação aparece aqui automaticamente após o pagamento.</p>
                         @else
                             <p class="pp-exp">A confirmação aparece aqui automaticamente após o pagamento.</p>
                         @endif

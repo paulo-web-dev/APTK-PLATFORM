@@ -33,7 +33,7 @@
                         <td class="td-muted" data-label="Telefone">{{ $c->phone ?? '—' }}</td>
                         <td class="td-num" data-label="Pedidos">{{ $c->orders_count }}</td>
                         <td class="td-num" data-label="Total gasto">R$ {{ number_format($c->orders_sum_total ?? 0, 2, ',', '.') }}</td>
-                        <td class="td-muted" data-label="Cadastro">{{ $c->created_at->format('d/m/Y') }}</td>
+                        <td class="td-muted" data-label="Cadastro">{{ data_br($c->created_at) }}</td>
                         <td data-label="" style="text-align:right;"><a href="{{ route('admin.customers.show', $c) }}" class="admin-btn admin-btn--ghost" style="padding:6px 12px;">Ver</a></td>
                     </tr>
                 @empty

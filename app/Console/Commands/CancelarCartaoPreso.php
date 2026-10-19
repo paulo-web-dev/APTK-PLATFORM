@@ -68,7 +68,7 @@ class CancelarCartaoPreso extends Command
                 "#{$p[0]->id}",
                 $p[0]->ship_name ?? $p[0]->user?->email ?? '—',
                 'R$ '.number_format((float) $p[0]->total, 2, ',', '.'),
-                $p[0]->created_at->format('d/m/Y H:i'),
+                data_br($p[0]->created_at),
                 $p[1]['acao'].' — '.$p[1]['motivo'],
             ])->all(),
         );
@@ -88,7 +88,7 @@ class CancelarCartaoPreso extends Command
                 'payment_status' => 'paid',
                 'paid_at'        => $order->paid_at ?? now(),
                 'notes'          => trim(($order->notes ?? '')
-                    ."\nAprovado automaticamente em ".now()->format('d/m/Y H:i')
+                    ."\nAprovado automaticamente em ".data_br(now())
                     .': a consulta à Appmax mostrou o pagamento aprovado.'),
             ]);
 
@@ -106,7 +106,7 @@ class CancelarCartaoPreso extends Command
             // automático, não um cancelamento de gestão.
             $order->update([
                 'notes' => trim(($order->notes ?? '')
-                    ."\nCancelado automaticamente em ".now()->format('d/m/Y H:i')
+                    ."\nCancelado automaticamente em ".data_br(now())
                     .": pagamento de cartão interrompido ({$plano['motivo']}), estoque devolvido."),
             ]);
 

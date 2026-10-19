@@ -77,7 +77,7 @@
                         <td data-label="Cliente">{{ $p->user?->name ?? '—' }}</td>
                         <td class="td-muted" data-label="Pgto">{{ $p->payment_method }}</td>
                         <td class="td-num" data-label="Tent.">{{ $p->microvix_envio_tentativas }}</td>
-                        <td class="td-muted" data-label="Última">{{ $p->microvix_envio_em?->format('d/m H:i') ?? '—' }}</td>
+                        <td class="td-muted" data-label="Última">{{ data_br($p->microvix_envio_em) }}</td>
                         <td data-label="Erro"><span class="status status--cancelado" title="{{ $p->microvix_envio_erro }}">{{ \Illuminate\Support\Str::limit($p->microvix_envio_erro, 70) }}</span></td>
                         <td data-label="">
                             <span style="display:inline-flex; gap:8px;">
@@ -105,7 +105,7 @@
                     <tr>
                         <td data-label="Método">{{ $s->method }}</td>
                         <td class="td-num" data-label="Timestamp">{{ $s->last_timestamp }}</td>
-                        <td class="td-muted" data-label="Execução">{{ $s->last_run_at?->format('d/m/Y H:i:s') ?? '—' }}</td>
+                        <td class="td-muted" data-label="Execução">{{ data_br($s->last_run_at, 'd/m/Y H:i:s') }}</td>
                         <td class="td-num" data-label="Registros">{{ $s->records_synced ?? '—' }}</td>
                         <td data-label="Erro">
                             @if ($s->last_error)
@@ -129,7 +129,7 @@
             <tbody>
                 @forelse ($conciliacoes as $c)
                     <tr>
-                        <td class="td-muted" data-label="Quando">{{ $c->created_at->format('d/m H:i') }}</td>
+                        <td class="td-muted" data-label="Quando">{{ data_br($c->created_at) }}</td>
                         <td data-label="Produto">{{ $c->product?->name ?? "produto #{$c->product_id}" }}</td>
                         <td class="td-muted" data-label="Volume">{{ $c->size ?? '—' }}</td>
                         <td data-label="Campo">{{ $c->campo }}</td>
@@ -158,7 +158,7 @@
             <tbody>
                 @forelse ($logs as $log)
                     <tr>
-                        <td class="td-muted" data-label="Quando">{{ $log->created_at->format('d/m H:i:s') }}</td>
+                        <td class="td-muted" data-label="Quando">{{ data_br($log->created_at, 'd/m/Y H:i:s') }}</td>
                         <td class="td-muted" data-label="Dir.">{{ $log->direction === 'out' ? 'consulta' : 'importa' }}</td>
                         <td data-label="Método">{{ $log->method }}</td>
                         <td class="td-num td-muted" data-label="HTTP">{{ $log->http_status ?? '—' }}</td>
