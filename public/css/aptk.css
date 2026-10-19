@@ -210,6 +210,99 @@ ul.list-clean { margin: 0; padding: 0; list-style: none; }
 .placeholder span { position: relative; z-index: 1; align-self: end; margin-bottom: 14px; }
 
 /* ---------------------------------------------------------------------
+   3b. LEVA 10 — componentes editoriais reaproveitados entre páginas
+   --------------------------------------------------------------------- */
+
+/* Título editorial (serif Neue World) — só heroes e títulos das seções
+   editoriais. Nav, botões, eyebrows e cards seguem em PP Rader. */
+.title-editorial {
+  font-family: var(--font-editorial);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.08;
+}
+.section-title.title-editorial { font-size: clamp(1.9rem, 4.2vw, 2.6rem); }
+
+/* Seta discreta dentro do botão: <a class="btn-aptk">Texto <span class="btn-arrow">→</span></a> */
+.btn-arrow { display: inline-block; font-family: var(--font-body); transition: transform .2s ease; }
+.btn-aptk:hover .btn-arrow,
+.link-arrow:hover .btn-arrow { transform: translateX(3px); }
+
+/* Link de card: caixa alta pequena âmbar, com seta */
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+.link-arrow:hover { color: var(--color-primary-hover); }
+
+/* Passos numerados "01 — Título / texto" (Quem Somos, Custom, Clube, Eventos) */
+.num-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: clamp(24px, 3vw, 40px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.num-steps > li { border-top: 1px solid var(--gold-line); padding-top: 18px; }
+.num-steps .ns-num {
+  display: block;
+  font-family: var(--font-editorial);
+  font-size: var(--text-4xl);
+  line-height: 1;
+  color: var(--color-primary);
+  margin-bottom: 14px;
+}
+.num-steps h3 { font-size: var(--text-lg); margin: 0 0 8px; }
+.num-steps .ns-sub { font-family: var(--font-editorial); color: var(--color-text); margin: 0 0 8px; }
+.num-steps p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.7; margin: 0; }
+/* Variante vertical (lista em coluna, ex. ao lado de um formulário) */
+.num-steps--stack { grid-template-columns: 1fr; gap: 22px; }
+.num-steps--stack .ns-num { font-size: var(--text-2xl); margin-bottom: 8px; }
+
+/* Card com mídia (foto ou <x-photo-slot>) + eyebrow, título, texto e link */
+.media-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  color: inherit;
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+a.media-card:hover { border-color: var(--color-primary-muted); box-shadow: var(--shadow-card); color: inherit; }
+.media-card .mc-media { position: relative; aspect-ratio: var(--mc-ratio, 4 / 3); background: var(--color-bg-media); overflow: hidden; }
+.media-card .mc-media > img,
+.media-card .mc-media > video { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s ease; }
+a.media-card:hover .mc-media > img { transform: scale(1.03); }
+.media-card .mc-media > .photo-slot { height: 100%; aspect-ratio: auto; border: 0; border-radius: 0; }
+.media-card .mc-body { display: flex; flex-direction: column; gap: 8px; padding: 20px 22px 22px; flex: 1; }
+.media-card .mc-eyebrow { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-primary); }
+.media-card h3 { font-size: var(--text-xl); margin: 0; }
+.media-card h3.title-editorial { font-size: var(--text-2xl); }
+.media-card p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.65; margin: 0; }
+.media-card .link-arrow { margin-top: auto; padding-top: 6px; }
+
+/* Bloco reservado para foto que ainda não chegou (<x-photo-slot>) */
+.photo-slot {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: var(--ps-ratio, 4 / 3);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.photo-slot .ps-symbol { width: 56px; max-width: 30%; height: auto; color: var(--color-copper); opacity: .35; }
+
+/* ---------------------------------------------------------------------
    4. UTILITÁRIOS
    --------------------------------------------------------------------- */
 .text-gold   { color: var(--color-primary); }

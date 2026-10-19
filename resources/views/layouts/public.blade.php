@@ -86,7 +86,9 @@
   .feature-band .eyebrow { margin-bottom: 18px; }
   .feature-band h2 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.2rem); color: var(--color-text); margin: 0 0 18px; }
   .feature-band p { font-family: var(--font-editorial); font-size: var(--text-lg); line-height: 1.7; color: var(--color-text-muted); margin: 0 0 30px; max-width: 560px; }
-  .feature-band .feature-div { width: 220px; color: var(--color-primary); margin-bottom: 30px; }
+  .feature-band h2.title-editorial { font-family: var(--font-editorial); font-weight: 400; font-size: clamp(2rem, 4.6vw, 3rem); }
+  .feature-band .feature-div { width: 220px; color: var(--color-primary); margin-bottom: 22px; }
+  .feature-band .feature-sign { font-family: var(--font-display); font-weight: 700; font-size: var(--text-sm); letter-spacing: .22em; text-transform: uppercase; color: var(--color-primary); }
 
   /* ---- Layout público: footer ---- */
   .site-footer { background: var(--color-bg); border-top: 1px solid var(--color-border); padding-top: 72px; }
@@ -231,11 +233,12 @@
   <section class="section section--dark feature-band">
     <div class="container-aptk">
       <x-brand.sunburst class="feature-sun" />
+      {{-- Leva 10: texto novo, sem CTA. --}}
       <span class="eyebrow">Alquimia de histórias</span>
-      <h2>Feito por humanos inquietos</h2>
-      <p>Drinks engarrafados em pequenos lotes, criados para despertar sentidos e abrir novas histórias. Da nossa loja para a sua mesa — sem pressa, sem atalho.</p>
+      <h2 class="title-editorial">Os melhores encontros se transformam em histórias.</h2>
+      <p>E toda boa história merece um brinde.</p>
       <x-brand.divider class="feature-div" />
-      <a href="{{ route('catalog') }}" class="btn-aptk">Conhecer os rótulos</a>
+      <span class="feature-sign">APTK Spirits</span>
     </div>
   </section>
   @endif
