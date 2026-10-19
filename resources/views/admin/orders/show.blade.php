@@ -66,6 +66,11 @@
                             <strong>Incidente ({{ $incidente['em'] }}):</strong> {{ $incidente['texto'] }}
                         </div>
                     @endforeach
+                    @if (\App\Services\ReconciliacaoPagamento::precisaConferir($order))
+                        <div class="alert-ok" style="color:var(--color-danger); border-left-color:var(--color-danger); margin-bottom:12px;">
+                            Pagamento a conferir: passou a janela de reconciliação automática sem resposta conclusiva da Appmax. Confira no painel da Appmax ou rode <code>php artisan appmax:diagnostico --pedido={{ $order->id }}</code>.
+                        </div>
+                    @endif
                     @if ($order->pagamentoEmVerificacao())
                         <div class="alert-ok" style="margin-bottom:12px;">
                             Pagamento em verificação: a cobrança do cartão não teve resposta da Appmax. A consulta automática (a cada 15 min) ou o webhook resolve.

@@ -76,6 +76,20 @@ return [
     'max_installments'      => (int) env('APPMAX_MAX_INSTALLMENTS', 3),
     'min_installment_value' => (float) env('APPMAX_MIN_INSTALLMENT_VALUE', 30.00),
 
+    // Reconciliação de Pix/boleto pendentes (pagamentos:reconciliar, a cada
+    // 5 min): consulta GET /v1/orders/{id} dentro da janela, contada da
+    // criação do pedido. Fora dela, sem resposta conclusiva, o pedido NÃO é
+    // cancelado sozinho: vira "pagamento a conferir" no admin.
+    'reconciliacao' => [
+        'pix_horas'   => 2,
+        'boleto_dias' => 10,   // vencimento + compensação bancária
+        // Pix só cancela se a Appmax disser "não pago" depois da expiração
+        // + esta folga (pagamento no último segundo ainda propagando).
+        'pix_folga_minutos' => 10,
+        // Polling da tela de sucesso: no máximo 1 consulta por pedido neste intervalo.
+        'polling_segundos' => 30,
+    ],
+
     'http_timeout' => 30,
 
     // Retry (só token e GET — POST de pedido/pagamento NUNCA, risco de

@@ -504,12 +504,26 @@ class AppmaxService
      */
     public function consultarSituacao(Order $order): string
     {
+        return $this->consultarPedido($order)['situacao'];
+    }
+
+    /**
+     * Consulta completa (diagnóstico): status cru da Appmax, situação
+     * traduzida e o corpo de data (valores em centavos, pagamento etc.).
+     *
+     * @return array{status: ?string, situacao: string, dados: array}
+     *
+     * @throws AppmaxException
+     */
+    public function consultarPedido(Order $order): array
+    {
         try {
             $data = $this->request('get', '/v1/orders/'.(int) $order->appmax_order_id, [],
                 'Não foi possível consultar o pedido na Appmax.');
         } catch (AppmaxException $e) {
             if ($e->httpStatus === 404) {
-                return 'inexistente'; // "Order not found": nada foi cobrado
+                // "Order not found": nada foi cobrado
+                return ['status' => null, 'situacao' => 'inexistente', 'dados' => []];
             }
 
             throw $e;
@@ -517,7 +531,11 @@ class AppmaxService
 
         $status = (string) ($data['order']['status'] ?? '');
 
-        return self::SITUACAO_POR_STATUS[$status] ?? 'desconhecido';
+        return [
+            'status'   => $status !== '' ? $status : null,
+            'situacao' => self::SITUACAO_POR_STATUS[$status] ?? 'desconhecido',
+            'dados'    => $data,
+        ];
     }
 
     /* -----------------------------------------------------------------

@@ -20,6 +20,12 @@ class Kernel extends ConsoleKernel
             ->everyFifteenMinutes()
             ->withoutOverlapping();
 
+        // Pix/boleto pendentes × Appmax: webhook perdido nunca deixa pedido
+        // pago como pendente (ReconciliacaoPagamento).
+        $schedule->command('pagamentos:reconciliar')
+            ->everyFiveMinutes()
+            ->withoutOverlapping();
+
         // Fase 2 Microvix: worker da fila database SEM supervisor — roda até
         // 50s e morre; o cron do minuto seguinte sobe outro. O lock
         // WithoutOverlapping do próprio job garante concorrência 1 mesmo se

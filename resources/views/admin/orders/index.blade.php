@@ -18,6 +18,11 @@
         @foreach ($statuses as $st)
             <a href="{{ route('admin.orders.index', ['status' => $st]) }}" class="filter-pill {{ $active === $st ? 'is-active' : '' }}">{{ $statusLabels[$st] ?? $st }}</a>
         @endforeach
+        {{-- Pix/boleto fora da janela de reconciliação sem resposta conclusiva:
+             nada cancela sozinho, alguém confere no painel da Appmax. --}}
+        @if ($aConferir > 0 || $active === 'a_conferir')
+            <a href="{{ route('admin.orders.index', ['status' => 'a_conferir']) }}" class="filter-pill {{ $active === 'a_conferir' ? 'is-active' : '' }}" style="{{ $active === 'a_conferir' ? '' : 'color:var(--color-danger); border-color:var(--color-danger);' }}">Pagamento a conferir ({{ $aConferir }})</a>
+        @endif
     </div>
 
     <div class="data-card">

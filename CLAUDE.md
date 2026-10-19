@@ -100,6 +100,11 @@ Appmax JS segue o ambiente da API URL. Cartão só com token do Appmax JS (dado 
 Webhook em `/webhooks/appmax/{token}`, formato do painel (sem assinatura): o
 controller confirma o status em `GET /v1/orders/{id}` antes de agir e responde
 503 pra Appmax retentar se a consulta falhar. Ver ESTADO-ATUAL §9.
+Independente do webhook, `pagamentos:reconciliar` (scheduler, 5 min) consulta
+Pix (até 2h) e boleto (até 10 dias) pendentes e aprova/cancela só com resposta
+conclusiva (`ReconciliacaoPagamento`); fora da janela vira "pagamento a
+conferir" no admin. O polling da tela de sucesso usa a mesma regra (1 consulta
+a cada 30s por pedido). `appmax:diagnostico --pedido=N [--reconciliar]`.
 
 **Frete** (leva 08): estimativa própria, sem transportadora. `FreteService` +
 `config/frete.php`: origem SP capital, tabela de referência dos Correios por

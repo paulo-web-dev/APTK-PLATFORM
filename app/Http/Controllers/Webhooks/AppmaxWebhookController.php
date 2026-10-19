@@ -213,16 +213,9 @@ class AppmaxWebhookController extends Controller
             return true;
         }
 
-        $order->update([
-            'payment_status' => 'paid',
-            'status'         => $order->status === 'pending' ? 'processing' : $order->status,
-            'paid_at'        => $order->paid_at ?? now(),
-        ]);
-
-        // Fase 2 Microvix: efetiva a reserva no ERP (somente_reserva=0).
-        // ÚLTIMA coisa do tratamento, e nunca derruba a resposta: sem o 200
-        // rápido a Appmax retenta e o evento chega duplicado.
-        $this->enfileiraEnvioErp($order, 'confirmar');
+        // Mesmo caminho da reconciliação: marca pago e efetiva a reserva no
+        // ERP (fase 2 Microvix), sem nunca derrubar a resposta.
+        $this->orders->aprovarPagamento($order);
 
         return true;
     }

@@ -203,7 +203,8 @@
         fetch(url, { headers: { 'Accept': 'application/json' } })
           .then(function (r) { return r.json(); })
           .then(function (d) {
-            if (d.paid) { clearInterval(poll); window.location.reload(); }
+            // Pago ou cancelado (webhook ou reconciliação com a Appmax): recarrega.
+            if (d.paid || d.cancelled) { clearInterval(poll); window.location.reload(); }
           })
           .catch(function () {});
       }, 8000);

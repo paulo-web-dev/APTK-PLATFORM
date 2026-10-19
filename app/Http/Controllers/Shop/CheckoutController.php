@@ -8,12 +8,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\AppmaxService;
 use App\Services\CartService;
-use App\Models\Setting;
 use App\Services\FreteService;
 use App\Services\OrderService;
+use App\Services\ReconciliacaoPagamento;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
@@ -298,13 +299,28 @@ class CheckoutController extends Controller
      * Status do pagamento em JSON — usado pelo polling da tela do Pix
      * (a página consulta a cada poucos segundos até o webhook confirmar).
      */
-    public function paymentStatus(Order $order): JsonResponse
+    public function paymentStatus(Order $order, ReconciliacaoPagamento $reconciliacao): JsonResponse
     {
         abort_unless($order->user_id === auth()->id(), 403);
+
+        // Sem depender do webhook: Pix/boleto ainda aberto consulta a Appmax,
+        // no máximo 1 vez por pedido a cada N segundos (o polling é de 8s).
+        if ($order->isAwaitingPayment()
+            && in_array($order->payment_method, ReconciliacaoPagamento::METODOS, true)
+            && Cache::add('pagamento:reconciliar:'.$order->id, true, (int) config('appmax.reconciliacao.polling_segundos', 30))
+        ) {
+            try {
+                $reconciliacao->reconciliar($order);
+                $order->refresh();
+            } catch (\Throwable $e) {
+                report($e); // consulta de status nunca quebra a tela
+            }
+        }
 
         return response()->json([
             'payment_status' => $order->payment_status,
             'paid'           => $order->isPaid(),
+            'cancelled'      => $order->status === 'cancelled',
         ]);
     }
 

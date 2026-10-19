@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Exceptions\AppmaxException;
 use App\Models\Order;
 use App\Services\AppmaxService;
+use App\Services\ReconciliacaoPagamento;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,14 +23,17 @@ class OrderController extends Controller
 
         if (in_array($active, self::STATUSES, true)) {
             $query->where('status', $active);
+        } elseif ($active === 'a_conferir') {
+            $query->whereIn('id', ReconciliacaoPagamento::aConferir()->select('id'));
         }
 
         $orders = $query->paginate(20)->withQueryString();
 
         return view('admin.orders.index', [
-            'orders'   => $orders,
-            'statuses' => self::STATUSES,
-            'active'   => $active,
+            'orders'    => $orders,
+            'statuses'  => self::STATUSES,
+            'active'    => $active,
+            'aConferir' => ReconciliacaoPagamento::aConferir()->count(),
         ]);
     }
 

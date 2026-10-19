@@ -260,6 +260,32 @@ class OrderService
     }
 
     /**
+     * Pagamento confirmado pela Appmax num pedido ainda aberto (webhook ou
+     * reconciliação): pending → processing, pago. Idempotente. Enfileira a
+     * confirmação no ERP (fora de transação; falha nunca derruba o pagamento).
+     */
+    public function aprovarPagamento(Order $order): void
+    {
+        if ($order->isPaid()) {
+            return;
+        }
+
+        $order->update([
+            'payment_status' => 'paid',
+            'status'         => $order->status === 'pending' ? 'processing' : $order->status,
+            'paid_at'        => $order->paid_at ?? now(),
+        ]);
+
+        try {
+            if (EnviarPedidoMicrovix::integracaoLigada()) {
+                EnviarPedidoMicrovix::dispatch($order->id, 'confirmar');
+            }
+        } catch (Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
      * Inverso do cancelAndRestoreStock: a Appmax aprovou um pedido que aqui
      * já estava cancelado (timeout na cobrança, cartão preso cancelado antes
      * do webhook). O dinheiro entrou — o pedido volta a valer e a reserva de
