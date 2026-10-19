@@ -92,14 +92,20 @@ class ProdutosAplicarFotos extends Command
         }
 
         $caminho = $this->option('manifesto') ?: base_path(self::MANIFESTO_PADRAO);
-        if (! is_file($caminho)) {
+        $this->dirFotos = dirname($caminho);
+
+        // --sem-galeria usa o manifesto só no relatório: em produção a pasta
+        // das fotos não existe (fora do git) e a ativação roda sem ele.
+        if (! is_file($caminho) && $this->semGaleria) {
+            $this->warn("Manifesto não encontrado ({$caminho}): relatório do manifesto fica de fora.");
+            $this->newLine();
+        } elseif (! is_file($caminho)) {
             $this->error("Manifesto não encontrado: {$caminho}");
 
             return self::FAILURE;
         }
-        $this->dirFotos = dirname($caminho);
 
-        $manifesto = json_decode(file_get_contents($caminho), true);
+        $manifesto = is_file($caminho) ? json_decode(file_get_contents($caminho), true) : [];
         if (! is_array($manifesto)) {
             $this->error('Manifesto não é um JSON válido.');
 

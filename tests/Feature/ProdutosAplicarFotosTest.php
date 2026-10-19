@@ -108,6 +108,19 @@ class ProdutosAplicarFotosTest extends TestCase
         $this->assertCount(1, Storage::disk('local')->files('fotos-manifesto'));
     }
 
+    public function test_sem_galeria_roda_sem_manifesto_como_em_producao(): void
+    {
+        $this->cenario();
+
+        $this->artisan('produtos:aplicar-fotos', ['--sem-galeria' => true, '--manifesto' => "{$this->dir}/nao-existe.json"])
+            ->expectsOutputToContain('relatório do manifesto fica de fora')
+            ->assertSuccessful();
+        $this->assertSame(['liga', 'mantem', 'upload'], Product::where('active', true)->orderBy('slug')->pluck('slug')->all());
+
+        // Montar galeria sem manifesto continua sendo erro.
+        $this->artisan('produtos:aplicar-fotos', ['--manifesto' => "{$this->dir}/nao-existe.json"])->assertFailed();
+    }
+
     public function test_dry_run_nao_grava_nada(): void
     {
         $this->cenario();
