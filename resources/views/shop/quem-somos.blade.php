@@ -18,26 +18,32 @@
   .sobre-hero .container-aptk { position: relative; z-index: 1; padding-block: 52px; }
   .sobre-hero .eyebrow { color: var(--color-cream); }
   .sobre-hero .eyebrow::before { background: var(--color-cream); }
-  .sobre-hero h1 { font-family: var(--font-display); font-size: clamp(2.4rem, 6vw, 4rem); color: var(--color-cream); margin: 14px 0 16px; max-width: 18ch; }
+  .sobre-hero h1 { font-size: clamp(2.6rem, 6.4vw, 4.4rem); color: var(--color-cream); margin: 14px 0 16px; max-width: 18ch; }
   .sobre-hero p { color: color-mix(in srgb, var(--color-cream) 84%, transparent); font-size: var(--text-lg); max-width: 600px; margin: 0; }
 
-  /* ---- Sobre: história + linha do tempo ---- */
+  /* ---- Quem Somos: a holding (leva 10) ---- */
+  .qs-holding { border-bottom: 1px solid var(--color-border); }
+  .qs-holding .section-head { max-width: 860px; }
+  .qs-holding-text { max-width: 760px; display: flex; flex-direction: column; gap: 18px; color: var(--color-text-muted); line-height: 1.85; }
+  .qs-holding-text p { margin: 0; }
+  .qs-holding-text .qs-holding-lead { font-family: var(--font-editorial); font-size: clamp(1.2rem, 2.4vw, 1.5rem); line-height: 1.55; color: var(--color-text); }
+
+  /* ---- Sobre: história + trajetória ---- */
   .story-lead { max-width: 760px; }
   .story-lead p { color: var(--color-text-muted); font-size: var(--text-lg); line-height: 1.8; margin: 0; }
-  .story-divider { color: var(--color-primary); width: 240px; margin: 36px 0; }
+  .qs-tl-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: clamp(48px, 7vw, 80px) 0 24px; }
+  .qs-tl-head h3 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); margin: 12px 0 0; }
+  .qs-tl-range { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.16em; color: var(--color-text-muted); white-space: nowrap; }
   .timeline { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .tl-card { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 32px; position: relative; }
-  .tl-card .tl-year { font-family: var(--font-mono); font-size: var(--text-sm); letter-spacing: 0.16em; color: var(--color-primary); }
-  .tl-card h3 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 10px 0 12px; }
+  .tl-card { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
+  .tl-img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--color-bg-media); }
+  .tl-body { padding: 26px 28px 30px; }
+  .tl-card .tl-year { font-family: var(--font-editorial); font-size: var(--text-2xl); color: var(--color-primary); }
+  .tl-card h3 { font-family: var(--font-display); font-size: var(--text-xl); margin: 10px 0 12px; }
   .tl-card p { color: var(--color-text-muted); margin: 0; line-height: 1.7; }
 
-  /* ---- Sobre: valores ---- */
+  /* ---- Quem Somos: no que acreditamos ---- */
   .values { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
-  .values-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-  .value { text-align: center; padding: 24px 18px; }
-  .value .v-num { font-family: var(--font-mono); color: var(--color-primary); font-size: var(--text-sm); letter-spacing: 0.18em; }
-  .value h4 { font-family: var(--font-display); font-size: var(--text-xl); margin: 12px 0 8px; }
-  .value p { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0; }
 
   /* ---- Sobre: galeria ---- */
   .gallery { display: grid; grid-template-columns: 1fr 1.3fr; grid-template-rows: 1fr 1fr; gap: 16px; height: 520px; }
@@ -65,140 +71,186 @@
   .contact-list svg { width: 18px; height: 18px; color: var(--color-primary); flex-shrink: 0; }
   .contact-cta { margin-top: 30px; }
 
-  /* ---- Quem Somos: as marcas da holding ---- */
+  /* ---- Quem Somos: ecossistema (cards com foto, leva 10) ---- */
   .brands { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
-  .brands-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-  .brand-box { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 30px 26px; display: flex; flex-direction: column; }
-  .brand-box .b-tag { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-primary); margin-bottom: 12px; }
-  .brand-box h3 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0 0 10px; }
-  .brand-box p { color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.7; margin: 0 0 22px; flex-grow: 1; }
+  .brands .section-head { max-width: 720px; }
+  .qs-eco-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .qs-eco-card { --mc-ratio: 4 / 5; background: var(--color-bg); }
+  .qs-eco-card h3.title-editorial { font-size: var(--text-3xl); }
+  .qs-eco-card .qs-eco-sub { font-family: var(--font-editorial); font-size: var(--text-base); color: var(--color-text); }
+  /* Foto de produto (fundo preto 2:3): inteira, sem corte */
+  .qs-eco-media--produto > img { object-fit: contain; padding: 6% 0; }
 
   /* ---- Sobre: responsivo ---- */
   @media (max-width: 760px) {
     .timeline { grid-template-columns: 1fr; }
-    .values-grid { grid-template-columns: 1fr; }
+    .qs-tl-head { flex-direction: column; align-items: flex-start; }
     .gallery { height: auto; grid-template-columns: 1fr; grid-template-rows: none; }
     .gallery .g-tall { grid-row: auto; }
     .gallery img { aspect-ratio: 4 / 3; height: auto; }
     .contact-inner { grid-template-columns: 1fr; gap: 28px; }
-    .brands-grid { grid-template-columns: 1fr; }
+    .qs-eco-grid { grid-template-columns: 1fr; }
   }
 </style>
 @endpush
 
 @section('content')
 
-  {{-- A HOLDING (leva 06) — texto institucional oficial da Small Batches,
-       publicado em capitalização normal (o design veio em caps; caixa alta
+  {{-- A HOLDING — texto da Small Batches (leva 10, briefing p.1). Veio em
+       caixa alta; publicado em caixa normal, como na leva 06 (caixa alta
        integral nesse volume prejudica leitura e acessibilidade). --}}
-  <section class="section" style="border-bottom:1px solid var(--color-border);">
-    <div class="container-aptk" style="max-width: 820px;">
-      <div class="section-head" style="text-align:center;">
+  <section class="section qs-holding">
+    <div class="container-aptk">
+      <div class="section-head">
         <span class="eyebrow">A holding</span>
-        <h2 class="section-title">Small Batches</h2>
+        <h2 class="section-title title-editorial">Small Batches — um ecossistema de marcas, histórias e possibilidades.</h2>
       </div>
-      <div style="color:var(--color-text-muted); line-height:1.9; font-size:var(--text-base); display:flex; flex-direction:column; gap:18px;">
-        <p>A Small Batches é uma holding brasileira dedicada à criação de marcas, produtos e experiências para o universo da coquetelaria e da hospitalidade. Seu ecossistema reúne a APTK Spirits, referência em coquetéis engarrafados e projetos especiais; a Ice4Pros, especializada em gelos profissionais; e a Barín, voltada ao atendimento de bares, restaurantes, eventos e operações de alta demanda.</p>
-        <p>Mais do que produzir bebidas e insumos, a Small Batches nasce para transformar conhecimento, técnica e criatividade em soluções capazes de elevar a experiência de consumo. Cada marca atua de forma complementar, conectando desenvolvimento de produtos, excelência operacional, inovação e sensibilidade para compreender diferentes canais, ocasiões e públicos.</p>
-        <p>A holding carrega em sua essência a produção cuidadosa, a atenção aos detalhes e o olhar humano sobre cada projeto. Acredita que grandes experiências não dependem apenas do produto final, mas de tudo o que existe ao redor dele: a receita, o gelo, o serviço, a apresentação, o ambiente e as pessoas.</p>
-        <p>Com uma atuação que combina coquetelaria, indústria, branding e hospitalidade, a Small Batches desenvolve marcas próprias, colaborações e projetos personalizados para empresas que desejam criar experiências autênticas e memoráveis. Seu propósito é construir um ecossistema em que cada detalhe tenha intenção, cada produto conte uma história e cada encontro possa se transformar em um momento especial.</p>
+      <div class="qs-holding-text">
+        <p class="qs-holding-lead">A Small Batches é uma holding brasileira que reúne marcas com um propósito em comum: transformar a maneira como as pessoas descobrem, consomem e se conectam com o universo da coquetelaria.</p>
+        <p>Nosso ecossistema é formado por três marcas complementares: a APTK Spirits, referência em coquetéis engarrafados, gifting e projetos especiais; a Ice4Pros, especializada em gelo profissional de alta qualidade; e a Barín, desenvolvida para atender às necessidades de bares, restaurantes, eventos e operações de grande escala.</p>
+        <p>Unimos conhecimento, técnica, criatividade e visão de negócio para desenvolver produtos e soluções que conectam qualidade, inovação e praticidade, sem abrir mão da autenticidade.</p>
+        <p>Cada marca possui sua própria identidade, mas todas compartilham o mesmo compromisso com a excelência, a atenção aos detalhes e a valorização das relações humanas.</p>
+        <p>Acreditamos que a coquetelaria vai muito além do que está dentro do copo. Ela está na escolha dos ingredientes, no cuidado com cada receita, na forma de servir e, principalmente, nas histórias que nascem dos encontros.</p>
+        <p>Mais do que um grupo de marcas, somos um ecossistema que conecta pessoas, ideias e oportunidades, construindo novos caminhos para a coquetelaria e a hospitalidade no Brasil.</p>
       </div>
     </div>
   </section>
 
-  {{-- HERO --}}
+  {{-- HERO — citação do briefing (p.3) --}}
   <section class="sobre-hero">
     <img src="{{ asset('img/aptk/sobre-loja.jpg') }}" alt="Loja física da APTK Spirits">
     <div class="container-aptk">
       <span class="eyebrow">Quem somos</span>
-      <h1>Da Apothek à APTK</h1>
-      <p>Alta coquetelaria engarrafada, com alma brasileira — drinks que dialogam com todos os sotaques e culturas do Brasil.</p>
+      <h1 class="title-editorial">Da Apothek à APTK.</h1>
+      <p>A evolução da alta coquetelaria brasileira, conectando tradição, criatividade e novas tendências de consumo em cada celebração.</p>
     </div>
   </section>
 
-  {{-- HISTÓRIA --}}
+  {{-- HISTÓRIA + TRAJETÓRIA (briefing p.2–4) --}}
   <section class="section">
     <div class="container-aptk">
       <div class="section-head">
         <span class="eyebrow">Nossa história</span>
-        <h2 class="section-title">Começou com uma inquietação</h2>
+        <h2 class="section-title title-editorial">Começou com uma inquietação</h2>
       </div>
-
       <div class="story-lead">
-        <p>Tudo começou em 2016, em São Paulo, com a <strong>Apothek Cocktails &amp; Co.</strong> — pioneira na alta coquetelaria engarrafada no Brasil. A vontade de transformar grandes drinks em algo para levar para casa virou método; e o método virou marca.</p>
+        <p>Em 2016, em São Paulo, nasceu a <strong>Apothek Cocktails &amp; Co.</strong>, pioneira na alta coquetelaria engarrafada no Brasil. Movida pelo desejo de reinventar a forma de consumir coquetéis, a marca antecipou tendências e rompeu com os formatos tradicionais, levando a sofisticação e a criatividade dos grandes bares para novas ocasiões de consumo. O que começou como uma ideia inovadora se transformou em uma marca que conecta tradição, inovação e novas formas de celebrar.</p>
       </div>
 
-      <x-brand.divider class="story-divider" />
-
+      <div class="qs-tl-head">
+        <div>
+          <span class="eyebrow">Nossa trajetória</span>
+          <h3 class="title-editorial">Do pioneirismo à evolução.</h3>
+        </div>
+        <span class="qs-tl-range">2016 — 2021</span>
+      </div>
       <div class="timeline">
-        <div class="tl-card">
-          <span class="tl-year">2016 · São Paulo</span>
-          <h3>Apothek Cocktails &amp; Co.</h3>
-          <p>Nasce a pioneira em alta coquetelaria engarrafada, levando o balcão do bar para dentro de casa, com o mesmo padrão de quem prepara na hora.</p>
-        </div>
-        <div class="tl-card">
-          <span class="tl-year">2021 · Brasil</span>
-          <h3>APTK Spirits</h3>
-          <p>A Apothek evolui para a APTK Spirits — marca de alma brasileira, reunindo alta coquetelaria, drinks prontos para consumo e uma linha de bases para criar a própria coquetelaria.</p>
-        </div>
+        <article class="tl-card">
+          {{-- FOTO: garrafa ou balcão da era Apothek Cocktails & Co. (2016). Provisória: Negroni em garrafas da casa. --}}
+          <img class="tl-img" src="{{ asset('img/aptk/featured-negroni.jpg') }}" alt="Garrafas de Negroni da casa" loading="lazy">
+          <div class="tl-body">
+            <span class="tl-year">2016 · São Paulo</span>
+            <h3>Apothek Cocktails &amp; Co.</h3>
+            <p>Nasce a pioneira da alta coquetelaria engarrafada no Brasil. Uma marca que desafiou convenções, antecipou tendências e abriu caminho para uma nova forma de consumir coquetéis, levando a excelência dos grandes bares para além do balcão.</p>
+          </div>
+        </article>
+        <article class="tl-card">
+          <img class="tl-img" src="{{ asset('img/aptk/about-loja-2.jpg') }}" alt="Loja da APTK Spirits com a marca iluminada" loading="lazy">
+          <div class="tl-body">
+            <span class="tl-year">2021 · Brasil</span>
+            <h3>APTK Spirits</h3>
+            <p>O pioneirismo evolui e ganha uma nova identidade. A Apothek se transforma em APTK Spirits, ampliando seu universo com alma brasileira, inovação e criatividade. Uma marca que conecta a alta coquetelaria a novos estilos de vida, ocasiões de consumo e formas de celebrar.</p>
+          </div>
+        </article>
       </div>
     </div>
   </section>
 
-  {{-- VALORES --}}
+  {{-- NO QUE ACREDITAMOS (briefing p.5–6) --}}
   <section class="section values">
     <div class="container-aptk">
-      <div class="section-head" style="margin-inline:auto; text-align:center;">
-        <span class="eyebrow" style="justify-content:center;">No que acreditamos</span>
-        <h2 class="section-title" style="display:inline-block;">Três valores, um padrão</h2>
+      <div class="section-head">
+        <span class="eyebrow">No que acreditamos</span>
+        <h2 class="section-title title-editorial">Nossa essência. Nosso jeito de fazer.</h2>
       </div>
-      <div class="values-grid">
-        <div class="value">
-          <span class="v-num">01</span>
-          <h4>Qualidade</h4>
-          <p>Cuidado em cada detalhe, do destilado ao rótulo.</p>
-        </div>
-        <div class="value">
-          <span class="v-num">02</span>
-          <h4>Autenticidade</h4>
-          <p>Pontos de vista próprios e receitas autorais, sem atalho.</p>
-        </div>
-        <div class="value">
-          <span class="v-num">03</span>
-          <h4>Excelência</h4>
-          <p>O padrão do balcão, engarrafado e sempre consistente.</p>
-        </div>
-      </div>
+      <ol class="num-steps">
+        <li>
+          <span class="ns-num">01</span>
+          <h3>Pioneirismo</h3>
+          <p>Nascemos para desafiar o convencional. Antecipamos tendências, abrimos novos caminhos e seguimos transformando a maneira de consumir e celebrar a coquetelaria.</p>
+        </li>
+        <li>
+          <span class="ns-num">02</span>
+          <h3>Autenticidade</h3>
+          <p>Acreditamos na criatividade sem fórmulas prontas. Com alma brasileira e olhar autoral, valorizamos nossas origens enquanto exploramos novas possibilidades.</p>
+        </li>
+        <li>
+          <span class="ns-num">03</span>
+          <h3>Excelência</h3>
+          <p>Da escolha dos ingredientes à última gota, unimos técnica, inovação e atenção aos detalhes para levar o padrão da alta coquetelaria a qualquer ocasião.</p>
+        </li>
+      </ol>
     </div>
   </section>
 
-  {{-- AS MARCAS DA HOLDING (conteúdo da antiga página "Marcas") --}}
+  {{-- O ECOSSISTEMA (briefing p.7–8). Links em config/marcas.php ('links'):
+       o briefing pede o Instagram de cada marca; Barín e Ice4Pros ainda
+       apontam pra LP / site até chegarem os perfis. --}}
+  @php
+    $links = config('marcas.links');
+    $ecossistema = [
+      [
+        'link'  => $links['aptk'],
+        'img'   => \Illuminate\Support\Facades\Storage::url('products/negroni-classico-375ml-frente.jpg'),
+        'alt'   => 'Garrafa de Negroni Clássico da APTK Spirits',
+        'name'  => 'APTK Spirits',
+        'sub'   => 'Alta coquetelaria. Alquimia de histórias.',
+        'text'  => 'Pioneira na alta coquetelaria engarrafada no Brasil, une sofisticação, criatividade e autenticidade em coquetéis prontos para servir, gifting e projetos especiais.',
+        'media' => 'qs-eco-media--produto',
+      ],
+      [
+        'link'  => $links['barin'],
+        // FOTO: garrafa ou serviço da Barín no balcão. Provisória: bartender da APTK.
+        'img'   => asset('img/aptk/hero-bartender.jpg'),
+        'alt'   => 'Bartender preparando um drink no balcão',
+        'name'  => 'Barín',
+        'sub'   => 'Qualidade e eficiência em cada serviço.',
+        'text'  => 'Coquetelaria desenvolvida para o ritmo de bares, restaurantes e eventos. Receitas de qualidade, padronização e praticidade para operações que exigem consistência e escala.',
+        'media' => '',
+      ],
+      [
+        'link'  => $links['ice4pros'],
+        'img'   => asset('img/aptk/ice4pros-cubo.jpg'),
+        'alt'   => 'Cubo de gelo cristal Ice4Pros iluminado',
+        'name'  => 'Ice4Pros',
+        'sub'   => 'O gelo também é protagonista.',
+        'text'  => 'Especialista em gelo profissional, combina precisão, tecnologia e qualidade para valorizar cada coquetel e atender às exigências da coquetelaria e da hospitalidade.',
+        'media' => '',
+      ],
+    ];
+  @endphp
   <section class="section brands">
     <div class="container-aptk">
       <div class="section-head">
-        <span class="eyebrow">A holding</span>
-        <h2 class="section-title">Uma casa, três marcas</h2>
-        <p>A APTK Spirits reúne a coquetelaria autoral, a linha artesanal BARIN e a operação B2B da Ice4Pros — cada uma com o seu papel, o mesmo padrão.</p>
+        <span class="eyebrow">O ecossistema Small Batches</span>
+        <h2 class="section-title title-editorial">Três marcas. Um universo de possibilidades.</h2>
+        <p>A Small Batches reúne marcas que compartilham a paixão pela coquetelaria, pela inovação e pela excelência. Um ecossistema que conecta criatividade, conhecimento e capacidade produtiva para transformar diferentes momentos e ocasiões de consumo.</p>
       </div>
-      <div class="brands-grid">
-        <div class="brand-box">
-          <span class="b-tag">Coquetelaria</span>
-          <h3>APTK Spirits</h3>
-          <p>Alta coquetelaria engarrafada, drinks prontos e bases autorais — o coração da casa.</p>
-          <a href="{{ route('catalog') }}" class="btn-aptk btn-aptk--outline">Ver a carta</a>
-        </div>
-        <div class="brand-box">
-          <span class="b-tag">Artesanal</span>
-          <h3>BARIN</h3>
-          <p>A linha artesanal da holding, com receitas próprias e alma de bar.</p>
-          <a href="{{ route('barin') }}" class="btn-aptk btn-aptk--outline">Conhecer a Barín</a>
-        </div>
-        <div class="brand-box">
-          <span class="b-tag">B2B</span>
-          <h3>Ice4Pros</h3>
-          <p>Gelo e insumos para o trade, com capacidade produtiva e qualidade certificada.</p>
-          <a href="{{ route('ice4pros') }}" class="btn-aptk btn-aptk--outline">Conhecer a Ice4Pros</a>
-        </div>
+      <div class="qs-eco-grid">
+        @foreach ($ecossistema as $marca)
+          @php $externo = str_starts_with($marca['link']['url'], 'http'); @endphp
+          <a href="{{ $marca['link']['url'] }}" class="media-card qs-eco-card" @if ($externo) target="_blank" rel="noopener noreferrer" @endif>
+            <div class="mc-media {{ $marca['media'] }}">
+              <img src="{{ $marca['img'] }}" alt="{{ $marca['alt'] }}" loading="lazy">
+            </div>
+            <div class="mc-body">
+              <h3 class="title-editorial">{{ $marca['name'] }}</h3>
+              <p class="qs-eco-sub">{{ $marca['sub'] }}</p>
+              <p>{{ $marca['text'] }}</p>
+              <span class="link-arrow">{{ $marca['link']['label'] }} <span class="btn-arrow">→</span></span>
+            </div>
+          </a>
+        @endforeach
       </div>
     </div>
   </section>
