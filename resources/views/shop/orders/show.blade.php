@@ -37,7 +37,7 @@
                 <a href="{{ route('checkout.success', $order) }}" class="btn-aptk">{{ $order->payment_method === 'pix' ? 'Pagar com Pix' : 'Ver boleto' }}</a>
             </div>
         @endif
-        <p class="acc-sub">{{ data_br($order->created_at) }} · @include('shop.partials.order-status', ['status' => $order->status])</p>
+        <p class="acc-sub">{{ data_br($order->created_at) }} · @include('shop.partials.order-status', ['order' => $order])</p>
     </x-slot>
 
     <div class="card-aptk od-card">
@@ -65,7 +65,7 @@
         <h3>Detalhes</h3>
         <div class="od-meta">
             <div><span class="k">Pagamento</span><span class="v">{{ $payLabels[$order->payment_method] ?? ($order->payment_method ?? '—') }}</span></div>
-            <div><span class="k">Status</span><span class="v">@include('shop.partials.order-status', ['status' => $order->status])</span></div>
+            <div><span class="k">Status</span><span class="v">@include('shop.partials.order-status', ['order' => $order])</span></div>
         </div>
         @if ($order->notes)
             <p class="od-note">{{ $order->notes }}</p>

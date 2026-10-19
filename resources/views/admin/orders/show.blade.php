@@ -1,7 +1,6 @@
 @extends('layouts.admin')
 
 @php
-    $statusLabels = ['pending'=>'Pendente','paid'=>'Pago','shipped'=>'Enviado','delivered'=>'Entregue','cancelled'=>'Cancelado'];
     $payLabels    = ['pix'=>'Pix','cartao'=>'Cartão','boleto'=>'Boleto'];
     $num          = 'APTK-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
 @endphp
@@ -16,7 +15,7 @@
             <h1>Pedido {{ $num }}</h1>
             <p>{{ data_br($order->created_at) }}</p>
         </div>
-        @include('admin.partials.status', ['status' => $order->status])
+        @include('admin.partials.status', ['order' => $order])
     </div>
 
     @if (session('status'))
@@ -134,7 +133,7 @@
                         @method('PATCH')
                         <select name="status" class="admin-select">
                             @foreach ($statuses as $st)
-                                <option value="{{ $st }}" {{ $order->status === $st ? 'selected' : '' }}>{{ $statusLabels[$st] ?? $st }}</option>
+                                <option value="{{ $st }}" {{ $order->statusExibido() === $st ? 'selected' : '' }}>{{ \App\Models\Order::rotuloStatus($st) }}</option>
                             @endforeach
                         </select>
                         <button type="submit" class="admin-btn">Salvar status</button>

@@ -13,7 +13,12 @@ use Illuminate\View\View;
 
 class OrderController extends Controller
 {
-    private const STATUSES = ['pending', 'paid', 'shipped', 'delivered', 'cancelled'];
+    /**
+     * Status que o admin pode GRAVAR. 'processing' é o "Pago" (o mesmo do
+     * checkout); o 'paid' antigo segue exibido como Pago, mas não é mais
+     * gravado. Estorno não entra aqui: é pelo botão da Appmax.
+     */
+    private const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
     public function index(Request $request): View
     {
@@ -21,8 +26,8 @@ class OrderController extends Controller
 
         $query = Order::with('user')->withCount('items')->latest();
 
-        if (in_array($active, self::STATUSES, true)) {
-            $query->where('status', $active);
+        if (in_array($active, Order::STATUS_FILTROS, true)) {
+            $query->comStatus($active); // mesmo critério do rótulo
         } elseif ($active === 'a_conferir') {
             $query->whereIn('id', ReconciliacaoPagamento::aConferir()->select('id'));
         }
@@ -31,7 +36,7 @@ class OrderController extends Controller
 
         return view('admin.orders.index', [
             'orders'    => $orders,
-            'statuses'  => self::STATUSES,
+            'statuses'  => Order::STATUS_FILTROS,
             'active'    => $active,
             'aConferir' => ReconciliacaoPagamento::aConferir()->count(),
         ]);
@@ -55,7 +60,7 @@ class OrderController extends Controller
 
         $order->status = $data['status'];
 
-        if ($data['status'] === 'paid') {
+        if ($data['status'] === 'processing') {
             $order->payment_status = 'paid';
         } elseif ($data['status'] === 'cancelled') {
             $order->payment_status = 'failed';

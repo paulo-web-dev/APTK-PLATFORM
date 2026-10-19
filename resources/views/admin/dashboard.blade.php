@@ -109,7 +109,7 @@
                         <td class="td-muted" data-label="Data">{{ data_br($o->created_at) }}</td>
                         <td class="td-num" data-label="Itens">{{ $o->items_count }}</td>
                         <td class="td-num" data-label="Total">R$ {{ number_format($o->total, 2, ',', '.') }}</td>
-                        <td data-label="Status">@include('admin.partials.status', ['status' => $o->status])</td>
+                        <td data-label="Status">@include('admin.partials.status', ['order' => $o])</td>
                     </tr>
                 @empty
                     <tr><td colspan="6" class="td-muted" style="text-align:center; padding:48px;">Nenhum pedido ainda. Assim que o primeiro pedido cair, ele aparece aqui.</td></tr>

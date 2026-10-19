@@ -3,7 +3,6 @@
 @section('admin_title', 'Pedidos')
 
 @php
-    $statusLabels = ['pending'=>'Pendente','paid'=>'Pago','shipped'=>'Enviado','delivered'=>'Entregue','cancelled'=>'Cancelado'];
     $payLabels    = ['pix'=>'Pix','cartao'=>'Cartão','boleto'=>'Boleto'];
 @endphp
 
@@ -16,7 +15,7 @@
     <div class="filter-row">
         <a href="{{ route('admin.orders.index') }}" class="filter-pill {{ ! $active ? 'is-active' : '' }}">Todos</a>
         @foreach ($statuses as $st)
-            <a href="{{ route('admin.orders.index', ['status' => $st]) }}" class="filter-pill {{ $active === $st ? 'is-active' : '' }}">{{ $statusLabels[$st] ?? $st }}</a>
+            <a href="{{ route('admin.orders.index', ['status' => $st]) }}" class="filter-pill {{ $active === $st ? 'is-active' : '' }}">{{ \App\Models\Order::rotuloStatus($st) }}</a>
         @endforeach
         {{-- Pix/boleto fora da janela de reconciliação sem resposta conclusiva:
              nada cancela sozinho, alguém confere no painel da Appmax. --}}
@@ -40,7 +39,7 @@
                         <td class="td-muted" data-label="Frete">{{ $o->shippingName() ?? '—' }}@if ($o->shipping_cost > 0) <span class="td-num">· R$ {{ number_format($o->shipping_cost, 2, ',', '.') }}</span>@endif</td>
                         <td class="td-num" data-label="Total">R$ {{ number_format($o->total, 2, ',', '.') }}</td>
                         <td class="td-muted" data-label="Pagamento">{{ $payLabels[$o->payment_method] ?? ($o->payment_method ?? '—') }}</td>
-                        <td data-label="Status">@include('admin.partials.status', ['status' => $o->status])</td>
+                        <td data-label="Status">@include('admin.partials.status', ['order' => $o])</td>
                     </tr>
                 @empty
                     <tr><td colspan="8" class="td-muted" style="text-align:center; padding:48px;">Nenhum pedido encontrado{{ $active ? ' com esse status' : '' }}.</td></tr>

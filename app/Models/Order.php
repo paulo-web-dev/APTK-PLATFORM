@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -61,6 +62,59 @@ class Order extends Model
         'microvix_envio_em'  => 'datetime',
         'shipping_days'      => 'integer',
     ];
+
+    /**
+     * Rótulo ÚNICO de status (badges e filtros, admin e cliente).
+     * 'processing' é o "pago" do checkout; 'paid' é legado (admin antigo) e
+     * mostra o mesmo texto. 'refunded' não é gravado em status: é como se
+     * exibe o cancelled com pagamento estornado/chargeback (statusExibido).
+     */
+    public const STATUS_LABELS = [
+        'pending'    => 'Pendente',
+        'processing' => 'Pago',
+        'paid'       => 'Pago',
+        'shipped'    => 'Enviado',
+        'delivered'  => 'Entregue',
+        'cancelled'  => 'Cancelado',
+        'refunded'   => 'Estornado',
+    ];
+
+    /** Filtros de status (admin), na ordem de exibição. */
+    public const STATUS_FILTROS = ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'];
+
+    public static function rotuloStatus(?string $status): string
+    {
+        return self::STATUS_LABELS[$status] ?? ucfirst((string) $status);
+    }
+
+    /** Status para exibição: legado 'paid' → processing; cancelado por estorno → refunded. */
+    public function statusExibido(): string
+    {
+        if ($this->status === 'cancelled' && in_array($this->payment_status, ['refunded', 'chargeback'], true)) {
+            return 'refunded';
+        }
+
+        return $this->status === 'paid' ? 'processing' : (string) $this->status;
+    }
+
+    public function statusLabel(): string
+    {
+        return self::rotuloStatus($this->statusExibido());
+    }
+
+    /** Filtra pelo status EXIBIDO (mesmo critério do rótulo). */
+    public function scopeComStatus(Builder $query, string $status): Builder
+    {
+        $estorno = ['refunded', 'chargeback'];
+
+        return match ($status) {
+            'processing' => $query->whereIn('status', ['processing', 'paid']),
+            'refunded'   => $query->where('status', 'cancelled')->whereIn('payment_status', $estorno),
+            'cancelled'  => $query->where('status', 'cancelled')
+                ->where(fn ($q) => $q->whereNotIn('payment_status', $estorno)->orWhereNull('payment_status')),
+            default      => $query->where('status', $status),
+        };
+    }
 
     /** Nome da opção de frete ("PAC", "SEDEX"); pedido antigo mostra o código cru. */
     public function shippingName(): ?string

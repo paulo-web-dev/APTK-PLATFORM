@@ -36,7 +36,7 @@ class AppmaxDiagnostico extends Command
         $this->table(['Campo', 'Valor'], [
             ['Pedido', 'APTK-'.str_pad((string) $order->id, 5, '0', STR_PAD_LEFT)],
             ['Método', $order->payment_method],
-            ['Status', $order->status],
+            ['Status', $order->status.' ('.$order->statusLabel().')'],
             ['Pagamento', $order->payment_status],
             ['Total', 'R$ '.number_format((float) $order->total, 2, ',', '.')
                 .' (frete '.number_format((float) $order->shipping_cost, 2, ',', '.').')'],

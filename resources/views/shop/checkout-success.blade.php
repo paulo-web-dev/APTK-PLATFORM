@@ -158,7 +158,7 @@
             <h3>Detalhes</h3>
             <div class="ok-meta">
                 <div><span class="k">Pagamento</span><span class="v">{{ $payLabels[$order->payment_method] ?? $order->payment_method }}</span></div>
-                <div><span class="k">Status</span><span class="v">{{ ucfirst($order->status) }}</span></div>
+                <div><span class="k">Status</span><span class="v">{{ $order->statusLabel() }}</span></div>
                 <div><span class="k">Pagamento (status)</span><span class="v">{{ ['pending' => 'Aguardando', 'paid' => 'Pago', 'failed' => 'Recusado', 'expired' => 'Expirado', 'refunded' => 'Estornado'][$order->payment_status] ?? ucfirst($order->payment_status) }}</span></div>
             </div>
             @if ($order->notes)
