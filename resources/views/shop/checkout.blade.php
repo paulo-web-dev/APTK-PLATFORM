@@ -491,7 +491,8 @@
         txt.textContent = o.nome;
         var prazo = document.createElement('small');
         prazo.className = 'frete-prazo';
-        prazo.textContent = 'até ' + o.prazo_dias + (o.prazo_dias === 1 ? ' dia útil' : ' dias úteis');
+        // Prazo 0 = opção de teste (frete isento): sem "até 0 dias".
+        prazo.textContent = o.prazo_dias > 0 ? 'até ' + o.prazo_dias + (o.prazo_dias === 1 ? ' dia útil' : ' dias úteis') : '';
         txt.appendChild(prazo);
         nome.appendChild(input);
         nome.appendChild(txt);

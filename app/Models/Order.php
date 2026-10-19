@@ -69,6 +69,10 @@ class Order extends Model
             return null;
         }
 
+        if ($this->shipping_method === \App\Services\FreteService::CODIGO_ISENTO) {
+            return \App\Services\FreteService::NOME_ISENTO;
+        }
+
         return config('frete.servicos.'.$this->shipping_method) ?? ucfirst($this->shipping_method);
     }
 

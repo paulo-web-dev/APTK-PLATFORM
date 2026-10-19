@@ -17,9 +17,17 @@ use Illuminate\Validation\ValidationException;
  */
 class FreteService
 {
+    /** Código (orders.shipping_method) da opção de frete zero do carrinho isento. */
+    public const CODIGO_ISENTO = 'teste';
+
+    public const NOME_ISENTO = 'Teste (sem frete)';
+
     /**
      * Opções para o carrinho e o CEP, no formato de transportadora:
      * [['codigo' => 'pac', 'nome' => 'PAC', 'valor' => 31.20, 'prazo_dias' => 5], ...]
+     *
+     * Carrinho 100% de produtos isentos (config frete.isentos): uma opção só,
+     * "teste", R$ 0,00. Com qualquer item não isento, cálculo normal.
      *
      * @param  Collection<int, object>  $items  linhas do CartService::items()
      *
@@ -31,7 +39,16 @@ class FreteService
             throw ValidationException::withMessages(['cart' => 'Seu carrinho está vazio.']);
         }
 
-        $regiao = $this->regiao($cep);
+        $regiao = $this->regiao($cep); // CEP valida igual, isento ou não
+
+        if ($this->todosIsentos($items)) {
+            return [[
+                'codigo'     => self::CODIGO_ISENTO,
+                'nome'       => self::NOME_ISENTO,
+                'valor'      => 0.0,
+                'prazo_dias' => 0,
+            ]];
+        }
         $kg = $this->pesoKg($items);
         $opcoes = [];
 
@@ -66,6 +83,16 @@ class FreteService
         }
 
         throw ValidationException::withMessages(['shipping_method' => 'Escolha uma opção de frete.']);
+    }
+
+    /** Todos os itens são de produtos com frete isento (config frete.isentos)? */
+    public function todosIsentos(Collection $items): bool
+    {
+        $isentos = (array) config('frete.isentos', []);
+
+        return $isentos !== []
+            && $items->isNotEmpty()
+            && $items->every(fn ($row) => in_array($row->product->slug ?? null, $isentos, true));
     }
 
     /** Peso total do carrinho em kg, arredondado PRA CIMA ao kg inteiro (mínimo 1). */

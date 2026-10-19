@@ -31,6 +31,12 @@ return [
         'sedex' => 'SEDEX',
     ],
 
+    // Produtos (slugs) com frete zero — só o de teste de pagamento
+    // (catalogo:produto-teste). Vale só se TODO o carrinho for isento: aí a
+    // única opção é "teste" (R$ 0,00). Qualquer item não isento e o frete
+    // normal vale pro carrinho inteiro, peso de tudo, sem desconto.
+    'isentos' => ['teste'],
+
     // Tabela por região: base até 1 kg + adicional por kg extra (R$);
     // prazo em dias úteis, sem o manuseio.
     'tabela' => [

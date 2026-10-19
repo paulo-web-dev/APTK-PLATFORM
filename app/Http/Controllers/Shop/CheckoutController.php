@@ -327,7 +327,9 @@ class CheckoutController extends Controller
             'state'           => ['required', 'string', 'size:2'],
             // Só o código da opção vem do front; valor e prazo o OrderService
             // recalcula do CEP (FreteService).
-            'shipping_method' => ['required', 'in:'.implode(',', array_keys(config('frete.servicos')))],
+            // "teste" (frete zero) passa aqui, mas o FreteService::opcao só o
+            // aceita com o carrinho 100% isento — misto é rejeitado lá.
+            'shipping_method' => ['required', 'in:'.implode(',', [...array_keys(config('frete.servicos')), FreteService::CODIGO_ISENTO])],
             'payment_method'  => ['required', 'in:pix,cartao,boleto'],
             'notes'           => ['nullable', 'string', 'max:1000'],
         ];

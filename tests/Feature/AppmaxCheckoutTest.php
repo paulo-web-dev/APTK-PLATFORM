@@ -450,6 +450,106 @@ class AppmaxCheckoutTest extends TestCase
         $this->assertSame(2, AppmaxService::maxParcelas(89.99));
         $this->assertSame(1, AppmaxService::maxParcelas(45.00));
         $this->assertSame(1, AppmaxService::maxParcelas(10.00));  // nunca menos que 1
+        $this->assertSame(1, AppmaxService::maxParcelas(1.00));   // produto de teste
+        $this->assertSame(1, AppmaxService::maxParcelas(0.00));
+    }
+
+    // ---- frete isento (produto de teste) ---------------------------------
+
+    protected function produtoTeste(): Product
+    {
+        $this->artisan('catalogo:produto-teste')->assertSuccessful();
+
+        return Product::where('slug', 'teste')->sole();
+    }
+
+    public function test_carrinho_so_com_teste_tem_uma_opcao_de_frete_zero(): void
+    {
+        $teste = $this->produtoTeste();
+        $this->actingAs($this->cliente());
+        app(CartService::class)->add($teste->id, 1, '100 ml');
+
+        $this->postJson('/frete/cotar', ['zipcode' => '01310-100'])
+            ->assertOk()
+            ->assertJsonCount(1, 'opcoes')
+            ->assertJson(['opcoes' => [
+                ['codigo' => 'teste', 'nome' => 'Teste (sem frete)', 'valor' => 0, 'prazo_dias' => 0],
+            ]]);
+
+        $this->get('/checkout')->assertOk()->assertSee('1x de R$ 1,00 à vista');
+    }
+
+    public function test_carrinho_so_com_teste_fecha_com_frete_zero_e_total_um_real(): void
+    {
+        $this->fakeAppmax();
+        $teste = $this->produtoTeste();
+        $this->actingAs($this->cliente());
+        app(CartService::class)->add($teste->id, 1, '100 ml');
+
+        $this->post('/checkout', $this->dados(['shipping_method' => 'teste', 'installments' => 1]))->assertRedirect();
+
+        $order = Order::sole();
+        $this->assertTrue($order->isPaid());
+        $this->assertSame('0.00', $order->shipping_cost);
+        $this->assertSame('1.00', $order->total);
+        $this->assertSame('teste', $order->shipping_method);
+        $this->assertSame('Teste (sem frete)', $order->shippingLabel());
+
+        $pedido = $this->enviado('POST', '/v1/orders');
+        $this->assertSame(100, $pedido['products_value']);
+        $this->assertSame(0, $pedido['shipping_value']);
+        $this->assertSame(0, $pedido['discount_value']);
+        $this->assertSame(100, $pedido['products'][0]['unit_value']);
+    }
+
+    public function test_teste_mais_outro_produto_cobra_frete_normal_sobre_o_peso_de_tudo(): void
+    {
+        $teste = $this->produtoTeste();
+        $p = $this->comCarrinho(); // Negroni 750 ml
+        app(CartService::class)->add($teste->id, 1, '100 ml');
+
+        // 0,1 + 1 (teste) + 0,75 + 1 (negroni) = 2,85 kg → 3 kg.
+        // Curitiba (zona2): PAC (35 + 7×2) × 1,2 = 58,80 · SEDEX (60 + 12×2) × 1,2 = 100,80
+        $this->postJson('/frete/cotar', ['zipcode' => '80000-000'])
+            ->assertOk()
+            ->assertJsonPath('opcoes.0.codigo', 'pac')
+            ->assertJsonPath('opcoes.0.valor', 58.8)
+            ->assertJsonPath('opcoes.1.valor', 100.8)
+            ->assertJsonCount(2, 'opcoes');
+
+        $this->fakeAppmax();
+        $this->post('/checkout', $this->dados())->assertRedirect();
+
+        $order = Order::sole();
+        $this->assertSame('100.80', $order->shipping_cost);
+        $this->assertSame('311.80', $order->total); // 210 + 1 + 100,80 (sem desconto de frete)
+        $this->assertSame(10080, $this->enviado('POST', '/v1/orders')['shipping_value']);
+    }
+
+    public function test_shipping_method_teste_com_carrinho_misto_e_rejeitado(): void
+    {
+        $this->fakeAppmax();
+        $teste = $this->produtoTeste();
+        $p = $this->comCarrinho();
+        app(CartService::class)->add($teste->id, 1, '100 ml');
+
+        $this->post('/checkout', $this->dados(['shipping_method' => 'teste']))
+            ->assertSessionHasErrors('shipping_method');
+
+        $this->assertSame(0, Order::count());
+        $this->assertSame(5, $p->refresh()->size_stock['750 ml']);
+        Http::assertNothingSent();
+    }
+
+    public function test_carrinho_isento_nao_aceita_pac(): void
+    {
+        $teste = $this->produtoTeste();
+        $this->actingAs($this->cliente());
+        app(CartService::class)->add($teste->id, 1, '100 ml');
+
+        $this->post('/checkout', $this->dados(['shipping_method' => 'pac', 'installments' => 1]))
+            ->assertSessionHasErrors('shipping_method');
+        $this->assertSame(0, Order::count());
     }
 
     public function test_backend_recusa_parcelas_acima_do_teto_ou_da_parcela_minima(): void

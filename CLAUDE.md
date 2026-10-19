@@ -110,7 +110,9 @@ região (faixa de CEP da UF) + 20%, PAC e SEDEX. Peso = ml do volume / 1000 +
 fechamento** (`OrderService::placeFromCart`, do CEP + `shipping_method`); o valor
 do front nunca entra. Pedido grava `shipping_cost`, `shipping_method`
 (pac|sedex) e `shipping_days`. SuperFrete (sem conta ainda): trocar só a
-implementação do `FreteService`.
+implementação do `FreteService`. Frete zero só com carrinho 100% de slugs em
+`frete.isentos` (hoje só `teste`): opção única `teste`, R$ 0,00; carrinho misto
+cobra frete normal sobre o peso de tudo e rejeita `shipping_method=teste`.
 
 **Linx Microvix ERP** (WS B2C): fase 1 implementada — espelho somente-leitura.
 Doc em `docs/linx-microvix-ws-b2c.md`; **em divergência de nome de campo, vale o
