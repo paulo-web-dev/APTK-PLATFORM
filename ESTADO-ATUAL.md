@@ -501,14 +501,14 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
 
 | página / bloco | foto provisória | o que o briefing pede |
 |---|---|---|
-| Quem Somos · 2016 | `<x-photo-slot>` (§12) | garrafa/balcão da era Apothek |
+| Quem Somos · 2016 | `featured-negroni.jpg` (rótulo antigo) | garrafa/balcão da era Apothek |
 | Quem Somos · card APTK Spirits | `franquias-hero.jpg` (§12) | produto ou loja APTK |
-| Quem Somos · card Barín | `<x-photo-slot>` (§12) | garrafa ou serviço da Barín |
+| Quem Somos · card Barín | `cat-cosmopolitan.jpg` (rótulo antigo) | garrafa ou serviço da Barín |
 | Quem Somos · galeria | `clube-hero.jpg`, `cat-evento.jpg` (§12) | — |
 | Home · Coquetéis Prontos | `about-loja-2.jpg` (§12) | coquetel pronto servido |
-| Home · Crie Seu Drink | `<x-photo-slot>` (§12) | bases e ingredientes |
-| Home · Arte de Presentear | `<x-photo-slot>` (§12) | kit/presente com embalagem |
-| Home · ecossistema Barín | `<x-photo-slot>` (§12) | garrafa ou serviço da Barín |
+| Home · Crie Seu Drink | `cat-fitzgerald.jpg` (rótulo antigo) | bases e ingredientes |
+| Home · Arte de Presentear | `featured-negroni.jpg` (rótulo antigo) | kit/presente com embalagem |
+| Home · ecossistema Barín | `hero-bartender.jpg` (rótulo antigo) | garrafa ou serviço da Barín |
 | Home · vitrine Collabs | `cat-evento.jpg` | fotos das collabs / vídeo Montblanc |
 | Home · vitrine Clube | `cat-pessoas.jpg` | encontro real do Clube |
 | Home · vitrine Lojas | `loja-aptk.jpg` | foto arquitetônica autoral |
@@ -516,9 +516,9 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
 | Custom · hero (2 fotos) | `cat-pessoas.jpg` (§12), `about-loja-3.jpg` | Presentes & Celebrações / Marcas & Projetos Especiais |
 | Custom · Full Custom | `cat-dry-martini.jpg` | garrafa com rótulo de marca parceira + embalagem premium |
 | Eventos · Bar APTK | `clube-hero.jpg` (§12) | — |
-| Eventos · Gifting | `<x-photo-slot>` (§12) | kit/presente de evento |
+| Eventos · Gifting | `featured-negroni.jpg` (rótulo antigo) | kit/presente de evento |
 | Eventos · Brand Experiences | `cat-evento.jpg` | ativação de marca em evento |
-| Eventos · Customização | `<x-photo-slot>` (§12) | garrafa com rótulo personalizado de evento |
+| Eventos · Customização | `cat-fitzgerald.jpg` (rótulo antigo) | garrafa com rótulo personalizado de evento |
 
 Nenhuma foto aparece duas vezes na mesma página (incluindo os arquivos
 duplicados com nome diferente: `loja-aptk`=`sobre-loja`,
@@ -603,7 +603,13 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
   `cat-cosmopolitan`, `cat-fitzgerald`, `featured-negroni`,
   `hero-bartender`/`sobre-barman`, `cat-loja`/`sobre-interior` (prateleira com
   Negroni legível) e `products/negroni-classico-375ml-frente.jpg` (Quem Somos).
-  Trocadas por foto de ambiente sem rótulo ou `<x-photo-slot>` (tabela §11.1).
+  **Regra (Paulo, 20/10):** rótulo antigo só bloqueia na galeria de produto. Em
+  foto de ambiente, onde a garrafa não é o foco, a foto antiga fica até chegar
+  a nova — nada de `<x-photo-slot>` no lugar dela. Trocadas só onde havia foto
+  de ambiente sem rótulo pra pôr (sem repetir foto na página): Home Coquetéis
+  Prontos → `about-loja-2`; Quem Somos card APTK → `franquias-hero`, galeria →
+  `clube-hero` + `cat-evento`; Custom hero → `cat-pessoas`; Eventos Bar APTK →
+  `clube-hero`. Ver tabela §11.1.
 - **Bug corrigido:** o comentário do `<x-photo-slot>` tinha um `--}}` aninhado
   e vazava texto na página (não aparecia porque o componente não renderizava
   em lugar nenhum).
@@ -616,8 +622,16 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
 - **Dry Martini:** `DM750` (branco) tem rótulo creme; `DM375` (branco) tem
   rótulo azul-marinho. Confirmar qual é o atual. `cat-dry-martini.jpg` (vitrine
   Custom da Home e Full Custom) tem o creme — ficou, até confirmar.
-- **Hero da Home:** o vídeo/pôster (`hero-negroni-poster.jpg`) mostra o Negroni
-  de rótulo antigo. Fora do escopo (hero não muda).
+- **Fotos de ambiente com rótulo antigo — trocar quando houver foto nova:**
+  - `hero-negroni-poster.jpg` + vídeo do hero da Home (Negroni).
+  - `cat-fitzgerald.jpg`: Home · Crie Seu Drink; Eventos · Customização.
+  - `featured-negroni.jpg`: Home · Arte de Presentear; Quem Somos · 2016;
+    Eventos · Gifting.
+  - `hero-bartender.jpg`: Home · ecossistema Barín.
+  - `cat-cosmopolitan.jpg`: Quem Somos · card Barín.
+  - `cat-dry-martini.jpg` (se o creme for o antigo): Home · vitrine Custom;
+    Custom · Full Custom.
+  - Fora de uso hoje: `sobre-barman.jpg`, `sobre-interior.jpg`/`cat-loja.jpg`.
 - Bordas: `bou375-frente`, `dm750-verso` e `slo750-frente` têm canto um pouco
   mais escuro que o fundo do card (foto original); quase invisível.
 - Sem foto branca do 750: Gallo Tropicalle, Ale Tonic, Penicillin, Licor de

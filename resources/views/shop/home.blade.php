@@ -255,11 +255,11 @@
       // FOTO: coquetel pronto servido (provisória: vitrine de garrafas da loja; a do Cosmopolitan tinha o rótulo antigo).
       ['href' => route('catalog'), 'img' => asset('img/aptk/about-loja-2.jpg'), 'alt' => 'Vitrine de garrafas da loja APTK Spirits',
        'h' => 'Coquetéis Prontos', 'p' => 'A excelência da alta coquetelaria, pronta para servir.', 'cls' => ''],
-      // FOTO: bases e ingredientes para criar em casa (a do Fitzgerald com limões tinha o rótulo antigo).
-      ['href' => route('catalog', ['categoria' => 'bases']), 'img' => null, 'alt' => '',
+      // FOTO: bases e ingredientes para criar em casa (provisória: Fitzgerald com limões, rótulo antigo; a foto do Neutral Gin já está no carrossel).
+      ['href' => route('catalog', ['categoria' => 'bases']), 'img' => asset('img/aptk/cat-fitzgerald.jpg'), 'alt' => 'Garrafa da APTK com limões',
        'h' => 'Crie Seu Drink', 'p' => 'Ingredientes e bases para explorar sua criatividade.', 'cls' => ''],
-      // FOTO: kit/presente APTK com embalagem (a do Negroni em garrafas da casa tinha o rótulo antigo). Leva pro Custom até existir categoria de kits.
-      ['href' => route('custom'), 'img' => null, 'alt' => '',
+      // FOTO: kit/presente APTK com embalagem (provisória: Negroni em garrafas da casa, rótulo antigo). Leva pro Custom até existir categoria de kits.
+      ['href' => route('custom'), 'img' => asset('img/aptk/featured-negroni.jpg'), 'alt' => 'Garrafas de Negroni da APTK',
        'h' => 'Arte de Presentear', 'p' => 'Presentes que transformam gestos em histórias.', 'cls' => ''],
       ['href' => route('pages.show', 'clube'), 'img' => asset('img/aptk/clube-hero.jpg'), 'alt' => 'Convidada do Clube APTK com um drink',
        'h' => 'Clube APTK', 'p' => 'Seleções especiais, descobertas e edições limitadas.', 'cls' => ''],
@@ -277,11 +277,7 @@
         @foreach ($explore as $card)
           <a href="{{ $card['href'] }}" class="media-card hx-card">
             <div class="mc-media {{ $card['cls'] }}">
-              @if ($card['img'])
-                <img src="{{ $card['img'] }}" alt="{{ $card['alt'] }}" loading="lazy">
-              @else
-                <x-photo-slot />
-              @endif
+              <img src="{{ $card['img'] }}" alt="{{ $card['alt'] }}" loading="lazy">
             </div>
             <div class="mc-body">
               <h3>{{ $card['h'] }}</h3>
@@ -294,9 +290,9 @@
 
       <span class="eyebrow hx-label">Nosso ecossistema</span>
       <div class="hx-eco">
-        {{-- FOTO: garrafa ou serviço da Barín (a do bartender tinha o Negroni de rótulo antigo). --}}
+        {{-- FOTO: garrafa ou serviço da Barín (provisória: bartender da APTK, Negroni de rótulo antigo). --}}
         <a href="{{ route('barin') }}" class="media-card hx-eco-card">
-          <div class="mc-media"><x-photo-slot /></div>
+          <div class="mc-media"><img src="{{ asset('img/aptk/hero-bartender.jpg') }}" alt="Bartender preparando um drink no balcão" loading="lazy"></div>
           <div class="mc-body">
             <span class="mc-eyebrow">Barín</span>
             <h3 class="title-editorial">Feito para o ritmo do bar</h3>

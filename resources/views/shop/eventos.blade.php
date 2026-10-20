@@ -135,25 +135,25 @@
     </section>
   @endif
 
-  {{-- SOLUÇÕES (briefing p.27–28). Fotos provisórias; as com rótulo antigo
-       (bartender, Negroni, Fitzgerald) saíram. --}}
+  {{-- SOLUÇÕES (briefing p.27–28). Fotos provisórias. O bartender saiu do Bar
+       APTK (rótulo antigo em destaque); Negroni e Fitzgerald ficam até chegar foto nova. --}}
   @php
     $solucoes = [
       ['n' => '01', 'h' => 'Bar APTK', 'sub' => 'Alta coquetelaria, onde seu evento acontecer.',
        'p' => 'Levamos a assinatura da APTK ao seu evento, com coquetéis autorais, estrutura de bar e profissionais especializados.',
        'img' => 'img/aptk/clube-hero.jpg', 'alt' => 'Convidada com um drink no bar da APTK'],
-      // FOTO: kit/presente de evento (coquetéis engarrafados em embalagem premium).
+      // FOTO: kit/presente de evento (coquetéis engarrafados em embalagem premium). Provisória: Negroni em garrafas da casa.
       ['n' => '02', 'h' => 'Gifting & Presentes', 'sub' => 'Presentes que continuam contando histórias.',
        'p' => 'Coquetéis engarrafados, kits exclusivos e presentes personalizados para convidados, parceiros e colaboradores.',
-       'img' => null, 'alt' => ''],
+       'img' => 'img/aptk/featured-negroni.jpg', 'alt' => 'Garrafas de Negroni da APTK'],
       // FOTO: ativação de marca / collab em evento. Provisória: encontro com drinks e gastronomia.
       ['n' => '03', 'h' => 'Brand Experiences & Collabs', 'sub' => 'Sua marca encontra a nossa criatividade.',
        'p' => 'Projetos personalizados, ativações e colaborações que conectam marcas ao universo da coquetelaria e da hospitalidade.',
        'img' => 'img/aptk/cat-evento.jpg', 'alt' => 'Encontro com drinks e gastronomia'],
-      // FOTO: garrafa com rótulo personalizado para evento.
+      // FOTO: garrafa com rótulo personalizado para evento. Provisória: Fitzgerald da casa.
       ['n' => '04', 'h' => 'Customização', 'sub' => 'Cada detalhe com a sua identidade.',
        'p' => 'Rótulos, embalagens e coquetéis personalizados para transformar produtos em lembranças únicas.',
-       'img' => null, 'alt' => ''],
+       'img' => 'img/aptk/cat-fitzgerald.jpg', 'alt' => 'Garrafa de Fitzgerald da APTK'],
     ];
   @endphp
   <section class="section evt-band">
@@ -166,13 +166,7 @@
       <div class="evt-sol-grid">
         @foreach ($solucoes as $s)
           <article class="media-card evt-sol">
-            <div class="mc-media">
-              @if ($s['img'])
-                <img src="{{ asset($s['img']) }}" alt="{{ $s['alt'] }}" loading="lazy">
-              @else
-                <x-photo-slot />
-              @endif
-            </div>
+            <div class="mc-media"><img src="{{ asset($s['img']) }}" alt="{{ $s['alt'] }}" loading="lazy"></div>
             <div class="mc-body">
               <span class="mc-eyebrow">{{ $s['n'] }}</span>
               <h3 class="title-editorial">{{ $s['h'] }}</h3>

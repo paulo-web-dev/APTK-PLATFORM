@@ -108,8 +108,9 @@ coquetel → rótulo → dados → prévia e envio, botão "Solicitar minha pers
 (`#FEFEFE`, o branco das fotos, nos dois temas) com `--radius-md`; placeholder no mesmo
 fundo, texto/símbolo em `--color-text-on-media`. `--color-bg-media` é SÓ pra foto de
 produto: foto de ambiente usa `--color-ink`. O pacote fundo preto
-(`{grupo}-{vol}-{lado}.jpg`) tem rótulo antigo e não é mais usado; foto de ambiente
-com garrafa de rótulo antigo também não (ESTADO-ATUAL §12).
+(`{grupo}-{vol}-{lado}.jpg`) tem rótulo antigo e não é mais usado. Rótulo antigo só
+bloqueia na galeria de produto: foto de ambiente com garrafa antiga fica até chegar a
+nova (não trocar por `<x-photo-slot>`); lista em ESTADO-ATUAL §12.1.
 Upload do admin: nome hash de 40 caracteres (`ProductImage::isUploadDoAdmin()`) — só
 esse arquivo o admin apaga do disco. Upload ADICIONA como principal.
 
@@ -224,8 +225,8 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
 2. Portal B2B é só fachada: middleware + role + um `/ping`. Sem controllers nem views.
 3. Microvix fora de operação (`MICROVIX_ENVIA_PEDIDO=false`); ver ESTADO-ATUAL §8.4.
 4. Fotos de produto: SLO375 precisa de foto em alta; NGA750 só em fundo cinza;
-   rótulo atual do Dry Martini a confirmar (DM750 creme × DM375 azul); hero da
-   Home com Negroni de rótulo antigo. Foto nova: renomear na pasta, rodar
+   rótulo atual do Dry Martini a confirmar (DM750 creme × DM375 azul); fotos de
+   ambiente com rótulo antigo (hero da Home, cards) a trocar quando houver nova. Foto nova: renomear na pasta, rodar
    `gerar-manifesto.php` e `produtos:aplicar-fotos`. Ver ESTADO-ATUAL §12.1.
 5. Leva 10: fotos e textos provisórios, links das marcas, pontos do Clube "em breve"
    e estilo "Clássico" (fonte Blackword) do Custom — lista em ESTADO-ATUAL §11.

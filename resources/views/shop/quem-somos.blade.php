@@ -37,7 +37,6 @@
   .timeline { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   .tl-card { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
   .tl-img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--color-ink); }
-  .tl-card > .photo-slot { border: 0; border-radius: 0; }
   .tl-body { padding: 26px 28px 30px; }
   .tl-card .tl-year { font-family: var(--font-editorial); font-size: var(--text-2xl); color: var(--color-primary); }
   .tl-card h3 { font-family: var(--font-display); font-size: var(--text-xl); margin: 10px 0 12px; }
@@ -145,8 +144,8 @@
       </div>
       <div class="timeline">
         <article class="tl-card">
-          {{-- FOTO: garrafa ou balcão da era Apothek Cocktails & Co. (2016). A do Negroni em garrafas da casa tinha o rótulo antigo. --}}
-          <x-photo-slot ratio="16/10" />
+          {{-- FOTO: garrafa ou balcão da era Apothek Cocktails & Co. (2016). Provisória: Negroni em garrafas da casa (rótulo antigo). --}}
+          <img class="tl-img" src="{{ asset('img/aptk/featured-negroni.jpg') }}" alt="Garrafas de Negroni da casa" loading="lazy">
           <div class="tl-body">
             <span class="tl-year">2016 · São Paulo</span>
             <h3>Apothek Cocktails &amp; Co.</h3>
@@ -211,9 +210,10 @@
       ],
       [
         'link'  => $links['barin'],
-        // FOTO: garrafa ou serviço da Barín no balcão (a do Cosmopolitan tinha o rótulo antigo).
-        'img'   => null,
-        'alt'   => '',
+        // FOTO: garrafa ou serviço da Barín no balcão. Provisória: drink servido no balcão
+        // (Cosmopolitan de rótulo antigo; o bartender também tem rótulo antigo).
+        'img'   => asset('img/aptk/cat-cosmopolitan.jpg'),
+        'alt'   => 'Drink servido no balcão ao lado da garrafa',
         'name'  => 'Barín',
         'sub'   => 'Qualidade e eficiência em cada serviço.',
         'text'  => 'Coquetelaria desenvolvida para o ritmo de bares, restaurantes e eventos. Receitas de qualidade, padronização e praticidade para operações que exigem consistência e escala.',
@@ -242,11 +242,7 @@
           @php $externo = str_starts_with($marca['link']['url'], 'http'); @endphp
           <a href="{{ $marca['link']['url'] }}" class="media-card qs-eco-card" @if ($externo) target="_blank" rel="noopener noreferrer" @endif>
             <div class="mc-media {{ $marca['media'] }}">
-              @if ($marca['img'])
-                <img src="{{ $marca['img'] }}" alt="{{ $marca['alt'] }}" loading="lazy">
-              @else
-                <x-photo-slot />
-              @endif
+              <img src="{{ $marca['img'] }}" alt="{{ $marca['alt'] }}" loading="lazy">
             </div>
             <div class="mc-body">
               <h3 class="title-editorial">{{ $marca['name'] }}</h3>
