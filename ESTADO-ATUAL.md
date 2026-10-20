@@ -551,10 +551,6 @@ página antiga) prometia pontos/10%, texto "em breve" sem número: passos 01 e 0
 da página e perks do Explorer e do Collector (seeder + migration
 `2026_10_19_100001`, com down). Voltar quando a gestão decidir.
 
-**Custom — estilo "Clássico":** fonte Blacksword. Desde a leva 11 já está
-pronta no código; basta colocar `public/fonts/blacksword.woff2` (ou `.ttf`)
-que ela aparece no seletor (§13).
-
 **Eventos — portfólio:** `PageController::PORTFOLIO_EVENTOS` vazio. Falta da
 gestão: nome, cliente, data, local, foto e autorização de uso.
 
@@ -653,7 +649,7 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
 
 - **Config** (`config/custom.php`): preço, volume, limite 30 caracteres em até
   2 linhas (quebra automática, sem Enter), fontes PP Rader (Editorial) e
-  Amithen (Autoral), Blacksword (Clássico, quando o arquivo chegar), cor fixa
+  Amithen (Autoral), Blacksword (Clássico), cor fixa
   preto, 9 bebidas na ordem do comercial. Elegível = estar na lista e ter
   produto no banco (ativo ou não, com ou sem preço no 375).
 - **Imagens** `public/img/custom/{slug}.jpeg`: 5 estavam com nome trocado em
@@ -687,12 +683,17 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
     `cor: "preto"` (explícito no admin). Linha antiga no carrinho com outra
     cor é recusada no checkout.
   - **Três fontes**, como no site antigo: PP Rader (Editorial), Amithen
-    (Autoral) e **Blacksword (Clássico)**. A Blacksword ainda não está no
-    projeto: `@font-face` em `aptk-tokens.css` lê
-    `public/fonts/blacksword.woff2` (ou `.ttf`), e `CustomService::fontes()`
-    só oferece/aceita a fonte se um dos arquivos existir — entra sozinha
-    quando o arquivo for colocado, sem deploy de código. Escala 1.2
-    provisória: **calibrar na prévia quando o arquivo chegar**.
+    (Autoral) e **Blacksword (Clássico)**. `@font-face` em `aptk-tokens.css`
+    lê `public/fonts/blacksword.woff2` (ou `.ttf`), e `CustomService::fontes()`
+    só oferece/aceita a fonte se um dos arquivos existir.
+  - **Blacksword: licenciada pela APTK.** Arquivo
+    `public/fonts/blacksword.woff2` versionado no repositório (chegou em
+    20/10/2026). Escala **0.9**, calibrada nas 9 bebidas com "Feliz
+    aniversário, João" e seis textos de 30 caracteres: é o maior valor em
+    que todos cabem em 2 linhas (0.95 já quebra "Ana, Pedro & Lu,
+    20.09.2026 :)" em 3). Nela a largura do texto fica igual à da PP Rader
+    e a maiúscula entre PP Rader e Amithen; o traço é mais fino, então
+    parece um pouco mais leve que a Amithen.
   - **Ordem da página:** o configurador é a primeira dobra (h1 "Um coquetel.
     A sua assinatura."; no celular: título, prévia, formulário). A
     apresentação "APTK Custom / Sua história. Nossa alquimia." vem depois,

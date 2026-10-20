@@ -269,6 +269,20 @@ class CustomPedidoTest extends TestCase
         $this->assertStringContainsString("url('../fonts/blacksword.ttf')", $css);
     }
 
+    public function test_blacksword_real_esta_no_projeto_e_e_aceita(): void
+    {
+        $this->assertFileExists(public_path('fonts/blacksword.woff2'));
+        $this->assertSame('wOF2', file_get_contents(public_path('fonts/blacksword.woff2'), false, null, 0, 4));
+        $this->negroni();
+
+        $this->assertSame(['PP Rader', 'Amithen', 'Blacksword'], array_keys(app(\App\Services\CustomService::class)->fontes()));
+        $this->get('/custom')->assertOk()->assertSee('value="Blacksword"', false)->assertSee('Clássico');
+
+        $this->post('/custom/carrinho', $this->p(['fonte' => 'Blacksword', 'texto' => 'Feliz aniversário, João']))
+            ->assertRedirect(route('cart.index'));
+        $this->assertSame('Blacksword', app(CartService::class)->items()->sole()->personalizacao['fonte']);
+    }
+
     public function test_sem_o_arquivo_a_blacksword_nao_aparece_nem_e_aceita(): void
     {
         config(['custom.fontes.Blacksword.arquivos' => ['fonts/nao-existe.woff2', 'fonts/nao-existe.ttf']]);

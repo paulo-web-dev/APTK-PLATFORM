@@ -72,7 +72,7 @@
   .style-opt input:checked + .so-tile { border-color: var(--color-primary); box-shadow: var(--shadow-glow); }
   .so-ex { color: var(--color-ink); line-height: 1.15; font-size: 1.25rem; }
   .so-ex.cst-f-amithen { font-size: 1.5rem; }
-  .so-ex.cst-f-blacksword { font-size: 1.45rem; }
+  .so-ex.cst-f-blacksword { font-size: 1.15rem; }
   .so-name { display: block; text-align: center; font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text); margin-top: 8px; }
 
   .cst-compra { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -117,7 +117,7 @@
     .so-tile { min-height: 64px; padding: 8px 6px; }
     .so-ex { font-size: 1rem; }
     .so-ex.cst-f-amithen { font-size: 1.2rem; }
-    .so-ex.cst-f-blacksword { font-size: 1.15rem; }
+    .so-ex.cst-f-blacksword { font-size: .95rem; }
     .chip-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .cst-hero-fig:nth-child(2) { margin-top: 28px; }
   }

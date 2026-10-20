@@ -103,8 +103,8 @@ eyebrow/título/texto/link, proporção via `--mc-ratio`) e `<x-photo-slot ratio
 **Custom Simples (leva 11): compra direta.** Configurador em `/custom` (primeira
 dobra; bebida, texto, fonte — texto sempre preto) → `POST /custom/carrinho` (`custom.cart`); não cria mais lead.
 Tudo em `config/custom.php` (preço fixo R$ 211, volume 375 ml, fontes PP Rader,
-Amithen e Blacksword — esta só entra se `public/fonts/blacksword.woff2|ttf`
-existir (`CustomService::fontes`) —, cor fixa `custom.cor`, 9 bebidas com imagem e área do
+Amithen e Blacksword — licenciada pela APTK; só entra se
+`public/fonts/blacksword.woff2|ttf` existir (`CustomService::fontes`) —, cor fixa `custom.cor`, 9 bebidas com imagem e área do
 rótulo calibrada por imagem) e validado por `CustomService::validar` no add-to-cart
 E no checkout (bebida na lista com produto no banco, ativo ou não; fonte entre as
 disponíveis; cor = a fixa; texto ≤ 30, sem HTML/emoji/Enter). Prévia `<x-custom.previa>` (imagem de
@@ -241,8 +241,7 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
    `gerar-manifesto.php` e `produtos:aplicar-fotos`. Ver ESTADO-ATUAL §12.1.
 5. Leva 10: fotos e textos provisórios, links das marcas, pontos do Clube "em breve"
    — lista em ESTADO-ATUAL §11.
-6. Custom (leva 11): arquivo da Blacksword (colocar em `public/fonts/` e
-   calibrar a escala). Imagens da prévia pequenas (~420 px), pedir maiores. SKU
+6. Custom (leva 11): imagens da prévia pequenas (~420 px), pedir maiores. SKU
    por volume na Appmax (hoje `{sku do 750}-375`; a planilha tem o SKU de cada
    volume). Ver ESTADO-ATUAL §13.1.
 

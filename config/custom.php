@@ -32,8 +32,10 @@ return [
     'fontes' => [
         'PP Rader' => ['nome' => 'Editorial', 'classe' => 'cst-f-pprader', 'escala' => 1.0],
         'Amithen'  => ['nome' => 'Autoral',   'classe' => 'cst-f-amithen', 'escala' => 1.25],
-        // Escala provisória: calibrar na prévia quando o arquivo chegar.
-        'Blacksword' => ['nome' => 'Clássico', 'classe' => 'cst-f-blacksword', 'escala' => 1.2,
+        // Escala calibrada em 2026-10-20 nas 9 bebidas: maior valor em que 30
+        // caracteres cabem em 2 linhas (0.95 já quebra em 3); largura do texto
+        // igual à da PP Rader.
+        'Blacksword' => ['nome' => 'Clássico', 'classe' => 'cst-f-blacksword', 'escala' => 0.9,
             'arquivos' => ['fonts/blacksword.woff2', 'fonts/blacksword.ttf']],
     ],
 
