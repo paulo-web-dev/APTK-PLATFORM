@@ -58,7 +58,12 @@ seção só aparece com ≥ 1 item); Collabs e Assinantes usam o template `shop.
 e `size_prices` (mapa volume→preço). Use `priceForSize()`, `sizeOptions()`,
 `defaultSize()`. O carrinho identifica linha por produto + volume (a "key" do CartService).
 
-**Carrinho em sessão**, não em banco. `CartService`.
+**Carrinho em sessão**, não em banco. `CartService`. Linha custom leva
+`personalizacao` e a chave ganha `:c{hash}` (texto diferente = outra linha); preço
+da linha custom = `config('custom.preco')`. Estoque é por produto + volume somando
+as linhas (`qtyDoVolume`): a garrafa custom consome a 375 da bebida. No pedido,
+`order_items.personalizacao` (JSON como o cliente enviou); Appmax recebe
+" (Custom)" no nome e SKU `-CUSTOM` (`-2`, `-3` se repetir no pedido).
 
 **Checkout aberto a visitante** (leva 09): `GET /checkout` é público; sem login
 mostra o card "Identificação" (e-mail → senha ou cadastro, AJAX em
@@ -95,10 +100,16 @@ eyebrow/título/texto/link, proporção via `--mc-ratio`) e `<x-photo-slot ratio
 **Links das marcas** nos cards do ecossistema (Quem Somos): `config/marcas.php`
 → `links` (url + label). Mudou → `config:cache` em produção.
 
-**Custom Simples:** `CustomController::FONTES` só lista fonte que existe no projeto
-(a prévia não pode mostrar fonte diferente da impressa). Na tela aparecem como
-estilos (PP Rader = Editorial, Amithen = Autoral); o lead grava a fonte. Formulário:
-coquetel → rótulo → dados → prévia e envio, botão "Solicitar minha personalização".
+**Custom Simples (leva 11): compra direta.** Configurador em `/custom` (bebida,
+texto, fonte, cor) → `POST /custom/carrinho` (`custom.cart`); não cria mais lead.
+Tudo em `config/custom.php` (preço fixo R$ 211, volume 375 ml, fontes PP Rader e
+Amithen — só fonte que existe no projeto —, paleta, 9 bebidas com imagem e área do
+rótulo calibrada por imagem) e validado por `CustomService::validar` no add-to-cart
+E no checkout (bebida na lista com produto no banco, ativo ou não; fonte/cor na
+lista; texto ≤ 30, sem HTML/emoji/Enter). Prévia `<x-custom.previa>` (imagem de
+`public/img/custom/{slug}.jpeg` + texto sobreposto em `cqw`), mesma em carrinho,
+checkout, pedidos e admin; `<x-custom.ficha>` ao lado do nome. Chave de cor da
+paleta nunca sai da config (pedido antigo aponta pra ela). Full Custom segue no WhatsApp.
 
 **Imagem de produto:** sempre via `<x-product.image :image="..." :alt="...">` (foto ou
 `<x-product.placeholder>`, moldura 2:3 "Produto ainda sem foto"). CSS em
@@ -230,6 +241,8 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
    `gerar-manifesto.php` e `produtos:aplicar-fotos`. Ver ESTADO-ATUAL §12.1.
 5. Leva 10: fotos e textos provisórios, links das marcas, pontos do Clube "em breve"
    e estilo "Clássico" (fonte Blackword) do Custom — lista em ESTADO-ATUAL §11.
+6. Custom (leva 11): imagens da prévia pequenas (~420 px), pedir maiores; prévia
+   no celular sem sticky. Ver ESTADO-ATUAL §13.
 
 ## Deploy
 
@@ -259,4 +272,4 @@ qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 - Não rodar `migrate:fresh` sem avisar — apaga dados locais.
 - Depois de mexer em rota, rodar `php artisan route:clear`.
 - Mudanças do cliente vêm agrupadas em "levas" numeradas, cada uma com escopo fechado
-  antes da execução. As levas 01 a 10 já foram concluídas.
+  antes da execução. As levas 01 a 11 já foram concluídas.

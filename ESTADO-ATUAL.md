@@ -4,8 +4,9 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-20** (§12 — fotos de produto em fundo branco com
-rótulo atual; fotos de ambiente com rótulo antigo trocadas). Antes: 2026-10-19 (§11 — leva 10, texto e layout de 6 páginas pelo
+Última revisão: **2026-10-20** (§13 — leva 11, Custom vira compra direta;
+§12 — fotos de produto em fundo branco com rótulo atual; fotos de ambiente com
+rótulo antigo trocadas). Antes: 2026-10-19 (§11 — leva 10, texto e layout de 6 páginas pelo
 briefing da gestão; §10 — ativação só com preço e foto no padrão, importador sem
 `active`/galeria, `produtos:aplicar-fotos`). Antes: 2026-10-18
 (§9 — Appmax com credenciais do painel, loja própria) e 2026-10-11 (leva 08,
@@ -640,6 +641,49 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
 **Deploy:** `reset --hard`, `migrate --force`, `view:clear`, depois
 `php artisan produtos:aplicar-fotos --dry-run` (conferir 8 ativam, 0 saem, 29
 trocam) e sem `--dry-run`.
+
+---
+
+## 13. Leva 11 — Custom vira compra direta (20/10/2026)
+
+Configurador em `/custom` no lugar do formulário "Crie seu APTK" (como no site
+antigo): bebida, texto, fonte e cor → carrinho. Garrafa 375 ml a **R$ 211,00**
+fixo, pronta entrega, sem caixa de presente (aviso na tela). Lead do Custom
+Simples deixou de ser criado (leads antigos ficam no admin); o mailable
+`CustomOrderRequested` ficou sem uso. Full Custom segue no WhatsApp.
+
+- **Config** (`config/custom.php`): preço, volume, limite 30 caracteres em até
+  2 linhas (quebra automática, sem Enter), fontes PP Rader (Editorial) e
+  Amithen (Autoral), paleta Preto/Âmbar/Cobre (Dourado ficou de fora: pouco
+  contraste), 9 bebidas na ordem do comercial. Elegível = estar na lista e ter
+  produto no banco (ativo ou não, com ou sem preço no 375).
+- **Imagens** `public/img/custom/{slug}.jpeg`: 5 estavam com nome trocado em
+  ciclo (o rótulo dizia outra bebida) e foram renomeadas com nome temporário.
+  São pequenas (399–459 × 408–425 px, ~16 KB): servem no card, mas ficam um
+  pouco moles em tela retina — **pedir versões maiores**. Área do rótulo
+  calibrada por imagem (detecção do rótulo + logo APTK + nome da bebida).
+- **Estoque:** a garrafa custom consome a 375 da bebida; carrinho e checkout
+  somam todas as linhas do mesmo produto + volume. Hoje `size_stock` é null
+  nas 9 (não trava).
+- **Pedido:** `order_items.personalizacao` (json) `{bebida, texto, fonte, cor}`
+  como o cliente enviou. Checkout revalida (config pode ter mudado) e devolve
+  ao carrinho com o motivo. Cartão recusado devolve a garrafa ao carrinho com
+  a personalização.
+- **Appmax:** nome com " (Custom)", SKU `{sku}-375-CUSTOM`, `-2`/`-3` quando
+  repete no mesmo pedido. O SKU base é o `products.sku` (o Negroni local tem
+  `NC750`, então sai `NC750-375-CUSTOM`; o mesmo vale pra 375 normal).
+- **Admin:** selo "Custom" na listagem; no detalhe, bloco "Personalização" por
+  item (texto grande, fonte, cor com hex de impressão, prévia).
+- **Frete:** sem mudança — a linha custom tem `size` "375 ml" e pesa igual.
+- **Cupom:** o checkout não aplica cupom hoje; quando entrar, decidir se vale
+  pro custom.
+- **Microvix (travado):** o item custom iria com o código do 375 a R$ 211.
+- **Em aberto:** no celular a prévia fica acima do formulário (sem sticky);
+  quem digita o texto no fim da página precisa rolar pra ver. Avaliar uma
+  prévia compacta fixa se a gestão pedir.
+
+**Deploy:** `reset --hard`, `migrate --force` (coluna nova em `order_items`),
+`route:clear && route:cache`, `view:clear && config:cache` (config nova).
 
 ---
 
