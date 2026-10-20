@@ -551,10 +551,9 @@ página antiga) prometia pontos/10%, texto "em breve" sem número: passos 01 e 0
 da página e perks do Explorer e do Collector (seeder + migration
 `2026_10_19_100001`, com down). Voltar quando a gestão decidir.
 
-**Custom — estilo "Clássico":** depende da fonte Blackword, que não está no
-projeto. Fora do seletor e recusada no POST (`CustomController::FONTES`). Quando
-a fonte chegar: WOFF2 em `public/fonts/`, `@font-face` em `aptk-tokens.css` e
-'Blackword' de volta em `FONTES` (o mapeamento pra "Clássico" já está na view).
+**Custom — estilo "Clássico":** fonte Blacksword. Desde a leva 11 já está
+pronta no código; basta colocar `public/fonts/blacksword.woff2` (ou `.ttf`)
+que ela aparece no seletor (§13).
 
 **Eventos — portfólio:** `PageController::PORTFOLIO_EVENTOS` vazio. Falta da
 gestão: nome, cliente, data, local, foto e autorização de uso.
@@ -647,15 +646,15 @@ trocam) e sem `--dry-run`.
 ## 13. Leva 11 — Custom vira compra direta (20/10/2026)
 
 Configurador em `/custom` no lugar do formulário "Crie seu APTK" (como no site
-antigo): bebida, texto, fonte e cor → carrinho. Garrafa 375 ml a **R$ 211,00**
+antigo): bebida, texto e fonte → carrinho (texto sempre preto). Garrafa 375 ml a **R$ 211,00**
 fixo, pronta entrega, sem caixa de presente (aviso na tela). Lead do Custom
 Simples deixou de ser criado (leads antigos ficam no admin); o mailable
 `CustomOrderRequested` ficou sem uso. Full Custom segue no WhatsApp.
 
 - **Config** (`config/custom.php`): preço, volume, limite 30 caracteres em até
   2 linhas (quebra automática, sem Enter), fontes PP Rader (Editorial) e
-  Amithen (Autoral), paleta Preto/Âmbar/Cobre (Dourado ficou de fora: pouco
-  contraste), 9 bebidas na ordem do comercial. Elegível = estar na lista e ter
+  Amithen (Autoral), Blacksword (Clássico, quando o arquivo chegar), cor fixa
+  preto, 9 bebidas na ordem do comercial. Elegível = estar na lista e ter
   produto no banco (ativo ou não, com ou sem preço no 375).
 - **Imagens** `public/img/custom/{slug}.jpeg`: 5 estavam com nome trocado em
   ciclo (o rótulo dizia outra bebida) e foram renomeadas com nome temporário.
@@ -673,7 +672,7 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
   repete no mesmo pedido. O SKU base é o `products.sku` (o Negroni local tem
   `NC750`, então sai `NC750-375-CUSTOM`; o mesmo vale pra 375 normal).
 - **Admin:** selo "Custom" na listagem; no detalhe, bloco "Personalização" por
-  item (texto grande, fonte, cor com hex de impressão, prévia).
+  item (texto grande, fonte, cor — sempre Preto — com hex de impressão, prévia).
 - **Frete:** sem mudança — a linha custom tem `size` "375 ml" e pesa igual.
 - **Cupom:** o checkout não aplica cupom hoje; quando entrar, decidir se vale
   pro custom.
@@ -681,24 +680,25 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
 - **Celular:** miniatura da prévia (sticky, no topo da área do formulário)
   aparece quando a prévia grande sai da tela e atualiza ao vivo. Desktop
   sem mudança (a prévia grande já é sticky).
-- **Cores por bebida** (`bebidas.*.cores`, padrão = paleta inteira). O
-  rótulo é o mesmo mockup nas 9 imagens: Preto tem contraste alto em todas;
-  Âmbar e Cobre ficam em ~1,5:1 de luminância sobre o rótulo, então o corte
-  foi pela distância de cor (ΔE Lab) até o líquido em volta do rótulo
-  (Cobre sai abaixo de 33, Âmbar abaixo de 30). O seletor só mostra as
-  liberadas e o servidor recusa a combinação.
-
-  | bebida | Preto | Âmbar | Cobre |
-  |---|---|---|---|
-  | Negroni Clássico | sim | sim | sim |
-  | Boulevardier | sim | sim | sim |
-  | Caipirinha Arazul | sim | sim | sim |
-  | Dry Martini | sim | sim | — (ΔE 30,5) |
-  | Caju Amigo | sim | sim | sim |
-  | Fitzgerald | sim | — (ΔE 26,4) | — (ΔE 14,7) |
-  | Moscow Mule | sim | sim | sim |
-  | Cosmopolitan | sim | sim | — (ΔE 32,1) |
-  | Sur L'Orange | sim | sim | sim |
+- **Ajuste da gestão (mesmo dia):**
+  - **Cor fixa:** texto sempre preto (Cuba Libre), sem seletor. Saíram a
+    paleta e as cores por bebida (a calibração por ΔE ficou no histórico do
+    git, commit `e899e04`). `config custom.cor`; o pedido grava
+    `cor: "preto"` (explícito no admin). Linha antiga no carrinho com outra
+    cor é recusada no checkout.
+  - **Três fontes**, como no site antigo: PP Rader (Editorial), Amithen
+    (Autoral) e **Blacksword (Clássico)**. A Blacksword ainda não está no
+    projeto: `@font-face` em `aptk-tokens.css` lê
+    `public/fonts/blacksword.woff2` (ou `.ttf`), e `CustomService::fontes()`
+    só oferece/aceita a fonte se um dos arquivos existir — entra sozinha
+    quando o arquivo for colocado, sem deploy de código. Escala 1.2
+    provisória: **calibrar na prévia quando o arquivo chegar**.
+  - **Ordem da página:** o configurador é a primeira dobra (h1 "Um coquetel.
+    A sua assinatura."; no celular: título, prévia, formulário). A
+    apresentação "APTK Custom / Sua história. Nossa alquimia." vem depois,
+    seguida da jornada 01/02/03 e do Full Custom.
+  - "Personalize seu APTK" → **"Personalize seu drink"** (CTA da
+    apresentação em `/custom` e card do Custom na Home; o menu não tinha).
 
 ### 13.1 Pendências da leva 11 (não feitas)
 

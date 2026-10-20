@@ -101,6 +101,7 @@
 }
 .cst-f-pprader { font-family: var(--font-display); font-weight: 700; }
 .cst-f-amithen { font-family: var(--font-amithen); font-weight: 400; }
+.cst-f-blacksword { font-family: var(--font-blacksword); font-weight: 400; }
 /* Miniatura (carrinho, checkout, pedidos): tamanho vem de quem usa. */
 .cst-previa--thumb { border: 1px solid var(--color-border); border-radius: var(--radius-sm); flex-shrink: 0; }
 /* Ficha da personalização ao lado do nome do item. */

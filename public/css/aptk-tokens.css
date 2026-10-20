@@ -11,6 +11,8 @@
 @font-face{font-family:'Neue World';font-style:normal;font-weight:200;font-display:swap;src:url('../fonts/NeueWorld-Ultralight.woff2') format('woff2');}
 @font-face{font-family:'Neue World';font-style:normal;font-weight:400;font-display:swap;src:url('../fonts/NeueWorld-Regular.woff2') format('woff2');}
 @font-face{font-family:'Amithen';font-style:normal;font-weight:400;font-display:swap;src:url('../fonts/Amithen.woff2') format('woff2');}
+/* Blacksword (Custom, estilo Clássico): o seletor só oferece a fonte quando o arquivo existir (CustomService::fontes). */
+@font-face{font-family:'Blacksword';font-style:normal;font-weight:400;font-display:swap;src:url('../fonts/blacksword.woff2') format('woff2'),url('../fonts/blacksword.ttf') format('truetype');}
 
 :root{
   color-scheme: light;
@@ -51,6 +53,7 @@
   --font-mono:      'PP Rader','Helvetica Neue',Arial,sans-serif;            /* rotulos pequenos com tracking */
   --font-script:    var(--font-editorial);
   --font-amithen: 'Amithen', 'Segoe Script', cursive;  /* rótulos Custom Simples */
+  --font-blacksword: 'Blacksword', 'Segoe Script', cursive;  /* rótulos Custom Simples (Clássico) */
   --font-ui:        var(--font-body);
 
   /* ----- Escala tipografica ----- */

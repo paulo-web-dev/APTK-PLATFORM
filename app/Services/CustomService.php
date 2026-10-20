@@ -49,17 +49,32 @@ class CustomService
     }
 
     /**
-     * Chaves de cor permitidas na bebida (config `bebidas.*.cores`); sem a
-     * lista, a paleta inteira. Só devolve cor que existe na paleta.
+     * Fontes oferecidas agora: a que tem `arquivos` na config só entra se um
+     * deles existir em public/ (a Blacksword aparece sozinha quando o arquivo
+     * chegar, sem deploy de código).
      *
-     * @return list<string>
+     * @return array<string, array<string, mixed>> chave => config, na ordem da config
      */
-    public function coresDa(?string $bebida): array
+    public function fontes(): array
     {
-        $paleta = array_keys(config('custom.cores', []));
-        $lista = config('custom.bebidas.'.$bebida.'.cores');
+        return array_filter(config('custom.fontes', []), function ($f) {
+            if (empty($f['arquivos'])) {
+                return true;
+            }
+            foreach ((array) $f['arquivos'] as $arquivo) {
+                if (is_file(public_path($arquivo))) {
+                    return true;
+                }
+            }
 
-        return is_array($lista) ? array_values(array_intersect($paleta, $lista)) : $paleta;
+            return false;
+        });
+    }
+
+    /** Cor do texto: fixa (config custom.cor), sem seletor. */
+    public function cor(): string
+    {
+        return (string) config('custom.cor.chave');
     }
 
     /** Produto da bebida, se ela é elegível e existe no catálogo (ativo ou não). */
@@ -73,7 +88,9 @@ class CustomService
     }
 
     /**
-     * Aceita ou recusa a personalização. Devolve os 4 campos como vieram.
+     * Aceita ou recusa a personalização. Devolve os 4 campos como vieram;
+     * `cor` não vem do formulário (sem a chave, entra a fixa) e é recusada se
+     * vier diferente — caso de linha antiga no carrinho, com outra cor.
      *
      * @throws ValidationException
      */
@@ -83,6 +100,7 @@ class CustomService
         foreach (self::CAMPOS as $campo) {
             $p[$campo] = $dados[$campo] ?? null;
         }
+        $p['cor'] ??= $this->cor();
 
         Validator::make($p, [
             'bebida' => ['required', 'string', Rule::in(array_keys($this->bebidas())),
@@ -91,23 +109,15 @@ class CustomService
                         $fail('Essa bebida não está disponível para personalização.');
                     }
                 }],
-            'fonte'  => ['required', 'string', Rule::in(array_keys(config('custom.fontes', [])))],
-            'cor'    => ['required', 'string', Rule::in(array_keys(config('custom.cores', []))),
-                function ($attr, $valor, $fail) use ($p) {
-                    // Combinação: a cor tem que estar liberada pra bebida escolhida.
-                    if (is_string($p['bebida']) && array_key_exists($p['bebida'], $this->bebidas())
-                        && ! in_array($valor, $this->coresDa($p['bebida']), true)) {
-                        $fail('Essa cor não está disponível para essa bebida.');
-                    }
-                }],
+            'fonte'  => ['required', 'string', Rule::in(array_keys($this->fontes()))],
+            'cor'    => ['required', 'string', Rule::in([$this->cor()])],
             'texto'  => ['required', 'string', 'max:'.$this->limite(), 'not_regex:/[\r\n]/', 'regex:'.self::CARACTERES],
         ], [
             'bebida.required' => 'Escolha a bebida.',
             'bebida.in'       => 'Essa bebida não está disponível para personalização.',
             'fonte.required'  => 'Escolha o estilo do rótulo.',
             'fonte.in'        => 'Escolha um dos estilos disponíveis.',
-            'cor.required'    => 'Escolha a cor do texto.',
-            'cor.in'          => 'Escolha uma das cores disponíveis.',
+            'cor.in'          => 'O texto do rótulo é sempre preto.',
             'texto.required'  => 'Escreva o texto do rótulo.',
             'texto.max'       => 'O texto do rótulo pode ter até :max caracteres.',
             'texto.not_regex' => 'O texto do rótulo é de uma linha só: a quebra é automática.',
@@ -136,7 +146,7 @@ class CustomService
     {
         $bebida = config('custom.bebidas.'.($p['bebida'] ?? ''));
         $fonte = config('custom.fontes.'.($p['fonte'] ?? ''));
-        $cor = config('custom.cores.'.($p['cor'] ?? ''));
+        $cor = ($p['cor'] ?? null) === $this->cor() ? config('custom.cor') : null;
 
         return [
             'texto'       => (string) ($p['texto'] ?? ''),

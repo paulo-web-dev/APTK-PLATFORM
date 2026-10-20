@@ -15,7 +15,7 @@ use Illuminate\View\View;
  *
  * Fluxos:
  *  - Custom Simples (leva 11): compra direta. O configurador escolhe bebida,
- *    texto, fonte e cor (config/custom.php) e põe a garrafa 375 ml no
+ *    texto e fonte (config/custom.php; a cor é fixa, preto) e põe a garrafa 375 ml no
  *    carrinho a preço fixo. Não cria mais lead.
  *  - Full Custom: contato direto via WhatsApp (link na view).
  */
@@ -36,13 +36,12 @@ class CustomController extends Controller
         $produtos = Product::whereIn('slug', array_keys($this->custom->bebidas()))->pluck('name', 'slug');
         $bebidas = collect($this->custom->bebidas())
             ->filter(fn ($b, $slug) => $produtos->has($slug))
-            ->map(fn ($b, $slug) => ['nome' => $produtos[$slug], 'cores' => $this->custom->coresDa($slug)]
-                + $this->custom->exibir(['bebida' => $slug]));
+            ->map(fn ($b, $slug) => ['nome' => $produtos[$slug]] + $this->custom->exibir(['bebida' => $slug]));
 
         return view('shop.custom', [
             'bebidas'  => $bebidas,
-            'fontes'   => config('custom.fontes'),
-            'cores'    => config('custom.cores'),
+            'fontes'   => $this->custom->fontes(),
+            'cor'      => $this->custom->cor(),
             'preco'    => $this->custom->preco(),
             'volume'   => $this->custom->volume(),
             'limite'   => $this->custom->limite(),
@@ -54,7 +53,8 @@ class CustomController extends Controller
     /** Adicionar ao carrinho: valida a personalização e confere o estoque do 375. */
     public function adicionar(Request $request): RedirectResponse
     {
-        $p = $this->custom->validar($request->only(CustomService::CAMPOS));
+        // A cor nunca vem do formulário: o validar põe a fixa.
+        $p = $this->custom->validar($request->only(['bebida', 'texto', 'fonte']));
         $qty = (int) ($request->validate(['qty' => ['nullable', 'integer', 'min:1', 'max:50']])['qty'] ?? 1);
 
         $produto = $this->custom->produto($p['bebida']);

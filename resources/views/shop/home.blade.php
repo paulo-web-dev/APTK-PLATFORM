@@ -361,7 +361,7 @@
             <span class="mc-eyebrow">Custom APTK</span>
             <h3 class="title-editorial">Sua história, nossa alquimia.</h3>
             <p>Personalização de coquetéis para marcas, presentes e celebrações.</p>
-            <span class="link-arrow">Personalize seu APTK <span class="btn-arrow">↗</span></span>
+            <span class="link-arrow">Personalize seu drink <span class="btn-arrow">↗</span></span>
           </div>
         </a>
       </div>

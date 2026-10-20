@@ -71,7 +71,7 @@ class CustomPedidoTest extends TestCase
 
     protected function p(array $over = []): array
     {
-        return $over + ['bebida' => 'negroni-classico', 'texto' => 'Bia & Eduardo', 'fonte' => 'PP Rader', 'cor' => 'cobre'];
+        return $over + ['bebida' => 'negroni-classico', 'texto' => 'Bia & Eduardo', 'fonte' => 'PP Rader', 'cor' => 'preto'];
     }
 
     protected function dados(array $extra = []): array
@@ -135,10 +135,11 @@ class CustomPedidoTest extends TestCase
         $this->assertStringContainsString('Adicionar ao carrinho', $html);
         $this->assertStringContainsString('As garrafas customizadas não acompanham caixa de presente.', $html);
         $this->assertStringContainsString('R$ 211,00', $html);
-        foreach (['value="PP Rader"', 'value="Amithen"', 'value="preto"', 'value="ambar"', 'value="cobre"'] as $opcao) {
+        foreach (['value="PP Rader"', 'value="Amithen"'] as $opcao) {
             $this->assertStringContainsString($opcao, $html);
         }
-        $this->assertStringNotContainsString('value="Blackword"', $html);
+        $this->assertStringNotContainsString('name="cor"', $html); // texto sempre preto, sem seletor
+        $this->assertStringContainsString('color:var(--color-ink)', $html);
         $this->assertStringNotContainsString('Solicitar minha personalização', $html);
         $this->assertStringNotContainsString('custom/pedido', $html);
         $this->assertStringContainsString('wa.me/', $html); // Full Custom segue
@@ -177,7 +178,6 @@ class CustomPedidoTest extends TestCase
         $this->get('/carrinho')->assertOk()
             ->assertSee('Bia &amp; Eduardo', false)
             ->assertSee('Editorial')
-            ->assertSee('Cobre')
             ->assertSee('img/custom/negroni-classico.jpeg');
     }
 
@@ -225,8 +225,7 @@ class CustomPedidoTest extends TestCase
         return [
             'bebida fora da lista'  => [['bebida' => 'negroni-piselli'], 'bebida'],
             'bebida sem produto'    => [['bebida' => 'boulevardier'], 'bebida'],
-            'fonte fora da lista'   => [['fonte' => 'Blackword'], 'fonte'],
-            'cor fora da lista'     => [['cor' => 'dourado'], 'cor'],
+            'fonte fora da lista'   => [['fonte' => 'Comic Sans'], 'fonte'],
             'texto vazio'           => [['texto' => ''], 'texto'],
             'texto com 31'          => [['texto' => str_repeat('a', 31)], 'texto'],
             'texto com html'        => [['texto' => '<b>Oi</b>'], 'texto'],
@@ -235,43 +234,80 @@ class CustomPedidoTest extends TestCase
         ];
     }
 
-    public function test_cor_fora_da_lista_da_bebida_e_recusada(): void
+    public function test_cor_e_sempre_preto_mesmo_se_o_formulario_mandar_outra(): void
     {
-        Product::create(['name' => 'Cosmopolitan', 'slug' => 'cosmopolitan', 'sku' => 'COS750', 'price' => 210,
-            'sizes' => ['375 ml'], 'size_prices' => ['375 ml' => 165], 'stock_qty' => 10, 'active' => true]);
-        $this->get('/custom');
+        $this->negroni();
 
-        // Cobre não combina com o Cosmopolitan (config bebidas.cosmopolitan.cores).
-        $this->post('/custom/carrinho', $this->p(['bebida' => 'cosmopolitan', 'cor' => 'cobre']))
-            ->assertSessionHasErrors(['cor' => 'Essa cor não está disponível para essa bebida.']);
+        $this->post('/custom/carrinho', $this->p(['cor' => 'cobre']))->assertRedirect(route('cart.index'));
+
+        $this->assertSame('preto', app(CartService::class)->items()->sole()->personalizacao['cor']);
+    }
+
+    public function test_linha_antiga_com_outra_cor_e_recusada_no_checkout(): void
+    {
+        $p = $this->negroni();
+        app(CartService::class)->add($p->id, 1, '375 ml', $this->p(['cor' => 'cobre']));
+
+        try {
+            app(OrderService::class)->placeFromCart($this->cliente(), $this->dados(['shipping_method' => null]));
+            $this->fail('Deveria ter recusado a garrafa custom.');
+        } catch (OutOfStockException $e) {
+            $this->assertStringContainsString('O texto do rótulo é sempre preto.', $e->getMessage());
+        }
+
+        $this->assertSame(0, Order::count());
+    }
+
+    // ---- Fonte Blacksword: entra sozinha quando o arquivo existir ---------
+
+    public function test_blacksword_le_de_public_fonts(): void
+    {
+        $this->assertSame(['fonts/blacksword.woff2', 'fonts/blacksword.ttf'], config('custom.fontes.Blacksword.arquivos'));
+        $this->assertSame('Clássico', config('custom.fontes.Blacksword.nome'));
+        $css = file_get_contents(public_path('css/aptk-tokens.css'));
+        $this->assertStringContainsString("url('../fonts/blacksword.woff2')", $css);
+        $this->assertStringContainsString("url('../fonts/blacksword.ttf')", $css);
+    }
+
+    public function test_sem_o_arquivo_a_blacksword_nao_aparece_nem_e_aceita(): void
+    {
+        config(['custom.fontes.Blacksword.arquivos' => ['fonts/nao-existe.woff2', 'fonts/nao-existe.ttf']]);
+        $this->negroni();
+
+        $html = $this->get('/custom')->assertOk()->getContent();
+        $this->assertStringNotContainsString('value="Blacksword"', $html);
+        $this->assertSame(['PP Rader', 'Amithen'], array_keys(app(\App\Services\CustomService::class)->fontes()));
+
+        $this->post('/custom/carrinho', $this->p(['fonte' => 'Blacksword']))->assertSessionHasErrors('fonte');
         $this->assertTrue(app(CartService::class)->isEmpty());
-
-        $this->post('/custom/carrinho', $this->p(['bebida' => 'cosmopolitan', 'cor' => 'ambar']))
-            ->assertRedirect(route('cart.index'));
     }
 
-    public function test_tabela_de_cores_por_bebida(): void
+    public function test_com_o_arquivo_a_blacksword_aparece_e_e_aceita(): void
     {
-        $custom = app(\App\Services\CustomService::class);
+        // Qualquer arquivo existente serve: o teste não depende da fonte real estar no projeto.
+        config(['custom.fontes.Blacksword.arquivos' => ['fonts/nao-existe.woff2', 'fonts/Amithen.woff2']]);
+        $this->negroni();
 
-        $this->assertSame(['preto', 'ambar', 'cobre'], $custom->coresDa('negroni-classico')); // sem lista = paleta inteira
-        $this->assertSame(['preto', 'ambar'], $custom->coresDa('cosmopolitan'));
-        $this->assertSame(['preto', 'ambar'], $custom->coresDa('dry-martini'));
-        $this->assertSame(['preto'], $custom->coresDa('fitzgerald'));
+        $html = $this->get('/custom')->assertOk()->getContent();
+        $this->assertStringContainsString('value="Blacksword"', $html);
+        $this->assertStringContainsString('cst-f-blacksword', $html);
+
+        $this->post('/custom/carrinho', $this->p(['fonte' => 'Blacksword']))->assertRedirect(route('cart.index'));
+        $this->assertSame('Blacksword', app(CartService::class)->items()->sole()->personalizacao['fonte']);
     }
 
-    public function test_seletor_so_mostra_as_cores_da_bebida_marcada_e_a_miniatura_do_celular(): void
+    public function test_pagina_abre_no_configurador_e_a_apresentacao_vem_depois(): void
     {
-        Product::create(['name' => 'Fitzgerald', 'slug' => 'fitzgerald', 'sku' => 'FITZ750', 'price' => 210,
-            'sizes' => ['375 ml'], 'size_prices' => ['375 ml' => 165], 'stock_qty' => 10, 'active' => true]);
+        $this->negroni();
 
-        // Fitzgerald é a primeira bebida da lista no banco do teste → marcada.
         $html = $this->get('/custom')->assertOk()->getContent();
 
-        $this->assertStringContainsString('data-cores="preto"', $html);
-        $this->assertMatchesRegularExpression('/<label class="cor-opt"\s+hidden\s*>\s*<input type="radio" name="cor" value="cobre"/', $html);
-        $this->assertMatchesRegularExpression('/<label class="cor-opt"\s*>\s*<input type="radio" name="cor" value="preto"/', $html);
         $this->assertStringContainsString('id="cstMini"', $html);
+        $this->assertLessThan(strpos($html, 'Sua história. Nossa alquimia.'), strpos($html, 'id="cstForm"'));
+        $this->assertSame(1, substr_count($html, '<h1'));
+        $this->assertStringContainsString('Personalize seu drink', $html);
+        $this->assertStringNotContainsString('Personalize seu APTK', $html);
+        $this->assertStringNotContainsString('Personalize seu APTK', $this->get('/')->getContent());
     }
 
     public function test_texto_com_30_caracteres_e_acento_passa(): void
@@ -333,14 +369,14 @@ class CustomPedidoTest extends TestCase
     {
         $p = $this->negroni();
         app(CartService::class)->add($p->id, 1, '375 ml', $this->p());
-        config(['custom.cores' => ['preto' => ['nome' => 'Preto', 'token' => '--color-ink', 'hex' => '#020203']]]);
+        config(['custom.fontes' => ['Amithen' => config('custom.fontes.Amithen')]]); // PP Rader saiu
 
         try {
             app(OrderService::class)->placeFromCart($this->cliente(), $this->dados(['shipping_method' => null]));
             $this->fail('Deveria ter recusado a garrafa custom.');
         } catch (OutOfStockException $e) {
             $this->assertStringContainsString('garrafa personalizada de "Negroni Clássico"', $e->getMessage());
-            $this->assertStringContainsString('cores disponíveis', $e->getMessage());
+            $this->assertStringContainsString('estilos disponíveis', $e->getMessage());
         }
 
         $this->assertSame(0, Order::count());
@@ -430,8 +466,8 @@ class CustomPedidoTest extends TestCase
             ->assertSee('Personalização · Negroni Clássico')
             ->assertSee('“Feliz 40, Ana”', false)
             ->assertSee('PP Rader')
-            ->assertSee('Cobre')
-            ->assertSee('#B87333')
+            ->assertSee('Preto')
+            ->assertSee('#020203')
             ->assertSee('img/custom/negroni-classico.jpeg');
 
         $this->get(route('admin.orders.show', $normal))->assertOk()->assertDontSee('Personalização ·');
