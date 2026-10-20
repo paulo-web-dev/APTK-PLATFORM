@@ -698,7 +698,8 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
     A sua assinatura."; no celular: título, prévia, formulário). A
     apresentação "APTK Custom / Sua história. Nossa alquimia." vem depois,
     seguida da jornada 01/02/03 e do Full Custom.
-  - "Personalize seu APTK" → **"Personalize seu drink"** (CTA da
+  - "Crie seu APTK" → **"Crie seu Drink"** (eyebrow do configurador) e
+    "Personalize seu APTK" → **"Personalize seu drink"** (CTA da
     apresentação em `/custom` e card do Custom na Home; o menu não tinha).
 
 ### 13.1 Pendências da leva 11 (não feitas)

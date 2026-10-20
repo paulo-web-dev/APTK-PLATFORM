@@ -139,7 +139,7 @@
   <section class="section cst-topo" id="pedido">
     <div class="container-aptk cst-config">
       <div class="cst-side">
-        <span class="eyebrow">Crie seu APTK</span>
+        <span class="eyebrow">Crie seu Drink</span>
         <h1 class="title-editorial">Um coquetel. A sua assinatura.</h1>
         <p>Escolha seu coquetel favorito, escreva a sua mensagem e defina o estilo do rótulo. A garrafa de {{ $volume }} sai com o seu pedido, pronta para presentear.</p>
       </div>

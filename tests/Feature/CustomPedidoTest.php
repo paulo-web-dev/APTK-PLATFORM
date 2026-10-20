@@ -321,6 +321,8 @@ class CustomPedidoTest extends TestCase
         $this->assertSame(1, substr_count($html, '<h1'));
         $this->assertStringContainsString('Personalize seu drink', $html);
         $this->assertStringNotContainsString('Personalize seu APTK', $html);
+        $this->assertStringContainsString('Crie seu Drink', $html);
+        $this->assertStringNotContainsString('Crie seu APTK', $html);
         $this->assertStringNotContainsString('Personalize seu APTK', $this->get('/')->getContent());
     }
 
