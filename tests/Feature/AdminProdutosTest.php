@@ -56,9 +56,9 @@ class AdminProdutosTest extends TestCase
             'active'      => true,
         ]);
 
-        foreach (['750ml-frente', '750ml-verso'] as $i => $nome) {
-            $path = "products/{$p->slug}-{$nome}.jpg";
-            Storage::disk('public')->put($path, 'pacote');
+        foreach (['frente', 'verso'] as $i => $lado) {
+            $path = "products/foto-branco-nc750-{$lado}.jpg";
+            Storage::disk('public')->put($path, 'manifesto');
             ProductImage::create(['product_id' => $p->id, 'path' => $path, 'alt' => $p->name, 'sort_order' => $i, 'is_primary' => $i === 0]);
         }
 
@@ -149,7 +149,7 @@ class AdminProdutosTest extends TestCase
         unset($antes['updated_at'], $depois['updated_at']);
         $this->assertSame($antes, $depois);
         $this->assertSame($imagensAntes, ProductImage::orderBy('id')->get(['id', 'path', 'sort_order', 'is_primary'])->toArray());
-        Storage::disk('public')->assertExists('products/negroni-classico-750ml-frente.jpg');
+        Storage::disk('public')->assertExists('products/foto-branco-nc750-frente.jpg');
     }
 
     public function test_preco_por_volume_descasado_e_erro_e_nao_zera_os_precos(): void
@@ -276,8 +276,8 @@ class AdminProdutosTest extends TestCase
         $this->assertTrue($galeria[0]->isUploadDoAdmin());
         $this->assertSame([true, false, false], $galeria->pluck('is_primary')->all());
         $this->assertSame([0, 1, 2], $galeria->pluck('sort_order')->all());
-        $this->assertSame('products/negroni-classico-750ml-frente.jpg', $galeria[1]->path);
-        Storage::disk('public')->assertExists('products/negroni-classico-750ml-frente.jpg');
+        $this->assertSame('products/foto-branco-nc750-frente.jpg', $galeria[1]->path);
+        Storage::disk('public')->assertExists('products/foto-branco-nc750-frente.jpg');
         Storage::disk('public')->assertExists($galeria[0]->path);
     }
 
@@ -290,7 +290,7 @@ class AdminProdutosTest extends TestCase
 
         [$upload, $frente] = $p->fresh('images')->images->all();
 
-        // Upload do admin: some linha e arquivo; a frente do pacote vira principal.
+        // Upload do admin: some linha e arquivo; a frente do manifesto vira principal.
         $this->actingAs($this->admin)
             ->delete("/admin/produtos/{$p->id}/imagens/{$upload->id}")
             ->assertRedirect("/admin/produtos/{$p->id}/editar");
@@ -298,7 +298,7 @@ class AdminProdutosTest extends TestCase
         $this->assertTrue($frente->fresh()->is_primary);
         $this->assertSame(0, $frente->fresh()->sort_order);
 
-        // Foto do pacote: some a linha, o arquivo fica (não regera em produção).
+        // Foto do manifesto: some a linha, o arquivo fica (não regera em produção).
         $this->actingAs($this->admin)->delete("/admin/produtos/{$p->id}/imagens/{$frente->id}");
         $this->assertNull(ProductImage::find($frente->id));
         Storage::disk('public')->assertExists($frente->path);

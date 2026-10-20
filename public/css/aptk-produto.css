@@ -13,6 +13,7 @@
   display: block;
   position: relative;
   background: var(--color-bg-media);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 .prod-ph-area {
@@ -37,12 +38,12 @@
   background: var(--color-bg-media);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
+  color: var(--color-text-on-media);
   text-align: center;
   padding: 12%;
   box-sizing: border-box;
 }
-.prod-ph__symbol { width: 34%; max-width: 72px; height: auto; color: var(--color-copper); opacity: .7; }
+.prod-ph__symbol { width: 34%; max-width: 72px; height: auto; color: var(--color-text-on-media); opacity: .8; }
 .prod-ph__txt {
   font-family: var(--font-mono);
   font-size: var(--text-xs);

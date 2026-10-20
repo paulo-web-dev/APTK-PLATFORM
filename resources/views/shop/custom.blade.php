@@ -18,7 +18,7 @@
   .cst-hero p.lead { font-size: var(--text-lg); color: var(--color-text-muted); max-width: 540px; margin: 0 0 30px; line-height: 1.7; }
   .cst-hero-media { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .cst-hero-fig { margin: 0; }
-  .cst-hero-fig img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-bg-media); }
+  .cst-hero-fig img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-ink); }
   .cst-hero-fig figcaption { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); margin-top: 10px; }
   .cst-hero-fig:nth-child(2) { margin-top: 48px; }
 
@@ -133,9 +133,9 @@
         </div>
       </div>
       <div class="cst-hero-media">
-        {{-- FOTO: garrafa APTK com rótulo personalizado para presente/celebração (provisória: Negroni em garrafas da casa). --}}
+        {{-- FOTO: garrafa APTK com rótulo personalizado para presente/celebração (provisória: pessoas brindando; a do Negroni tinha o rótulo antigo). --}}
         <figure class="cst-hero-fig">
-          <img src="{{ asset('img/aptk/featured-negroni.jpg') }}" alt="Garrafas de Negroni da APTK">
+          <img src="{{ asset('img/aptk/cat-pessoas.jpg') }}" alt="Pessoas brindando com drinks da APTK">
           <figcaption>Presentes &amp; Celebrações</figcaption>
         </figure>
         {{-- FOTO: kit com rótulo de marca parceira e embalagem premium (provisória: loja APTK). --}}

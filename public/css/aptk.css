@@ -278,7 +278,7 @@ ul.list-clean { margin: 0; padding: 0; list-style: none; }
   transition: border-color .25s ease, box-shadow .25s ease;
 }
 a.media-card:hover { border-color: var(--color-primary-muted); box-shadow: var(--shadow-card); color: inherit; }
-.media-card .mc-media { position: relative; aspect-ratio: var(--mc-ratio, 4 / 3); background: var(--color-bg-media); overflow: hidden; }
+.media-card .mc-media { position: relative; aspect-ratio: var(--mc-ratio, 4 / 3); background: var(--color-ink); overflow: hidden; }
 .media-card .mc-media > img,
 .media-card .mc-media > video { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s ease; }
 a.media-card:hover .mc-media > img { transform: scale(1.03); }

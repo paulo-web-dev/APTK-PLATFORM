@@ -18,8 +18,8 @@
     .cat-pill.is-active { background: var(--color-primary); color: var(--color-text-inverse); border-color: var(--color-primary); }
     .prod-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
     .prod-card { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
-    .prod-card .prod-img { aspect-ratio: 1 / 1; border-radius: 0; border: none; border-bottom: 1px solid var(--color-border); background: var(--color-bg-media); }
-    .prod-card img.prod-img, .prod-card .prod-ph-box.prod-img { width: 100%; object-fit: contain; padding: 18px; }
+    .prod-card .prod-img { aspect-ratio: 1 / 1; margin: 10px 10px 0; border-radius: var(--radius-md); border: none; background: var(--color-bg-media); }
+    .prod-card img.prod-img, .prod-card .prod-ph-box.prod-img { width: calc(100% - 20px); object-fit: contain; padding: 18px; }
     .prod-body { padding: 20px; display: flex; flex-direction: column; flex: 1; }
     .prod-cat { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 8px; }
     .prod-name { font-family: var(--font-script); font-size: var(--text-2xl); color: var(--color-primary); line-height: 1.1; margin: 0 0 14px; }

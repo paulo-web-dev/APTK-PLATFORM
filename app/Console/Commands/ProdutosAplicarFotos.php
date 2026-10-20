@@ -14,31 +14,35 @@ use Illuminate\Support\Facades\Storage;
  * não mexe em nenhuma das duas).
  *
  * Ativo = Product::podeAtivar() (a mesma regra do admin): tem preço E tem
- * foto no padrão na galeria — pacote fundo preto, foto de manifesto fundo
- * preto ou upload do admin. Só placeholder, foto antiga do site ou fundo
- * branco = inativo.
+ * foto no padrão na galeria — foto de manifesto fundo branco ou upload do
+ * admin. Só placeholder, foto antiga do site ou pacote fundo preto (rótulo
+ * antigo) = inativo.
  *
  * --sem-galeria: só aplica a regra de ativação sobre a galeria atual, sem
  * tocar em product_images. O manifesto entra só no relatório.
  *
  * Sem a opção, a galeria vem do manifesto (public/img/fotos_produtos/
  * manifesto.json, uma entrada por produto × tamanho), e SÓ de manifesto
- * fundo preto: campo `fundo` da entrada ou --fundo=preto. Fundo branco (o
- * manifesto de 375ML/750ML) é recusado — não combina com o tema escuro.
+ * fundo branco (as fotos de 375ML/750ML, com o rótulo atual): campo `fundo`
+ * da entrada ou --fundo=branco. O pacote fundo preto tem rótulo antigo e sai
+ * da galeria (só a linha).
  * - SKU do manifesto casa com `products.sku` OU com o SKU do volume na
  *   planilha do catálogo (o produto guarda um SKU só; os dos outros volumes
  *   vivem na planilha). "G750." e "G2750." (com ponto) são aliases dos SKUs
- *   sem ponto: o ponto final é ignorado na comparação.
+ *   sem ponto: o ponto final é ignorado na comparação. Entrada sem SKU casa
+ *   pelo `grupo` (o grupo da planilha / slug do produto).
  * - Produto com frente: galeria = frente e verso do volume padrão primeiro,
  *   depois os outros volumes; upload do admin fica atrás. Foto de volume que
  *   não está à venda não entra (sai no relatório).
- * - Produto sem frente no manifesto fica com a galeria que tem. Nada é
- *   apagado: imagem que sai da galeria perde só a linha, o arquivo fica.
+ * - Produto sem frente no manifesto fica com a galeria que tem, menos o
+ *   pacote fundo preto. Nada é apagado: imagem que sai da galeria perde só a
+ *   linha, o arquivo fica.
  * - Produto de teste de pagamento (catalogo:produto-teste) nunca é tocado.
  * - Antes de gravar, o estado (ativo + galeria) de todos os produtos vai pra
  *   storage/app/fotos-manifesto/backup-*.json; --reverter volta a partir dele.
  * - Versão web: recorte central 2:3 em 800x1200, JPG 82, em
- *   storage/app/public/products/foto-preto-{sku}-{frente|verso}.jpg. O original não
+ *   storage/app/public/products/foto-branco-{chave}-{frente|verso}.jpg (chave = sku,
+ *   ou {grupo}-{N}ml sem SKU). O original não
  *   é tocado; destino existente é reaproveitado (produção roda sem GD e sem
  *   as fotos de origem, que ficam fora do git).
  */
@@ -49,7 +53,7 @@ class ProdutosAplicarFotos extends Command
         {--sem-galeria : Só aplica a regra de ativação, sem tocar em product_images}
         {--reverter= : Volta o estado salvo (caminho do backup, ou "ultimo")}
         {--manifesto= : Manifesto de origem (padrão: public/img/fotos_produtos/manifesto.json)}
-        {--fundo= : Fundo das fotos do manifesto quando a entrada não diz (só "preto" monta galeria)}';
+        {--fundo= : Fundo das fotos do manifesto quando a entrada não diz (só "branco" monta galeria)}';
 
     protected $description = 'Vincula as fotos do manifesto e deixa ativos só os produtos com foto de frente';
 
@@ -65,6 +69,9 @@ class ProdutosAplicarFotos extends Command
     private const ALTURA = 1200;
 
     private const QUALIDADE = 82;
+
+    /** Pacote fundo preto (rótulo antigo): sai da galeria. */
+    private const FUNDO_PRETO = '#^products/(?!foto-branco-)([a-z0-9-]+-\d+ml|foto-preto-[a-z0-9-]+)-(frente|verso)\.jpg$#';
 
     private bool $dryRun;
 
@@ -114,10 +121,10 @@ class ProdutosAplicarFotos extends Command
 
         if (! $this->semGaleria) {
             $foraDoPadrao = array_filter($manifesto, fn ($e) => ! empty($e['frente'])
-                && ($e['fundo'] ?? $this->option('fundo')) !== 'preto');
+                && ($e['fundo'] ?? $this->option('fundo')) !== 'branco');
             if ($foraDoPadrao) {
-                $this->error(count($foraDoPadrao).' foto(s) do manifesto sem fundo=preto (campo fundo ou --fundo=preto): '
-                    .'galeria só com fundo preto. Use --sem-galeria para aplicar só a ativação.');
+                $this->error(count($foraDoPadrao).' foto(s) do manifesto sem fundo=branco (campo fundo ou --fundo=branco): '
+                    .'galeria só com fundo branco. Use --sem-galeria para aplicar só a ativação.');
 
                 return self::FAILURE;
             }
@@ -169,7 +176,7 @@ class ProdutosAplicarFotos extends Command
     // ------------------------------------------------------------------ //
     // Casamento manifesto → produto + volume
 
-    /** @return array<int, array> product_id => [volume => [sku, frente, verso]] */
+    /** @return array<int, array> product_id => [volume => [chave, frente, verso]] */
     private function casarManifesto(array $manifesto, $produtos): array
     {
         $porSkuProduto = [];
@@ -179,6 +186,7 @@ class ProdutosAplicarFotos extends Command
             }
         }
         $porSkuPlanilha = $this->skusDaPlanilha($produtos);
+        $porSlug = $produtos->keyBy('slug');
 
         $resultado = [];
         $vistos = [];
@@ -188,7 +196,29 @@ class ProdutosAplicarFotos extends Command
             $rotulo = ($e['produto'] ?? '?')." {$volume}";
 
             if (empty($e['tem_sku']) || empty($e['sku'])) {
-                $this->relatorio['sem_sku'][] = $rotulo.($e['frente'] ? " · frente: {$e['frente']}" : ' · sem foto');
+                // Sem SKU: casa pelo grupo (slug da planilha → slug do produto).
+                $grupo = (string) ($e['grupo'] ?? '');
+                $slugAntigo = array_search($grupo, CatalogoImportarPlanilha::SLUG_ANTIGO, true);
+                $produto = $grupo === '' ? null
+                    : (($slugAntigo !== false ? $porSlug->get($slugAntigo) : null) ?? $porSlug->get($grupo));
+
+                if (! $produto || empty($e['frente'])) {
+                    $this->relatorio['sem_sku'][] = $rotulo.($e['frente'] ? " · frente: {$e['frente']}" : ' · sem foto')
+                        .($grupo !== '' && ! $produto ? " · grupo {$grupo} não existe no banco" : '');
+
+                    continue;
+                }
+                if (isset($resultado[$produto->id][$volume])) {
+                    $this->relatorio['aviso'][] = "{$produto->slug} {$volume}: entrada sem SKU repetida, ficou a primeira";
+
+                    continue;
+                }
+
+                $resultado[$produto->id][$volume] = [
+                    'sku'    => strtolower($grupo.'-'.str_replace(' ', '', $volume)),
+                    'frente' => $e['frente'],
+                    'verso'  => $e['verso'] ?: null,
+                ];
 
                 continue;
             }
@@ -292,12 +322,15 @@ class ProdutosAplicarFotos extends Command
         $atual = $p->images->pluck('path')->all();
         $novas = $this->semGaleria ? [] : $this->fotosNovas($p, $fotos);
 
-        // Sem foto no manifesto (ou --sem-galeria), a galeria fica como está.
+        // Sem foto no manifesto, a galeria fica como está, menos o pacote fundo
+        // preto (rótulo antigo). --sem-galeria não toca na galeria.
         if ($novas !== []) {
             $doAdmin = $p->images->filter(fn ($i) => $i->isUploadDoAdmin())->pluck('path')->all();
             $desejada = array_values(array_unique(array_merge(array_column($novas, 'destino'), $doAdmin)));
-        } else {
+        } elseif ($this->semGaleria) {
             $desejada = $atual;
+        } else {
+            $desejada = array_values(array_filter($atual, fn ($path) => ! preg_match(self::FUNDO_PRETO, $path)));
         }
 
         $temFoto = $p->temFotoNoPadrao($desejada);
@@ -342,7 +375,7 @@ class ProdutosAplicarFotos extends Command
                 if (! $f[$lado]) {
                     continue;
                 }
-                $destino = 'products/foto-preto-'.strtolower($f['sku'])."-{$lado}.jpg";
+                $destino = 'products/foto-branco-'.strtolower($f['sku'])."-{$lado}.jpg";
                 $novas[] = [
                     'destino' => $destino,
                     'origem'  => $this->dirFotos.DIRECTORY_SEPARATOR.$f[$lado],

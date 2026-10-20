@@ -163,7 +163,7 @@
                             <a href="{{ route('product', $rel->slug) }}" class="card-aptk"
                                style="display:flex; flex-direction:column; padding:0; overflow:hidden; text-decoration:none;">
                                 <x-product.image :image="$rel->primaryImage" :alt="$rel->name"
-                                    style="aspect-ratio:1/1; width:100%; object-fit:contain; background:var(--color-bg-media); border:none; border-bottom:1px solid var(--color-border); border-radius:0; padding:16px;" />
+                                    style="aspect-ratio:1/1; width:calc(100% - 20px); margin:10px 10px 0; object-fit:contain; background:var(--color-bg-media); border:none; border-radius:var(--radius-md); padding:16px;" />
                                 <div style="padding:18px;">
                                     <p style="font-family:var(--font-script); font-size:var(--text-xl); color:var(--color-primary); margin:0 0 8px;">{{ $rel->name }}</p>
                                     <span style="font-family:var(--font-mono); color:var(--color-text);">R$ {{ number_format($rel->price, 2, ',', '.') }}</span>

@@ -4,7 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-19** (§11 — leva 10, texto e layout de 6 páginas pelo
+Última revisão: **2026-10-20** (§12 — fotos de produto em fundo branco com
+rótulo atual; fotos de ambiente com rótulo antigo trocadas). Antes: 2026-10-19 (§11 — leva 10, texto e layout de 6 páginas pelo
 briefing da gestão; §10 — ativação só com preço e foto no padrão, importador sem
 `active`/galeria, `produtos:aplicar-fotos`). Antes: 2026-10-18
 (§9 — Appmax com credenciais do painel, loja própria) e 2026-10-11 (leva 08,
@@ -406,6 +407,9 @@ conferir os 26 ativos, rodar sem `--dry-run`, e `config:cache`
 
 ## 10. Ativação só com foto no padrão (19/10/2026)
 
+> **Substituída em parte pela §12:** o padrão agora é fundo branco (rótulo
+> atual); o pacote fundo preto não conta mais.
+
 A gestão quis na loja só produto com foto. Chegou um acervo novo em
 `public/img/fotos_produtos/375ML|750ML` com `manifesto.json` (SKU → frente/verso),
 mas é outra sessão (Canon 7D, dez/2023–jan/2024), **fundo branco**, quase tudo
@@ -497,21 +501,24 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
 
 | página / bloco | foto provisória | o que o briefing pede |
 |---|---|---|
-| Quem Somos · 2016 | `featured-negroni.jpg` | garrafa/balcão da era Apothek |
-| Quem Somos · card Barín | `cat-cosmopolitan.jpg` | garrafa ou serviço da Barín |
-| Home · Coquetéis Prontos | `cat-cosmopolitan.jpg` | coquetel pronto servido |
-| Home · Crie Seu Drink | `cat-fitzgerald.jpg` | bases e ingredientes |
-| Home · Arte de Presentear | `featured-negroni.jpg` | kit/presente com embalagem |
-| Home · ecossistema Barín | `hero-bartender.jpg` | garrafa ou serviço da Barín |
+| Quem Somos · 2016 | `<x-photo-slot>` (§12) | garrafa/balcão da era Apothek |
+| Quem Somos · card APTK Spirits | `franquias-hero.jpg` (§12) | produto ou loja APTK |
+| Quem Somos · card Barín | `<x-photo-slot>` (§12) | garrafa ou serviço da Barín |
+| Quem Somos · galeria | `clube-hero.jpg`, `cat-evento.jpg` (§12) | — |
+| Home · Coquetéis Prontos | `about-loja-2.jpg` (§12) | coquetel pronto servido |
+| Home · Crie Seu Drink | `<x-photo-slot>` (§12) | bases e ingredientes |
+| Home · Arte de Presentear | `<x-photo-slot>` (§12) | kit/presente com embalagem |
+| Home · ecossistema Barín | `<x-photo-slot>` (§12) | garrafa ou serviço da Barín |
 | Home · vitrine Collabs | `cat-evento.jpg` | fotos das collabs / vídeo Montblanc |
 | Home · vitrine Clube | `cat-pessoas.jpg` | encontro real do Clube |
 | Home · vitrine Lojas | `loja-aptk.jpg` | foto arquitetônica autoral |
 | Home · vitrine Custom | `cat-dry-martini.jpg` | close de garrafa personalizada + embalagem |
-| Custom · hero (2 fotos) | `featured-negroni.jpg`, `about-loja-3.jpg` | Presentes & Celebrações / Marcas & Projetos Especiais |
+| Custom · hero (2 fotos) | `cat-pessoas.jpg` (§12), `about-loja-3.jpg` | Presentes & Celebrações / Marcas & Projetos Especiais |
 | Custom · Full Custom | `cat-dry-martini.jpg` | garrafa com rótulo de marca parceira + embalagem premium |
-| Eventos · Gifting | `featured-negroni.jpg` | kit/presente de evento |
+| Eventos · Bar APTK | `clube-hero.jpg` (§12) | — |
+| Eventos · Gifting | `<x-photo-slot>` (§12) | kit/presente de evento |
 | Eventos · Brand Experiences | `cat-evento.jpg` | ativação de marca em evento |
-| Eventos · Customização | `cat-fitzgerald.jpg` | garrafa com rótulo personalizado de evento |
+| Eventos · Customização | `<x-photo-slot>` (§12) | garrafa com rótulo personalizado de evento |
 
 Nenhuma foto aparece duas vezes na mesma página (incluindo os arquivos
 duplicados com nome diferente: `loja-aptk`=`sobre-loja`,
@@ -556,6 +563,69 @@ ativos no banco local porque o `ClubePlanos2026Seeder` não rodou aqui.
 
 **Deploy da leva 10:** `migrate --force` (nomes das categorias + perks do
 Clube), `config:cache` (`config/marcas.php`), `view:clear`.
+
+---
+
+## 12. Fotos de produto em fundo branco, rótulo atual (20/10/2026)
+
+O pacote FUNDO PRETO (leva 07) mostra o **rótulo antigo** (ex.: Cosmopolitan
+rosa). As fotos de `375ML/` e `750ML/` (fundo branco) têm o rótulo atual: o site
+passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
+
+- **Regra:** `Product::ehFotoNoPadrao` = `products/foto-branco-{chave}-{lado}.jpg`
+  ou upload do admin. Pacote `{grupo}-{N}ml-{lado}.jpg` e `foto-preto-*` não
+  contam mais. Chave = SKU em minúsculas, ou `{grupo}-{N}ml` em entrada sem SKU.
+- **`produtos:aplicar-fotos`:** galeria só de manifesto `fundo=branco`
+  (`--fundo=branco`); entrada sem SKU casa pelo campo `grupo` (grupo da planilha
+  / slug do produto, com `SLUG_ANTIGO`). Pacote fundo preto sai da galeria (só
+  a linha; arquivo fica), inclusive de produto sem foto nova. Upload do admin
+  segue no fim. Recorte 2:3, 800x1200, JPG 82.
+- **Pasta das fotos (fora do git):** 26 arquivos renomeados pro padrão
+  `{SKU}_{lado}.jpg` (375: CAIP, CA, MM, PCL, LIM, LA, LCCS, WCS + 6 versos
+  tirados de `375ML VERSO/`; 750: CAIP, CA, MM, LIM, VDK, GAKJ, MHA, LCC + 3
+  versos de `750ML CONTRA RÓTULO/`). `Produtos_375_e_750_fotos_e_SKUs.csv` ganhou
+  a coluna `GRUPO` e 13 produtos; manifesto regenerado por
+  `gerar-manifesto.php` (57 entradas). `ANTIGOS/` intocada. Lista do que ficou
+  com nome original no `CLAUDE.md` da pasta.
+- **Manifesto no git:** só `public/img/fotos_produtos/manifesto.json` (exceção
+  no `.gitignore`). Em produção as 69 imagens `foto-branco-*` sobem pelo git e o
+  comando reaproveita (não precisa de GD nem da pasta de origem).
+- **Resultado local:** 8 ativam (vodka-vdk, caipirinha-arazul, caju-amigo,
+  squadra-amendoas, squadra-coco, limoncello, moscow-mule, penicillin), 0 saem,
+  29 trocam galeria → **17 ativos**. Backup
+  `storage/app/fotos-manifesto/backup-20261020-132131.json`.
+- **Visual:** `--color-bg-media` = `#FEFEFE` (amostrado nos cantos de 8 fotos:
+  FEFEFE/FFFFFF), nos dois temas. Card do catálogo e relacionados com a foto
+  recuada e `--radius-md`; placeholder no mesmo fundo com texto e símbolo em
+  `--color-text-on-media` (`#6F6353`). Usos de fundo de mídia que não são foto
+  de produto (`.mc-media`, hero do Custom, timeline) voltaram a `--color-ink`.
+- **Fotos de ambiente com rótulo antigo** (varredura em views/config/controllers):
+  `cat-cosmopolitan`, `cat-fitzgerald`, `featured-negroni`,
+  `hero-bartender`/`sobre-barman`, `cat-loja`/`sobre-interior` (prateleira com
+  Negroni legível) e `products/negroni-classico-375ml-frente.jpg` (Quem Somos).
+  Trocadas por foto de ambiente sem rótulo ou `<x-photo-slot>` (tabela §11.1).
+- **Bug corrigido:** o comentário do `<x-photo-slot>` tinha um `--}}` aninhado
+  e vazava texto na página (não aparecia porque o componente não renderizava
+  em lugar nenhum).
+
+### 12.1 Pendências de foto
+
+- **SLO375** (Sur L'Orange 375) sem foto própria: `SLO375_frente` é rótulo
+  antigo e `SUR-L_ORANGE.jpg` é baixa resolução (720x538). Precisa de foto em alta.
+- **NGA750** (Negroni Aged): só existe em fundo cinza, fora do padrão.
+- **Dry Martini:** `DM750` (branco) tem rótulo creme; `DM375` (branco) tem
+  rótulo azul-marinho. Confirmar qual é o atual. `cat-dry-martini.jpg` (vitrine
+  Custom da Home e Full Custom) tem o creme — ficou, até confirmar.
+- **Hero da Home:** o vídeo/pôster (`hero-negroni-poster.jpg`) mostra o Negroni
+  de rótulo antigo. Fora do escopo (hero não muda).
+- Bordas: `bou375-frente`, `dm750-verso` e `slo750-frente` têm canto um pouco
+  mais escuro que o fundo do card (foto original); quase invisível.
+- Sem foto branca do 750: Gallo Tropicalle, Ale Tonic, Penicillin, Licor de
+  Amêndoas Squadra. Gin #1 375 e O Drink Perfeito sem foto.
+
+**Deploy:** `reset --hard`, `migrate --force`, `view:clear`, depois
+`php artisan produtos:aplicar-fotos --dry-run` (conferir 8 ativam, 0 saem, 29
+trocam) e sem `--dry-run`.
 
 ---
 

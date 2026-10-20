@@ -36,7 +36,8 @@
   .qs-tl-range { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.16em; color: var(--color-text-muted); white-space: nowrap; }
   .timeline { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   .tl-card { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; }
-  .tl-img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--color-bg-media); }
+  .tl-img { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--color-ink); }
+  .tl-card > .photo-slot { border: 0; border-radius: 0; }
   .tl-body { padding: 26px 28px 30px; }
   .tl-card .tl-year { font-family: var(--font-editorial); font-size: var(--text-2xl); color: var(--color-primary); }
   .tl-card h3 { font-family: var(--font-display); font-size: var(--text-xl); margin: 10px 0 12px; }
@@ -78,8 +79,6 @@
   .qs-eco-card { --mc-ratio: 4 / 5; background: var(--color-bg); }
   .qs-eco-card h3.title-editorial { font-size: var(--text-3xl); }
   .qs-eco-card .qs-eco-sub { font-family: var(--font-editorial); font-size: var(--text-base); color: var(--color-text); }
-  /* Foto de produto (fundo preto 2:3): inteira, sem corte */
-  .qs-eco-media--produto > img { object-fit: contain; padding: 6% 0; }
 
   /* ---- Sobre: responsivo ---- */
   @media (max-width: 760px) {
@@ -146,8 +145,8 @@
       </div>
       <div class="timeline">
         <article class="tl-card">
-          {{-- FOTO: garrafa ou balcão da era Apothek Cocktails & Co. (2016). Provisória: Negroni em garrafas da casa. --}}
-          <img class="tl-img" src="{{ asset('img/aptk/featured-negroni.jpg') }}" alt="Garrafas de Negroni da casa" loading="lazy">
+          {{-- FOTO: garrafa ou balcão da era Apothek Cocktails & Co. (2016). A do Negroni em garrafas da casa tinha o rótulo antigo. --}}
+          <x-photo-slot ratio="16/10" />
           <div class="tl-body">
             <span class="tl-year">2016 · São Paulo</span>
             <h3>Apothek Cocktails &amp; Co.</h3>
@@ -201,19 +200,20 @@
     $ecossistema = [
       [
         'link'  => $links['aptk'],
-        'img'   => \Illuminate\Support\Facades\Storage::url('products/negroni-classico-375ml-frente.jpg'),
-        'alt'   => 'Garrafa de Negroni Clássico da APTK Spirits',
+        // FOTO: produto ou loja APTK. Provisória: interior da loja (a garrafa
+        // do pacote fundo preto tinha o rótulo antigo).
+        'img'   => asset('img/aptk/franquias-hero.jpg'),
+        'alt'   => 'Interior da loja APTK Spirits',
         'name'  => 'APTK Spirits',
         'sub'   => 'Alta coquetelaria. Alquimia de histórias.',
         'text'  => 'Pioneira na alta coquetelaria engarrafada no Brasil, une sofisticação, criatividade e autenticidade em coquetéis prontos para servir, gifting e projetos especiais.',
-        'media' => 'qs-eco-media--produto',
+        'media' => '',
       ],
       [
         'link'  => $links['barin'],
-        // FOTO: garrafa ou serviço da Barín no balcão. Provisória: drink servido no balcão
-        // (o bartender já está na galeria desta página).
-        'img'   => asset('img/aptk/cat-cosmopolitan.jpg'),
-        'alt'   => 'Drink servido no balcão ao lado da garrafa',
+        // FOTO: garrafa ou serviço da Barín no balcão (a do Cosmopolitan tinha o rótulo antigo).
+        'img'   => null,
+        'alt'   => '',
         'name'  => 'Barín',
         'sub'   => 'Qualidade e eficiência em cada serviço.',
         'text'  => 'Coquetelaria desenvolvida para o ritmo de bares, restaurantes e eventos. Receitas de qualidade, padronização e praticidade para operações que exigem consistência e escala.',
@@ -242,7 +242,11 @@
           @php $externo = str_starts_with($marca['link']['url'], 'http'); @endphp
           <a href="{{ $marca['link']['url'] }}" class="media-card qs-eco-card" @if ($externo) target="_blank" rel="noopener noreferrer" @endif>
             <div class="mc-media {{ $marca['media'] }}">
-              <img src="{{ $marca['img'] }}" alt="{{ $marca['alt'] }}" loading="lazy">
+              @if ($marca['img'])
+                <img src="{{ $marca['img'] }}" alt="{{ $marca['alt'] }}" loading="lazy">
+              @else
+                <x-photo-slot />
+              @endif
             </div>
             <div class="mc-body">
               <h3 class="title-editorial">{{ $marca['name'] }}</h3>
@@ -264,8 +268,9 @@
         <h2 class="section-title">Onde a alquimia acontece</h2>
       </div>
       <div class="gallery">
-        <img class="g-tall" src="{{ asset('img/aptk/sobre-barman.jpg') }}" alt="Bartender da APTK preparando um drink">
-        <img src="{{ asset('img/aptk/sobre-interior.jpg') }}" alt="Interior da loja física da APTK">
+        {{-- Bartender e prateleira da loja saíram: mostravam garrafas com o rótulo antigo. --}}
+        <img class="g-tall" src="{{ asset('img/aptk/clube-hero.jpg') }}" alt="Convidada com um drink no bar da APTK">
+        <img src="{{ asset('img/aptk/cat-evento.jpg') }}" alt="Encontro com drinks e gastronomia">
         <img src="{{ asset('img/aptk/sobre-pessoas.jpg') }}" alt="Pessoas brindando com drinks da APTK">
       </div>
     </div>

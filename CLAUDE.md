@@ -103,8 +103,14 @@ coquetel → rótulo → dados → prévia e envio, botão "Solicitar minha pers
 **Imagem de produto:** sempre via `<x-product.image :image="..." :alt="...">` (foto ou
 `<x-product.placeholder>`, moldura 2:3 "Produto ainda sem foto"). CSS em
 `public/css/aptk-produto.css` (linkado também no layout admin, que não carrega o
-`aptk.css`). Foto do pacote fundo preto: `products/{grupo}-{vol}-{frente|verso}.jpg`;
-upload do admin: nome hash de 40 caracteres (`ProductImage::isUploadDoAdmin()`) — só
+`aptk.css`). Foto de produto é fundo branco (rótulo atual):
+`products/foto-branco-{sku|grupo-Nml}-{frente|verso}.jpg`, sobre `--color-bg-media`
+(`#FEFEFE`, o branco das fotos, nos dois temas) com `--radius-md`; placeholder no mesmo
+fundo, texto/símbolo em `--color-text-on-media`. `--color-bg-media` é SÓ pra foto de
+produto: foto de ambiente usa `--color-ink`. O pacote fundo preto
+(`{grupo}-{vol}-{lado}.jpg`) tem rótulo antigo e não é mais usado; foto de ambiente
+com garrafa de rótulo antigo também não (ESTADO-ATUAL §12).
+Upload do admin: nome hash de 40 caracteres (`ProductImage::isUploadDoAdmin()`) — só
 esse arquivo o admin apaga do disco. Upload ADICIONA como principal.
 
 **Catálogo: responsabilidade dividida em dois comandos.**
@@ -114,13 +120,14 @@ esse arquivo o admin apaga do disco. Upload ADICIONA como principal.
   (não faz parte do deploy).
 - `produtos:aplicar-fotos` é o dono da ativação (e da galeria). Ativo =
   `Product::podeAtivar()`: tem preço E tem foto no padrão
-  (`Product::ehFotoNoPadrao`: pacote fundo preto `{grupo}-{N}ml-{lado}.jpg`,
-  `foto-preto-{sku}-{lado}.jpg` de manifesto fundo preto, ou upload do admin).
-  Foto antiga do site e fundo branco não contam; só placeholder = inativo.
-  `--sem-galeria` só aplica a ativação; sem ela, monta galeria a partir de
-  `public/img/fotos_produtos/manifesto.json` e recusa manifesto que não seja
-  `fundo=preto`. Salva backup em `storage/app/fotos-manifesto/` antes de gravar;
-  `--reverter=ultimo` volta. `--dry-run`.
+  (`Product::ehFotoNoPadrao`: `foto-branco-*` do manifesto fundo branco, ou
+  upload do admin). Pacote fundo preto e foto antiga do site não contam; só
+  placeholder = inativo. `--sem-galeria` só aplica a ativação; sem ela, monta
+  galeria a partir de `public/img/fotos_produtos/manifesto.json` (único arquivo
+  da pasta no git; o resto é fonte local, regenerada por `gerar-manifesto.php`)
+  e recusa manifesto que não seja `fundo=branco`. Entrada sem SKU casa pelo
+  `grupo`. Pacote fundo preto sai da galeria (só a linha). Salva backup em
+  `storage/app/fotos-manifesto/` antes de gravar; `--reverter=ultimo` volta. `--dry-run`.
 - O admin usa a mesma regra: sem preço ou sem foto no padrão não ativa ("Envie
   uma foto do produto antes de ativar."). Foto enviada no mesmo salvar conta.
 
@@ -216,9 +223,10 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
 1. Frete é estimativa por tabela (+20%) — cotação real depende de conta na SuperFrete.
 2. Portal B2B é só fachada: middleware + role + um `/ping`. Sem controllers nem views.
 3. Microvix fora de operação (`MICROVIX_ENVIA_PEDIDO=false`); ver ESTADO-ATUAL §8.4.
-4. Foto fundo preto nova não tem caminho automático: precisa de um manifesto
-   (`fundo=preto`) apontando pro `FUNDO PRETO/` e `produtos:aplicar-fotos` sem
-   `--sem-galeria`. Ver ESTADO-ATUAL §10.
+4. Fotos de produto: SLO375 precisa de foto em alta; NGA750 só em fundo cinza;
+   rótulo atual do Dry Martini a confirmar (DM750 creme × DM375 azul); hero da
+   Home com Negroni de rótulo antigo. Foto nova: renomear na pasta, rodar
+   `gerar-manifesto.php` e `produtos:aplicar-fotos`. Ver ESTADO-ATUAL §12.1.
 5. Leva 10: fotos e textos provisórios, links das marcas, pontos do Clube "em breve"
    e estilo "Clássico" (fonte Blackword) do Custom — lista em ESTADO-ATUAL §11.
 

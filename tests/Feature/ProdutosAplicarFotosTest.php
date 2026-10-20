@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 /**
  * produtos:aplicar-fotos — dono da ativação (e da galeria, só com manifesto
- * fundo preto). Ativo = Product::podeAtivar(): preço E foto no padrão.
+ * fundo branco). Ativo = Product::podeAtivar(): preço E foto no padrão.
  */
 class ProdutosAplicarFotosTest extends TestCase
 {
@@ -72,13 +72,13 @@ class ProdutosAplicarFotosTest extends TestCase
     private function cenario(): array
     {
         return [
-            'liga'         => $this->produto('liga', false, true, ['products/liga-375ml-frente.jpg']),
+            'liga'         => $this->produto('liga', false, true, ['products/foto-branco-liga375-frente.jpg']),
             'upload'       => $this->produto('upload', false, true, ['products/'.str_repeat('a', 40).'.jpg']),
             'sem_foto'     => $this->produto('sem-foto', true, true),
             'foto_antiga'  => $this->produto('foto-antiga', true, true, ['products/foto-antiga.jpg', 'products/foto-antiga-serve.jpg']),
-            'fundo_branco' => $this->produto('fundo-branco', true, true, ['products/foto-branco-x1-frente.jpg']),
-            'sem_preco'    => $this->produto('sem-preco', true, false, ['products/sem-preco-750ml-frente.jpg']),
-            'mantem'       => $this->produto('mantem', true, true, ['products/mantem-375ml-frente.jpg', 'products/mantem-375ml-verso.jpg']),
+            'fundo_preto'  => $this->produto('fundo-preto', true, true, ['products/fundo-preto-375ml-frente.jpg']),
+            'sem_preco'    => $this->produto('sem-preco', true, false, ['products/foto-branco-x750-frente.jpg']),
+            'mantem'       => $this->produto('mantem', true, true, ['products/foto-branco-m375-frente.jpg', 'products/foto-branco-m375-verso.jpg']),
         ];
     }
 
@@ -155,28 +155,30 @@ class ProdutosAplicarFotosTest extends TestCase
         );
     }
 
-    public function test_galeria_com_manifesto_fundo_branco_e_recusada(): void
+    public function test_galeria_com_manifesto_fundo_preto_e_recusada(): void
     {
         $p = $this->produto('liga', false, true);
         $manifesto = $this->manifesto([
-            ['sku' => 'LIGA', 'produto' => 'Liga', 'tamanho' => '375ml', 'frente' => '375ML/LIGA_frente.jpg', 'verso' => null, 'tem_sku' => true, 'fundo' => 'branco'],
+            ['sku' => 'LIGA', 'produto' => 'Liga', 'tamanho' => '375ml', 'frente' => '375ML/LIGA_frente.jpg', 'verso' => null, 'tem_sku' => true, 'fundo' => 'preto'],
         ]);
 
         $this->artisan('produtos:aplicar-fotos', ['--manifesto' => $manifesto])
-            ->expectsOutputToContain('galeria só com fundo preto')
+            ->expectsOutputToContain('galeria só com fundo branco')
             ->assertFailed();
 
         $this->assertFalse($p->fresh()->active);
         $this->assertSame(0, ProductImage::count());
     }
 
-    public function test_galeria_com_manifesto_fundo_preto_gera_foto_e_ativa(): void
+    public function test_galeria_com_manifesto_fundo_branco_gera_foto_e_ativa(): void
     {
         if (! function_exists('imagecreatetruecolor')) {
             $this->markTestSkipped('GD indisponível.');
         }
 
-        $p = $this->produto('gin', false, true);
+        // Pacote fundo preto (rótulo antigo) sai da galeria; upload do admin fica no fim.
+        $upload = 'products/'.str_repeat('b', 40).'.jpg';
+        $p = $this->produto('gin', false, true, ['products/gin-750ml-frente.jpg', $upload]);
         $p->update(['sku' => 'G750', 'sizes' => ['750 ml'], 'size_prices' => ['750 ml' => 200]]);
 
         File::ensureDirectoryExists("{$this->dir}/750ML");
@@ -191,35 +193,63 @@ class ProdutosAplicarFotosTest extends TestCase
             ['sku' => 'G750.'] + $entrada, // alias com ponto: conta uma vez só
         ]);
 
-        $this->artisan('produtos:aplicar-fotos', ['--manifesto' => $manifesto, '--fundo' => 'preto'])->assertSuccessful();
+        $this->artisan('produtos:aplicar-fotos', ['--manifesto' => $manifesto, '--fundo' => 'branco'])->assertSuccessful();
 
         $p->refresh();
         $this->assertTrue($p->active);
         $this->assertSame(
-            ['products/foto-preto-g750-frente.jpg', 'products/foto-preto-g750-verso.jpg'],
-            $p->images()->pluck('path')->all(),
+            ['products/foto-branco-g750-frente.jpg', 'products/foto-branco-g750-verso.jpg', $upload],
+            $p->images()->orderBy('sort_order')->pluck('path')->all(),
         );
-        [$w, $h] = getimagesizefromstring(Storage::disk('public')->get('products/foto-preto-g750-frente.jpg'));
+        [$w, $h] = getimagesizefromstring(Storage::disk('public')->get('products/foto-branco-g750-frente.jpg'));
         $this->assertSame([800, 1200], [$w, $h]);
+    }
+
+    public function test_entrada_sem_sku_casa_pelo_grupo_e_pacote_preto_sai_sem_foto_nova(): void
+    {
+        if (! function_exists('imagecreatetruecolor')) {
+            $this->markTestSkipped('GD indisponível.');
+        }
+
+        $tonic = $this->produto('ale-tonic', false, true, ['products/ale-tonic-375ml-frente.jpg']);
+        $tonic->update(['sku' => null]);
+        $velho = $this->produto('velho', true, true, ['products/velho-375ml-frente.jpg', 'products/velho-375ml-verso.jpg']);
+
+        File::ensureDirectoryExists("{$this->dir}/375ML");
+        $img = imagecreatetruecolor(300, 300);
+        imagejpeg($img, "{$this->dir}/375ML/sem-sku_ale-tonic_375ml_frente.jpg");
+        imagedestroy($img);
+        $manifesto = $this->manifesto([
+            ['sku' => null, 'produto' => 'Ale Tonic', 'grupo' => 'ale-tonic', 'tamanho' => '375ml', 'frente' => '375ML/sem-sku_ale-tonic_375ml_frente.jpg', 'verso' => null, 'tem_sku' => false, 'fundo' => 'branco'],
+        ]);
+
+        $this->artisan('produtos:aplicar-fotos', ['--manifesto' => $manifesto])->assertSuccessful();
+
+        $this->assertSame(['products/foto-branco-ale-tonic-375ml-frente.jpg'], $tonic->images()->pluck('path')->all());
+        $this->assertTrue($tonic->fresh()->active);
+        // Sem foto no manifesto: o pacote preto sai e o produto fica no placeholder, inativo.
+        $this->assertSame([], $velho->images()->pluck('path')->all());
+        $this->assertFalse($velho->fresh()->active);
     }
 
     public function test_pode_ativar_exige_preco_e_foto_no_padrao(): void
     {
-        $this->assertTrue(Product::ehFotoNoPadrao('products/aptk-gin-2-750ml-frente.jpg'));
-        $this->assertTrue(Product::ehFotoNoPadrao('products/foto-preto-g750-verso.jpg'));
+        $this->assertTrue(Product::ehFotoNoPadrao('products/foto-branco-g750-frente.jpg'));
+        $this->assertTrue(Product::ehFotoNoPadrao('products/foto-branco-ale-tonic-375ml-verso.jpg'));
         $this->assertTrue(Product::ehFotoNoPadrao('products/'.str_repeat('Z', 40).'.png'));
+        $this->assertFalse(Product::ehFotoNoPadrao('products/aptk-gin-2-750ml-frente.jpg')); // pacote fundo preto
+        $this->assertFalse(Product::ehFotoNoPadrao('products/foto-preto-g750-verso.jpg'));
         $this->assertFalse(Product::ehFotoNoPadrao('products/negroni-classico.jpg'));
         $this->assertFalse(Product::ehFotoNoPadrao('products/negroni-classico-serve.jpg'));
-        $this->assertFalse(Product::ehFotoNoPadrao('products/foto-branco-g750-frente.jpg'));
         $this->assertFalse(Product::ehFotoNoPadrao('products/foto-g750-frente.jpg'));
 
-        $comTudo = $this->produto('a', false, true, ['products/a-375ml-frente.jpg']);
+        $comTudo = $this->produto('a', false, true, ['products/foto-branco-a375-frente.jpg']);
         $semFoto = $this->produto('b', false, true);
-        $semPreco = $this->produto('c', false, false, ['products/c-375ml-frente.jpg']);
+        $semPreco = $this->produto('c', false, false, ['products/foto-branco-c375-frente.jpg']);
 
         $this->assertTrue($comTudo->podeAtivar());
         $this->assertFalse($semFoto->podeAtivar());
-        $this->assertTrue($semFoto->podeAtivar(['products/b-375ml-frente.jpg'])); // galeria candidata
+        $this->assertTrue($semFoto->podeAtivar(['products/foto-branco-b375-frente.jpg'])); // galeria candidata
         $this->assertFalse($semPreco->podeAtivar());
     }
 }

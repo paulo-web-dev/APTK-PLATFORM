@@ -43,7 +43,7 @@ class AdminErpLockTest extends TestCase
             'active'      => true,
         ]);
         // Ativo exige foto no padrão (Product::podeAtivar).
-        ProductImage::create(['product_id' => $this->product->id, 'path' => 'products/negroni-classico-375ml-frente.jpg', 'sort_order' => 0, 'is_primary' => true]);
+        ProductImage::create(['product_id' => $this->product->id, 'path' => 'products/foto-branco-nc375-frente.jpg', 'sort_order' => 0, 'is_primary' => true]);
     }
 
     protected function vincula(): void

@@ -147,13 +147,14 @@ class Product extends Model
      ------------------------------------------------------------------ */
 
     /**
-     * Foto no padrão: pacote fundo preto ({grupo}-{N}ml-{frente|verso}.jpg),
-     * foto de manifesto marcado fundo preto (foto-preto-{sku}-{lado}.jpg) ou
-     * upload do admin. Foto antiga do site ({slug}.jpg) e fundo branco não contam.
+     * Foto no padrão: foto do manifesto fundo branco (foto-branco-{chave}-{lado}.jpg,
+     * rótulo atual) ou upload do admin. O pacote fundo preto
+     * ({grupo}-{N}ml-{lado}.jpg, foto-preto-*) tem rótulo antigo e não conta
+     * mais, nem foto antiga do site ({slug}.jpg).
      */
     public static function ehFotoNoPadrao(string $path): bool
     {
-        return (bool) preg_match('#^products/([a-z0-9-]+-\d+ml|foto-preto-[a-z0-9-]+)-(frente|verso)\.jpg$#', $path)
+        return (bool) preg_match('#^products/foto-branco-[a-z0-9-]+-(frente|verso)\.jpg$#', $path)
             || (new ProductImage(['path' => $path]))->isUploadDoAdmin();
     }
 
