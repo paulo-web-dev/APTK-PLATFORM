@@ -31,7 +31,7 @@ Route::get('/produto/{slug}', [ProductController::class, 'show'])->name('product
 |--------------------------------------------------------------------------
 */
 Route::get('/custom', [CustomController::class, 'show'])->name('custom');
-Route::post('/custom/pedido', [CustomController::class, 'store'])->name('custom.store');
+Route::post('/custom/carrinho', [CustomController::class, 'adicionar'])->name('custom.cart');
 
 /*
 |--------------------------------------------------------------------------

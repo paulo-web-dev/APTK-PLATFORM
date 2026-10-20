@@ -3,100 +3,85 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
-use App\Models\Lead;
+use App\Models\Product;
+use App\Services\CartService;
+use App\Services\CustomService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
- * Custom (antiga Customização) — página + formulário do Custom Simples.
+ * Custom — página + configurador do Custom Simples.
  *
  * Fluxos:
- *  - Custom Simples: fonte + coquetel + mensagem (até 8 palavras) → Lead
- *    tipo "custom" no admin. E-mail à APTK fica pronto ("casca") mas
- *    desativado até haver SMTP no .env — ver comentário no store().
+ *  - Custom Simples (leva 11): compra direta. O configurador escolhe bebida,
+ *    texto, fonte e cor (config/custom.php) e põe a garrafa 375 ml no
+ *    carrinho a preço fixo. Não cria mais lead.
  *  - Full Custom: contato direto via WhatsApp (link na view).
  */
 class CustomController extends Controller
 {
-    /**
-     * Fontes disponíveis no Custom Simples (modelos de referência).
-     * Leva 10: só fonte que existe no projeto — a prévia não pode mostrar
-     * uma fonte diferente da impressa. Blackword (estilo "Clássico") volta
-     * aqui quando o arquivo da fonte chegar em public/fonts/ (PENDENTE).
-     */
-    public const FONTES = ['PP Rader', 'Amithen'];
-
-    /** Coquetéis disponíveis para personalização (lista do comercial). */
-    public const COQUETEIS = [
-        'Limoncello',
-        'Fitzgerald',
-        'Caipirinha',
-        'Cosmopolitan',
-        'Dry Martini',
-        'Negroni',
-        'Boulevardier',
-        'Moscow Mule',
-        "Sur L'Orange",
-        'Old Fashioned',
-    ];
-
     /** WhatsApp da equipe de criação (Full Custom). */
     public const WHATSAPP = '5511941766319';
 
+    public function __construct(
+        protected CartService $cart,
+        protected CustomService $custom,
+    ) {
+    }
+
     public function show(): View
     {
+        // Só bebida com produto no catálogo (ativo ou não), na ordem da config.
+        $produtos = Product::whereIn('slug', array_keys($this->custom->bebidas()))->pluck('name', 'slug');
+        $bebidas = collect($this->custom->bebidas())
+            ->filter(fn ($b, $slug) => $produtos->has($slug))
+            ->map(fn ($b, $slug) => ['nome' => $produtos[$slug]] + $this->custom->exibir(['bebida' => $slug]));
+
         return view('shop.custom', [
-            'fontes'    => self::FONTES,
-            'coqueteis' => self::COQUETEIS,
-            'whatsapp'  => self::WHATSAPP,
+            'bebidas'  => $bebidas,
+            'fontes'   => config('custom.fontes'),
+            'cores'    => config('custom.cores'),
+            'preco'    => $this->custom->preco(),
+            'volume'   => $this->custom->volume(),
+            'limite'   => $this->custom->limite(),
+            'aviso'    => config('custom.aviso'),
+            'whatsapp' => self::WHATSAPP,
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    /** Adicionar ao carrinho: valida a personalização e confere o estoque do 375. */
+    public function adicionar(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'max:255'],
-            'phone'    => ['nullable', 'string', 'max:20'],
-            'fonte'    => ['required', 'in:'.implode(',', self::FONTES)],
-            'coquetel' => ['required', 'in:'.implode(',', self::COQUETEIS)],
-            'mensagem' => ['required', 'string', 'max:120', function ($attribute, $value, $fail) {
-                if (count(Str::of($value)->squish()->explode(' ')->filter()->all()) > 8) {
-                    $fail('A mensagem da personalização pode ter no máximo 8 palavras.');
-                }
-            }],
-        ], [
-            'fonte.in'          => 'Escolha uma das fontes disponíveis.',
-            'coquetel.in'       => 'Escolha um coquetel da lista.',
-            'mensagem.required' => 'Escreva a mensagem que vai no rótulo.',
-        ]);
+        $p = $this->custom->validar($request->only(CustomService::CAMPOS));
+        $qty = (int) ($request->validate(['qty' => ['nullable', 'integer', 'min:1', 'max:50']])['qty'] ?? 1);
 
-        $lead = Lead::create([
-            'type'    => 'custom',
-            'name'    => $data['name'],
-            'email'   => $data['email'],
-            'phone'   => $data['phone'] ?? null,
-            'status'  => 'new',
-            'message' => implode("\n", [
-                'Custom Simples — pedido de rótulo personalizado',
-                'Fonte: '.$data['fonte'],
-                'Coquetel: '.$data['coquetel'],
-                'Mensagem do rótulo: "'.Str::squish($data['mensagem']).'"',
-            ]),
-        ]);
+        $produto = $this->custom->produto($p['bebida']);
+        $volume = $this->custom->volume();
 
-        /*
-         | E-mail para a APTK — ATIVAR quando o SMTP estiver no .env:
-         |
-         |   \Illuminate\Support\Facades\Mail::to('rafael@aptkspirits.com')
-         |       ->send(new \App\Mail\CustomOrderRequested($lead));
-         |
-         | A casca (Mailable + template markdown) já está pronta em
-         | app/Mail/CustomOrderRequested.php e resources/views/emails/.
-         */
+        // Consome o estoque da 375 da bebida (soma com as linhas que já estão
+        // no carrinho). Volume não rastreado (saldo null) não trava.
+        $saldo = $produto->stockForSize($volume);
+        if ($saldo !== null) {
+            $rotulo = '"'.$produto->name." ({$volume})\"";
+            $noCarrinho = $this->cart->qtyDoVolume($produto->id, $volume);
 
-        return back()->with('custom_ok', 'Pedido recebido! Nossa equipe entra em contato com a proposta.');
+            if ($saldo <= 0) {
+                return back()->withInput()->with('stock_error', "{$rotulo} está esgotado.");
+            }
+
+            if ($noCarrinho + $qty > $saldo) {
+                return back()->withInput()->with(
+                    'stock_error',
+                    "Só temos {$saldo} unidade(s) de {$rotulo}".($noCarrinho > 0 ? " e você já tem {$noCarrinho} no carrinho" : '').'.',
+                );
+            }
+        }
+
+        $this->cart->add($produto->id, $qty, $volume, $p);
+
+        return redirect()
+            ->route('cart.index')
+            ->with('status', 'Garrafa personalizada adicionada ao carrinho.');
     }
 }

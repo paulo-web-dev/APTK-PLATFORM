@@ -7,6 +7,16 @@
 
 @section('admin_title', 'Pedido ' . $num)
 
+@push('styles')
+<style>
+    .adm-cst { border-color: var(--color-primary); }
+    .adm-cst__body { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: center; }
+    .adm-cst__previa { width: 100%; }
+    .adm-cst__texto { font-size: 1.6rem; line-height: 1.25; color: var(--color-text); margin: 0 0 14px; overflow-wrap: anywhere; }
+    @media (max-width: 640px) { .adm-cst__body { grid-template-columns: 1fr; } .adm-cst__previa { max-width: 240px; } }
+</style>
+@endpush
+
 @section('content')
     <a href="{{ route('admin.orders.index') }}" class="back-link" style="display:inline-block; margin-bottom:16px;">← Voltar aos pedidos</a>
 
@@ -36,7 +46,7 @@
                     <tbody>
                         @foreach ($order->items as $it)
                             <tr>
-                                <td data-label="Produto">{{ $it->product_name }}@if ($it->size) <span class="td-muted">· {{ $it->size }}</span>@endif</td>
+                                <td data-label="Produto">{{ $it->product_name }}@if ($it->size) <span class="td-muted">· {{ $it->size }}</span>@endif @if ($it->isCustom()) <span class="cst-selo">Custom</span>@endif</td>
                                 <td class="td-muted" data-label="SKU">{{ $it->product_sku ?? '—' }}</td>
                                 <td class="td-num" data-label="Qtd">{{ $it->qty }}</td>
                                 <td class="td-num" data-label="Unit.">R$ {{ number_format($it->unit_price, 2, ',', '.') }}</td>
@@ -46,6 +56,24 @@
                     </tbody>
                 </table>
             </div>
+
+            {{-- Garrafa custom (leva 11): o que vai impresso no rótulo, em destaque. --}}
+            @foreach ($order->items->filter->isCustom() as $it)
+                @php $d = app(\App\Services\CustomService::class)->exibir($it->personalizacao); @endphp
+                <div class="panel adm-cst">
+                    <div class="panel-head">Personalização · {{ $it->product_name }} · {{ $it->qty }}× {{ $it->size }}</div>
+                    <div class="panel-body adm-cst__body">
+                        <x-custom.previa class="adm-cst__previa" :p="$it->personalizacao" />
+                        <div class="adm-cst__dados">
+                            <p class="adm-cst__texto">“{{ $d['texto'] }}”</p>
+                            <div class="kv"><span class="k">Bebida</span><span class="v">{{ $it->product_name }} <span class="td-muted">({{ $d['bebida'] }})</span></span></div>
+                            <div class="kv"><span class="k">Fonte</span><span class="v">{{ $d['fonte'] }} <span class="td-muted">· {{ $d['fonte_nome'] }}</span></span></div>
+                            <div class="kv"><span class="k">Cor</span><span class="v"><span class="cst-cor-dot" style="background:var({{ $d['cor_token'] }});"></span>{{ $d['cor_nome'] }}@if ($d['cor_hex']) <span class="td-muted">· {{ $d['cor_hex'] }}</span>@endif</span></div>
+                            <div class="kv"><span class="k">Caracteres</span><span class="v">{{ mb_strlen($d['texto']) }}</span></div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
 
             @if ($order->notes)
                 <div class="panel">

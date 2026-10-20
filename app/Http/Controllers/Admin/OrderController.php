@@ -24,7 +24,9 @@ class OrderController extends Controller
     {
         $active = $request->query('status');
 
-        $query = Order::with('user')->withCount('items')->latest();
+        $query = Order::with('user')->withCount('items')
+            ->withExists(['items as tem_custom' => fn ($q) => $q->whereNotNull('personalizacao')])
+            ->latest();
 
         if (in_array($active, Order::STATUS_FILTROS, true)) {
             $query->comStatus($active); // mesmo critério do rótulo

@@ -45,8 +45,13 @@
         @foreach ($order->items as $item)
             <div class="od-row">
                 <span class="od-item">
-                    <x-product.image class="prod-thumb od-thumb" :image="$item->product?->primaryImage" :alt="$item->product_name" compact />
-                    <span><span class="q">{{ $item->qty }}×</span> {{ $item->product_name }}@if ($item->size) <small style="color:var(--color-text-muted);">({{ $item->size }})</small>@endif</span>
+                    @if ($item->isCustom())
+                        <x-custom.previa class="cst-previa--thumb od-thumb" :p="$item->personalizacao" />
+                    @else
+                        <x-product.image class="prod-thumb od-thumb" :image="$item->product?->primaryImage" :alt="$item->product_name" compact />
+                    @endif
+                    <span><span class="q">{{ $item->qty }}×</span> {{ $item->product_name }}@if ($item->size) <small style="color:var(--color-text-muted);">({{ $item->size }})</small>@endif
+                        @if ($item->isCustom()) <x-custom.ficha :p="$item->personalizacao" /> @endif</span>
                 </span>
                 <span>R$ {{ number_format($item->total_price, 2, ',', '.') }}</span>
             </div>

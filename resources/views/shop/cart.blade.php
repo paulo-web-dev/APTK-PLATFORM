@@ -60,10 +60,19 @@
                 <div class="cart-items">
                     @foreach ($items as $row)
                         <div class="cart-row">
-                            <x-product.image class="prod-thumb cart-thumb" :image="$row->product->primaryImage" :alt="$row->product->name" compact />
+                            @if ($row->personalizacao)
+                                {{-- Garrafa custom: miniatura é a prévia; o link volta pro configurador
+                                     (o produto pode estar inativo e a página dele dar 404). --}}
+                                <x-custom.previa class="cst-previa--thumb cart-thumb" :p="$row->personalizacao" />
+                            @else
+                                <x-product.image class="prod-thumb cart-thumb" :image="$row->product->primaryImage" :alt="$row->product->name" compact />
+                            @endif
 
                             <div class="cart-info">
-                                <a href="{{ route('product', $row->product->slug) }}" class="cart-name">{{ $row->product->name }}</a>
+                                <a href="{{ $row->personalizacao ? route('custom') : route('product', $row->product->slug) }}" class="cart-name">{{ $row->product->name }}</a>
+                                @if ($row->personalizacao)
+                                    <x-custom.ficha :p="$row->personalizacao" />
+                                @endif
                                 <span class="cart-unit">@if ($row->size){{ $row->size }} · @endif R$ {{ number_format($row->unit_price, 2, ',', '.') }} / un</span>
                             </div>
 

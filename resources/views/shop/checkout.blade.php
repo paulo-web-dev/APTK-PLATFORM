@@ -108,7 +108,8 @@
                 <div class="mini-itens">
                     @foreach ($items as $row)
                         <div class="sum-item">
-                            <span><span class="q">{{ $row->qty }}×</span> {{ $row->product->name }}@if ($row->size) <small>({{ $row->size }})</small>@endif</span>
+                            <span><span class="q">{{ $row->qty }}×</span> {{ $row->product->name }}@if ($row->size) <small>({{ $row->size }})</small>@endif
+                                @if ($row->personalizacao) <x-custom.ficha :p="$row->personalizacao" /> @endif</span>
                             <span>R$ {{ number_format($row->subtotal, 2, ',', '.') }}</span>
                         </div>
                     @endforeach
@@ -335,8 +336,13 @@
                     @foreach ($items as $row)
                         <div class="sum-item">
                             <span class="sum-item-name">
-                                <x-product.image class="prod-thumb sum-thumb" :image="$row->product->primaryImage" :alt="$row->product->name" compact />
-                                <span><span class="q">{{ $row->qty }}×</span> {{ $row->product->name }}@if ($row->size) <small style="color:var(--color-text-muted);">({{ $row->size }})</small>@endif</span>
+                                @if ($row->personalizacao)
+                                    <x-custom.previa class="cst-previa--thumb sum-thumb" :p="$row->personalizacao" />
+                                @else
+                                    <x-product.image class="prod-thumb sum-thumb" :image="$row->product->primaryImage" :alt="$row->product->name" compact />
+                                @endif
+                                <span><span class="q">{{ $row->qty }}×</span> {{ $row->product->name }}@if ($row->size) <small style="color:var(--color-text-muted);">({{ $row->size }})</small>@endif
+                                    @if ($row->personalizacao) <x-custom.ficha :p="$row->personalizacao" /> @endif</span>
                             </span>
                             <span>R$ {{ number_format($row->subtotal, 2, ',', '.') }}</span>
                         </div>

@@ -67,3 +67,44 @@
 }
 .prod-thumb.prod-ph-box { padding: 4px; }
 .prod-thumb .prod-ph { border: none; }
+
+/* ---- Garrafa custom (leva 11): prévia = imagem da bebida + texto na área
+   em branco do rótulo. A área e o tamanho (cqw = % da largura da prévia)
+   vêm de config/custom.php via <x-custom.previa>. ---- */
+.cst-previa {
+  position: relative;
+  container-type: inline-size;
+  background: var(--color-bg-media);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.cst-previa__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+.cst-previa__area {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.cst-previa__txt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.cst-f-pprader { font-family: var(--font-display); font-weight: 700; }
+.cst-f-amithen { font-family: var(--font-amithen); font-weight: 400; }
+/* Miniatura (carrinho, checkout, pedidos): tamanho vem de quem usa. */
+.cst-previa--thumb { border: 1px solid var(--color-border); border-radius: var(--radius-sm); flex-shrink: 0; }
+/* Ficha da personalização ao lado do nome do item. */
+.cst-ficha { display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-muted); }
+.cst-ficha__texto { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text); flex-basis: 100%; }
+.cst-cor-dot { display: inline-block; width: .8em; height: .8em; border-radius: 50%; vertical-align: -.05em; margin-right: 4px; border: 1px solid var(--color-border); }
+.cst-selo { display: inline-block; font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-primary); border: 1px solid var(--color-primary); border-radius: 100px; padding: 2px 8px; line-height: 1.4; vertical-align: middle; }
