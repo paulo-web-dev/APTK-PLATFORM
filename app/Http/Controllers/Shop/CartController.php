@@ -44,7 +44,8 @@ class CartController extends Controller
         $saldo = $product->stockForSize($size);
         if ($saldo !== null) {
             $rotulo = '"'.$product->name.($size ? " ({$size})" : '').'"';
-            $noCarrinho = (int) ($this->cart->line($this->cart->lineKey($product->id, $size))['qty'] ?? 0);
+            // Soma todas as linhas do volume (inclui as garrafas custom da bebida).
+            $noCarrinho = $this->cart->qtyDoVolume($product->id, $size);
 
             if ($saldo <= 0) {
                 return back()->with('stock_error', "{$rotulo} está esgotado.");
@@ -78,7 +79,10 @@ class CartController extends Controller
             $product = Product::find($line['product_id']);
             $saldo = $product?->stockForSize($line['size']);
 
-            if ($saldo !== null && $data['qty'] > $saldo) {
+            // As outras linhas do mesmo volume (custom/normal) contam junto.
+            $outras = $this->cart->qtyDoVolume((int) $line['product_id'], $line['size']) - (int) $line['qty'];
+
+            if ($saldo !== null && $outras + $data['qty'] > $saldo) {
                 $rotulo = '"'.$product->name.($line['size'] ? " ({$line['size']})" : '').'"';
 
                 return redirect()->route('cart.index')->with(

@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
 
@@ -18,6 +19,7 @@ class OrderService
     public function __construct(
         protected CartService $cart,
         protected FreteService $frete,
+        protected CustomService $custom,
     ) {
     }
 
@@ -32,6 +34,21 @@ class OrderService
 
         if ($items->isEmpty()) {
             throw new RuntimeException('Carrinho vazio.');
+        }
+
+        // Garrafa custom: revalida a personalização (a config pode ter mudado
+        // com o item no carrinho). O preço já vem recalculado da config pelo
+        // CartService::items(). Recusada → volta pro carrinho com o motivo.
+        foreach ($items->whereNotNull('personalizacao') as $row) {
+            try {
+                $p = $this->custom->validar($row->personalizacao);
+                if ($p['bebida'] !== $row->product->slug) {
+                    throw ValidationException::withMessages(['bebida' => 'Essa bebida não está disponível para personalização.']);
+                }
+            } catch (ValidationException $e) {
+                throw new OutOfStockException('A garrafa personalizada de "'.$row->product->name.'" não pode ser confirmada: '
+                    .collect($e->errors())->flatten()->first().' Remova o item do carrinho para continuar.');
+            }
         }
 
         // Frete recalculado AQUI, do CEP de entrega e da opção escolhida — o
@@ -62,7 +79,16 @@ class OrderService
                 ->get()
                 ->keyBy('id');
 
-            foreach ($items as $row) {
+            // Por produto + volume, somando as linhas: a 375 normal e as
+            // garrafas custom da mesma bebida dividem o mesmo estoque.
+            $porVolume = $items->groupBy(fn ($row) => $row->product->id.':'.$row->size)
+                ->map(fn ($linhas) => (object) [
+                    'product' => $linhas->first()->product,
+                    'size'    => $linhas->first()->size,
+                    'qty'     => (int) $linhas->sum('qty'),
+                ]);
+
+            foreach ($porVolume as $row) {
                 $produto = $produtos->get($row->product->id);
                 $rotulo = '"'.$row->product->name.($row->size ? " ({$row->size})" : '').'"';
 
@@ -170,6 +196,7 @@ class OrderService
                     'qty'          => $row->qty,
                     'unit_price'   => $row->unit_price,
                     'total_price'  => $row->subtotal,
+                    'personalizacao' => $row->personalizacao,
                 ]);
 
                 // Baixa no MESMO model lockado da revalidação, nunca no da
@@ -343,13 +370,14 @@ class OrderService
     }
 
     /**
-     * Devolve os itens de um pedido ao carrinho da sessão (produto + volume),
-     * para o cliente tentar pagar de novo sem remontar a sacola.
+     * Devolve os itens de um pedido ao carrinho da sessão (produto + volume
+     * + personalização), para o cliente tentar pagar de novo sem remontar a
+     * sacola. Sem a personalização a garrafa custom voltaria como 375 comum.
      */
     public function restoreCartFromOrder(Order $order): void
     {
         foreach ($order->items as $item) {
-            $this->cart->add((int) $item->product_id, (int) $item->qty, $item->size);
+            $this->cart->add((int) $item->product_id, (int) $item->qty, $item->size, $item->personalizacao);
         }
     }
 }

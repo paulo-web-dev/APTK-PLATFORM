@@ -15,6 +15,10 @@ class CartService
      |   [ "12:750 ml" => ['product_id' => 12, 'size' => '750 ml', 'qty' => 2], ... ]
      | O identificador de linha é "productId:size" ("12:" quando sem volume).
      | Carrinhos antigos ([product_id => qty]) são migrados on-the-fly.
+     |
+     | Garrafa custom (leva 11): a linha leva 'personalizacao' ({bebida,
+     | texto, fonte, cor}) e a chave ganha ":c{hash}" — mesma bebida com
+     | texto diferente vira outra linha. Preço da linha = config custom.preco.
      */
     protected function raw(): array
     {
@@ -48,10 +52,12 @@ class CartService
         return $out;
     }
 
-    /** Identificador único da linha do carrinho (produto + volume). */
-    public function lineKey(int $productId, ?string $size): string
+    /** Identificador único da linha do carrinho (produto + volume [+ personalização]). */
+    public function lineKey(int $productId, ?string $size, ?array $personalizacao = null): string
     {
-        return $productId.':'.($size ?? '');
+        $key = $productId.':'.($size ?? '');
+
+        return $personalizacao ? $key.':c'.app(CustomService::class)->hash($personalizacao) : $key;
     }
 
     /** Linha crua do carrinho (product_id, size, qty) ou null se não existe. */
@@ -60,16 +66,28 @@ class CartService
         return $this->raw()[$key] ?? null;
     }
 
-    public function add(int $productId, int $qty = 1, ?string $size = null): void
+    /**
+     * Quantidade de um produto + volume somando TODAS as linhas (a 375
+     * normal e as custom da mesma bebida dividem o mesmo estoque).
+     */
+    public function qtyDoVolume(int $productId, ?string $size): int
+    {
+        return (int) collect($this->raw())
+            ->filter(fn (array $l) => (int) $l['product_id'] === $productId && ($l['size'] ?? null) === $size)
+            ->sum('qty');
+    }
+
+    public function add(int $productId, int $qty = 1, ?string $size = null, ?array $personalizacao = null): void
     {
         $items = $this->raw();
-        $key   = $this->lineKey($productId, $size);
+        $key   = $this->lineKey($productId, $size, $personalizacao);
 
-        $items[$key] = [
-            'product_id' => $productId,
-            'size'       => $size,
-            'qty'        => ($items[$key]['qty'] ?? 0) + max(1, $qty),
-        ];
+        $items[$key] = array_filter([
+            'product_id'     => $productId,
+            'size'           => $size,
+            'qty'            => ($items[$key]['qty'] ?? 0) + max(1, $qty),
+            'personalizacao' => $personalizacao,
+        ], fn ($v, $k) => $k !== 'personalizacao' || $v !== null, ARRAY_FILTER_USE_BOTH);
 
         $this->save($items);
     }
@@ -116,7 +134,8 @@ class CartService
 
     /**
      * Itens enriquecidos: UMA query e uma coleção de objetos com
-     * key, product, size, qty, unit_price (do volume) e subtotal.
+     * key, product, size, qty, unit_price (do volume, ou o preço fixo do
+     * custom), subtotal e personalizacao (null na linha normal).
      * Produtos inexistentes são ignorados.
      */
     public function items(): Collection
@@ -140,15 +159,19 @@ class CartService
                     return null;
                 }
 
-                $unit = $product->priceForSize($line['size']);
+                $personalizacao = $line['personalizacao'] ?? null;
+                $unit = $personalizacao
+                    ? app(CustomService::class)->preco()
+                    : $product->priceForSize($line['size']);
 
                 return (object) [
-                    'key'        => $key,
-                    'product'    => $product,
-                    'size'       => $line['size'],
-                    'qty'        => $line['qty'],
-                    'unit_price' => $unit,
-                    'subtotal'   => $unit * $line['qty'],
+                    'key'            => $key,
+                    'product'        => $product,
+                    'size'           => $line['size'],
+                    'qty'            => $line['qty'],
+                    'unit_price'     => $unit,
+                    'subtotal'       => $unit * $line['qty'],
+                    'personalizacao' => $personalizacao,
                 ];
             })
             ->filter()

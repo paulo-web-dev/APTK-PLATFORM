@@ -16,13 +16,21 @@ class OrderItem extends Model
         'qty',
         'unit_price',
         'total_price',
+        'personalizacao',
     ];
 
     protected $casts = [
         'qty'         => 'integer',
         'unit_price'  => 'decimal:2',
         'total_price' => 'decimal:2',
+        // Garrafa custom (leva 11): {bebida, texto, fonte, cor} como o cliente enviou.
+        'personalizacao' => 'array',
     ];
+
+    public function isCustom(): bool
+    {
+        return ! empty($this->personalizacao);
+    }
 
     public function order(): BelongsTo
     {

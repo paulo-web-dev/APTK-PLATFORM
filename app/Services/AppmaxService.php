@@ -369,15 +369,25 @@ class AppmaxService
 
     public function createOrder(Order $order, int $appmaxCustomerId): int
     {
-        $products = $order->items->map(function ($item) {
+        $repetidos = [];
+        $products = $order->items->map(function ($item) use (&$repetidos) {
             $sku = $item->product_sku ?: ('APTK-'.$item->product_id);
             if ($item->size) {
                 $sku .= '-'.$this->digits($item->size); // SKU único por volume
             }
+            if ($item->isCustom()) {
+                $sku .= '-CUSTOM';
+            }
+            // Duas garrafas custom da mesma bebida com textos diferentes
+            // teriam o mesmo SKU: a partir da segunda, -2, -3...
+            $repetidos[$sku] = ($repetidos[$sku] ?? 0) + 1;
+            if ($repetidos[$sku] > 1) {
+                $sku .= '-'.$repetidos[$sku];
+            }
 
             return [
                 'sku'        => substr($sku, 0, 100),
-                'name'       => substr($item->product_name.($item->size ? ' '.$item->size : ''), 0, 255),
+                'name'       => substr($item->product_name.($item->size ? ' '.$item->size : '').($item->isCustom() ? ' (Custom)' : ''), 0, 255),
                 'quantity'   => (int) $item->qty,
                 'unit_value' => $this->toCents($item->unit_price),
                 'type'       => 'physical',
