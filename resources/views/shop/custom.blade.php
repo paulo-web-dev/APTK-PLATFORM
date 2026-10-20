@@ -80,6 +80,8 @@
   .cst-preco strong { display: block; font-size: var(--text-xl); font-weight: 400; }
   .cst-preco span { font-size: var(--text-xs); color: var(--color-text-muted); letter-spacing: .06em; text-transform: uppercase; }
   .cst-aviso { font-size: var(--text-sm); color: var(--color-text-muted); border-left: 3px solid var(--color-primary); padding: 4px 0 4px 12px; margin: 0 0 18px; }
+  .cst-mini-trilho { display: none; }
+  .cor-opt[hidden] { display: none; }
   .cst-erro { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--color-danger); border: 1px solid var(--color-border); border-left: 3px solid var(--color-danger); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 20px; }
 
   /* ---- Full Custom (leva 10): texto à esquerda, foto à direita ---- */
@@ -94,6 +96,17 @@
     .cst-hero .container-aptk, .cst-config, .full-grid { grid-template-columns: 1fr; gap: 36px; }
     .cst-config-media { position: static; }
     .cst-moldura { max-width: 340px; }
+    /* Miniatura: trilho sticky de altura zero no topo do formulário — a
+       barra passa por cima do conteúdo sem ocupar espaço. Some enquanto a
+       prévia grande está na tela (classe via JS). */
+    .cst-mini-trilho { display: block; position: sticky; top: var(--header-h); z-index: 5; height: 0; margin: -22px -18px 22px; }
+    .cst-mini { display: flex; align-items: center; gap: 12px; position: absolute; top: 0; left: 0; right: 0; padding: 8px 18px; background: var(--color-bg-elevated); border-bottom: 1px solid var(--color-border); box-shadow: var(--shadow-card); transition: opacity .2s ease; }
+    .cst-mini.is-escondida { opacity: 0; pointer-events: none; }
+    .cst-mini__previa { width: 64px; flex: none; border-radius: var(--radius-sm); }
+    .cst-mini__info { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+    .cst-mini__bebida { font-family: var(--font-display); font-size: var(--text-sm); color: var(--color-text); }
+    .cst-mini__texto { color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cst-mini__detalhe { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cst-hero .container-aptk { padding-block: 44px 40px; }
   }
   @media (max-width: 520px) {
@@ -188,6 +201,20 @@
         </div>
 
         <div class="cst-form">
+          {{-- Celular: miniatura da prévia que acompanha a rolagem do formulário
+               (sticky no topo da área do formulário). No desktop fica escondida:
+               a prévia grande já é sticky ao lado. --}}
+          <div class="cst-mini-trilho">
+            <div class="cst-mini is-escondida" id="cstMini" aria-hidden="true">
+              <x-custom.previa class="cst-mini__previa" :p="$sel" />
+              <span class="cst-mini__info">
+                <strong class="cst-mini__bebida"></strong>
+                <span class="cst-mini__texto"></span>
+                <span class="cst-mini__detalhe"></span>
+              </span>
+            </div>
+          </div>
+
           @if (session('stock_error'))
             <div class="cst-erro">{{ session('stock_error') }}</div>
           @endif
@@ -202,7 +229,8 @@
                   <label class="chip-opt" title="{{ $b['nome'] }}">
                     <input type="radio" name="bebida" value="{{ $slug }}" required @checked($sel['bebida'] === $slug)
                            data-img="{{ $b['imagem'] }}" data-ratio="{{ $b['proporcao'] }}"
-                           data-area="{{ implode(',', $b['area']) }}" data-tam="{{ config('custom.bebidas.'.$slug.'.fonte') }}">
+                           data-area="{{ implode(',', $b['area']) }}" data-tam="{{ config('custom.bebidas.'.$slug.'.fonte') }}"
+                           data-cores="{{ implode(',', $b['cores']) }}" data-nome="{{ $b['nome'] }}">
                     <span>{{ $b['nome'] }}</span>
                   </label>
                 @endforeach
@@ -236,8 +264,9 @@
               <p class="f-label" style="margin-top:18px;">Cor do texto</p>
               <div class="cor-group" role="radiogroup" aria-label="Cor do texto">
                 @foreach ($cores as $chave => $c)
-                  <label class="cor-opt">
-                    <input type="radio" name="cor" value="{{ $chave }}" required @checked($sel['cor'] === $chave) data-token="{{ $c['token'] }}">
+                  {{-- Só as cores liberadas pra bebida (config bebidas.*.cores); o JS refaz ao trocar de bebida. --}}
+                  <label class="cor-opt" @if (! in_array($chave, $bebidas[$sel['bebida']]['cores'] ?? array_keys($cores), true)) hidden @endif>
+                    <input type="radio" name="cor" value="{{ $chave }}" required @checked($sel['cor'] === $chave) data-token="{{ $c['token'] }}" data-nome="{{ $c['nome'] }}">
                     <span class="cor-sw" style="background:var({{ $c['token'] }});"></span>
                     {{ $c['nome'] }}
                   </label>
@@ -293,18 +322,31 @@
     var form = document.getElementById('cstForm');
     var previa = document.getElementById('cstPrevia');
     if (!form || !previa) return;
-    var img = previa.querySelector('.cst-previa__img');
-    var area = previa.querySelector('.cst-previa__area');
-    var txt = previa.querySelector('.cst-previa__txt');
+    var mini = document.getElementById('cstMini');
+    var previas = [previa].concat(mini ? [mini.querySelector('.cst-previa')] : []);
     var input = document.getElementById('cst-texto');
     var conta = document.getElementById('cstConta');
     var limite = parseInt(input.getAttribute('maxlength'), 10);
     function marcado(nome) { return form.querySelector('input[name="' + nome + '"]:checked'); }
-    function render() {
-      var b = marcado('bebida'), f = marcado('fonte'), c = marcado('cor');
+    // Cor fora da lista da bebida some do seletor; se a marcada sumiu, marca a primeira liberada.
+    function filtrarCores(b) {
+      var ok = (b && b.dataset.cores ? b.dataset.cores : '').split(',');
+      var primeira = null;
+      form.querySelectorAll('input[name="cor"]').forEach(function (r) {
+        var livre = ok.indexOf(r.value) !== -1;
+        r.closest('.cor-opt').hidden = !livre;
+        if (livre && !primeira) primeira = r;
+        if (!livre && r.checked) r.checked = false;
+      });
+      if (!marcado('cor') && primeira) primeira.checked = true;
+    }
+    function pintar(p, b, f, c, v) {
+      var img = p.querySelector('.cst-previa__img');
+      var area = p.querySelector('.cst-previa__area');
+      var txt = p.querySelector('.cst-previa__txt');
       if (b) {
         if (img && img.getAttribute('src') !== b.dataset.img) img.src = b.dataset.img;
-        previa.style.aspectRatio = b.dataset.ratio;
+        p.style.aspectRatio = b.dataset.ratio;
         var a = b.dataset.area.split(',');
         area.style.left = a[0] + '%'; area.style.top = a[1] + '%';
         area.style.width = a[2] + '%'; area.style.height = a[3] + '%';
@@ -313,11 +355,29 @@
       txt.className = 'cst-previa__txt ' + (f ? f.dataset.classe : '');
       txt.style.fontSize = (tam * (f ? parseFloat(f.dataset.escala) : 1)) + 'cqw';
       if (c) txt.style.color = 'var(' + c.dataset.token + ')';
-      // Sem Enter: a quebra é automática (o servidor recusa quebra de linha).
-      var v = input.value.replace(/[\r\n]+/g, ' ');
       txt.textContent = v.trim() || 'Seu texto aqui';
       txt.classList.toggle('is-vazio', !v.trim());
+    }
+    function render() {
+      var b = marcado('bebida');
+      filtrarCores(b);
+      var f = marcado('fonte'), c = marcado('cor');
+      // Sem Enter: a quebra é automática (o servidor recusa quebra de linha).
+      var v = input.value.replace(/[\r\n]+/g, ' ');
+      previas.forEach(function (p) { pintar(p, b, f, c, v); });
       conta.textContent = v.length + '/' + limite;
+      if (mini) {
+        mini.querySelector('.cst-mini__bebida').textContent = b ? b.dataset.nome : '';
+        mini.querySelector('.cst-mini__texto').textContent = v.trim() ? '“' + v.trim() + '”' : '';
+        mini.querySelector('.cst-mini__detalhe').textContent =
+          [f ? f.closest('.style-opt').querySelector('.so-name').textContent : '', c ? c.dataset.nome : ''].filter(Boolean).join(' · ');
+      }
+    }
+    // Miniatura só aparece quando a prévia grande saiu da tela.
+    if (mini && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (e) {
+        mini.classList.toggle('is-escondida', e[0].isIntersecting);
+      }, { rootMargin: '-64px 0px 0px 0px' }).observe(previa);
     }
     form.addEventListener('change', render);
     input.addEventListener('input', render);

@@ -235,6 +235,45 @@ class CustomPedidoTest extends TestCase
         ];
     }
 
+    public function test_cor_fora_da_lista_da_bebida_e_recusada(): void
+    {
+        Product::create(['name' => 'Cosmopolitan', 'slug' => 'cosmopolitan', 'sku' => 'COS750', 'price' => 210,
+            'sizes' => ['375 ml'], 'size_prices' => ['375 ml' => 165], 'stock_qty' => 10, 'active' => true]);
+        $this->get('/custom');
+
+        // Cobre não combina com o Cosmopolitan (config bebidas.cosmopolitan.cores).
+        $this->post('/custom/carrinho', $this->p(['bebida' => 'cosmopolitan', 'cor' => 'cobre']))
+            ->assertSessionHasErrors(['cor' => 'Essa cor não está disponível para essa bebida.']);
+        $this->assertTrue(app(CartService::class)->isEmpty());
+
+        $this->post('/custom/carrinho', $this->p(['bebida' => 'cosmopolitan', 'cor' => 'ambar']))
+            ->assertRedirect(route('cart.index'));
+    }
+
+    public function test_tabela_de_cores_por_bebida(): void
+    {
+        $custom = app(\App\Services\CustomService::class);
+
+        $this->assertSame(['preto', 'ambar', 'cobre'], $custom->coresDa('negroni-classico')); // sem lista = paleta inteira
+        $this->assertSame(['preto', 'ambar'], $custom->coresDa('cosmopolitan'));
+        $this->assertSame(['preto', 'ambar'], $custom->coresDa('dry-martini'));
+        $this->assertSame(['preto'], $custom->coresDa('fitzgerald'));
+    }
+
+    public function test_seletor_so_mostra_as_cores_da_bebida_marcada_e_a_miniatura_do_celular(): void
+    {
+        Product::create(['name' => 'Fitzgerald', 'slug' => 'fitzgerald', 'sku' => 'FITZ750', 'price' => 210,
+            'sizes' => ['375 ml'], 'size_prices' => ['375 ml' => 165], 'stock_qty' => 10, 'active' => true]);
+
+        // Fitzgerald é a primeira bebida da lista no banco do teste → marcada.
+        $html = $this->get('/custom')->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-cores="preto"', $html);
+        $this->assertMatchesRegularExpression('/<label class="cor-opt"\s+hidden\s*>\s*<input type="radio" name="cor" value="cobre"/', $html);
+        $this->assertMatchesRegularExpression('/<label class="cor-opt"\s*>\s*<input type="radio" name="cor" value="preto"/', $html);
+        $this->assertStringContainsString('id="cstMini"', $html);
+    }
+
     public function test_texto_com_30_caracteres_e_acento_passa(): void
     {
         $this->negroni();

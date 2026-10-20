@@ -20,6 +20,11 @@
  |   rótulo, em % da imagem (x, y, largura, altura), calibrada por imagem em
  |   2026-10-20; `fonte` é o tamanho do texto em % da largura da imagem (largura da
  |   área / 8: cabem ~15 caracteres por linha, 30 em duas).
+ |   `cores` (opcional) = chaves da paleta permitidas na bebida; sem a chave,
+ |   vale a paleta inteira. Calibrado em 2026-10-20: o rótulo é igual nas 9
+ |   (Âmbar e Cobre têm contraste baixo nele, ~1,5:1), então a cor sai quando
+ |   se confunde com o líquido em volta do rótulo (ΔE Lab: Cobre < 33, Âmbar
+ |   < 30). Preto vale em todas.
  */
 return [
     'preco'  => 211.00,
@@ -43,11 +48,11 @@ return [
         'negroni-classico'  => ['imagem' => 'img/custom/negroni-classico.jpeg',  'largura' => 423, 'altura' => 413, 'area' => [37.7, 55.2, 26.4, 24.9], 'fonte' => 3.3],
         'boulevardier'      => ['imagem' => 'img/custom/boulevardier.jpeg',      'largura' => 400, 'altura' => 421, 'area' => [39.2, 56.0, 27.9, 23.0], 'fonte' => 3.5],
         'caipirinha-arazul' => ['imagem' => 'img/custom/caipirinha-arazul.jpeg', 'largura' => 440, 'altura' => 410, 'area' => [34.6, 56.3, 25.0, 23.9], 'fonte' => 3.1],
-        'dry-martini'       => ['imagem' => 'img/custom/dry-martini.jpeg',       'largura' => 459, 'altura' => 425, 'area' => [39.8, 55.8, 24.3, 23.5], 'fonte' => 3.0],
+        'dry-martini'       => ['imagem' => 'img/custom/dry-martini.jpeg',       'largura' => 459, 'altura' => 425, 'area' => [39.8, 55.8, 24.3, 23.5], 'fonte' => 3.0, 'cores' => ['preto', 'ambar']],
         'caju-amigo'        => ['imagem' => 'img/custom/caju-amigo.jpeg',        'largura' => 399, 'altura' => 416, 'area' => [37.6, 56.5, 28.6, 23.8], 'fonte' => 3.6],
-        'fitzgerald'        => ['imagem' => 'img/custom/fitzgerald.jpeg',        'largura' => 441, 'altura' => 408, 'area' => [37.5, 56.9, 25.2, 24.5], 'fonte' => 3.1],
+        'fitzgerald'        => ['imagem' => 'img/custom/fitzgerald.jpeg',        'largura' => 441, 'altura' => 408, 'area' => [37.5, 56.9, 25.2, 24.5], 'fonte' => 3.1, 'cores' => ['preto']],
         'moscow-mule'       => ['imagem' => 'img/custom/moscow-mule.jpeg',       'largura' => 423, 'altura' => 418, 'area' => [38.9, 56.0, 26.4, 24.0], 'fonte' => 3.3],
-        'cosmopolitan'      => ['imagem' => 'img/custom/cosmopolitan.jpeg',      'largura' => 455, 'altura' => 415, 'area' => [37.7, 57.1, 24.7, 23.9], 'fonte' => 3.1],
+        'cosmopolitan'      => ['imagem' => 'img/custom/cosmopolitan.jpeg',      'largura' => 455, 'altura' => 415, 'area' => [37.7, 57.1, 24.7, 23.9], 'fonte' => 3.1, 'cores' => ['preto', 'ambar']],
         'sur-lorange'       => ['imagem' => 'img/custom/sur-lorange.jpeg',       'largura' => 423, 'altura' => 421, 'area' => [39.2, 57.7, 26.8, 24.0], 'fonte' => 3.4],
     ],
 ];

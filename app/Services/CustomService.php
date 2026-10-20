@@ -48,6 +48,20 @@ class CustomService
         return config('custom.bebidas', []);
     }
 
+    /**
+     * Chaves de cor permitidas na bebida (config `bebidas.*.cores`); sem a
+     * lista, a paleta inteira. Só devolve cor que existe na paleta.
+     *
+     * @return list<string>
+     */
+    public function coresDa(?string $bebida): array
+    {
+        $paleta = array_keys(config('custom.cores', []));
+        $lista = config('custom.bebidas.'.$bebida.'.cores');
+
+        return is_array($lista) ? array_values(array_intersect($paleta, $lista)) : $paleta;
+    }
+
     /** Produto da bebida, se ela é elegível e existe no catálogo (ativo ou não). */
     public function produto(?string $bebida): ?Product
     {
@@ -78,7 +92,14 @@ class CustomService
                     }
                 }],
             'fonte'  => ['required', 'string', Rule::in(array_keys(config('custom.fontes', [])))],
-            'cor'    => ['required', 'string', Rule::in(array_keys(config('custom.cores', [])))],
+            'cor'    => ['required', 'string', Rule::in(array_keys(config('custom.cores', []))),
+                function ($attr, $valor, $fail) use ($p) {
+                    // Combinação: a cor tem que estar liberada pra bebida escolhida.
+                    if (is_string($p['bebida']) && array_key_exists($p['bebida'], $this->bebidas())
+                        && ! in_array($valor, $this->coresDa($p['bebida']), true)) {
+                        $fail('Essa cor não está disponível para essa bebida.');
+                    }
+                }],
             'texto'  => ['required', 'string', 'max:'.$this->limite(), 'not_regex:/[\r\n]/', 'regex:'.self::CARACTERES],
         ], [
             'bebida.required' => 'Escolha a bebida.',

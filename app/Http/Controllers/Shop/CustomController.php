@@ -36,7 +36,8 @@ class CustomController extends Controller
         $produtos = Product::whereIn('slug', array_keys($this->custom->bebidas()))->pluck('name', 'slug');
         $bebidas = collect($this->custom->bebidas())
             ->filter(fn ($b, $slug) => $produtos->has($slug))
-            ->map(fn ($b, $slug) => ['nome' => $produtos[$slug]] + $this->custom->exibir(['bebida' => $slug]));
+            ->map(fn ($b, $slug) => ['nome' => $produtos[$slug], 'cores' => $this->custom->coresDa($slug)]
+                + $this->custom->exibir(['bebida' => $slug]));
 
         return view('shop.custom', [
             'bebidas'  => $bebidas,

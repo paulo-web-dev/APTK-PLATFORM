@@ -678,9 +678,36 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
 - **Cupom:** o checkout não aplica cupom hoje; quando entrar, decidir se vale
   pro custom.
 - **Microvix (travado):** o item custom iria com o código do 375 a R$ 211.
-- **Em aberto:** no celular a prévia fica acima do formulário (sem sticky);
-  quem digita o texto no fim da página precisa rolar pra ver. Avaliar uma
-  prévia compacta fixa se a gestão pedir.
+- **Celular:** miniatura da prévia (sticky, no topo da área do formulário)
+  aparece quando a prévia grande sai da tela e atualiza ao vivo. Desktop
+  sem mudança (a prévia grande já é sticky).
+- **Cores por bebida** (`bebidas.*.cores`, padrão = paleta inteira). O
+  rótulo é o mesmo mockup nas 9 imagens: Preto tem contraste alto em todas;
+  Âmbar e Cobre ficam em ~1,5:1 de luminância sobre o rótulo, então o corte
+  foi pela distância de cor (ΔE Lab) até o líquido em volta do rótulo
+  (Cobre sai abaixo de 33, Âmbar abaixo de 30). O seletor só mostra as
+  liberadas e o servidor recusa a combinação.
+
+  | bebida | Preto | Âmbar | Cobre |
+  |---|---|---|---|
+  | Negroni Clássico | sim | sim | sim |
+  | Boulevardier | sim | sim | sim |
+  | Caipirinha Arazul | sim | sim | sim |
+  | Dry Martini | sim | sim | — (ΔE 30,5) |
+  | Caju Amigo | sim | sim | sim |
+  | Fitzgerald | sim | — (ΔE 26,4) | — (ΔE 14,7) |
+  | Moscow Mule | sim | sim | sim |
+  | Cosmopolitan | sim | sim | — (ΔE 32,1) |
+  | Sur L'Orange | sim | sim | sim |
+
+### 13.1 Pendências da leva 11 (não feitas)
+
+- **Prévias em resolução maior:** pedir à APTK (hoje ~420 px, 16 KB).
+- **SKU por volume na Appmax:** a 375 vai como `{sku do produto}-375`, e o
+  `products.sku` é o do 750 (ex. `NC750-375`). A planilha tem o SKU de cada
+  volume (`NC375` etc.). Proposta: o importador grava o mapa volume → SKU
+  (ex. `size_skus`) e o payload da Appmax usa o SKU do volume (custom:
+  `NC375-CUSTOM`).
 
 **Deploy:** `reset --hard`, `migrate --force` (coluna nova em `order_items`),
 `route:clear && route:cache`, `view:clear && config:cache` (config nova).

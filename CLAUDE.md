@@ -106,7 +106,7 @@ Tudo em `config/custom.php` (preço fixo R$ 211, volume 375 ml, fontes PP Rader 
 Amithen — só fonte que existe no projeto —, paleta, 9 bebidas com imagem e área do
 rótulo calibrada por imagem) e validado por `CustomService::validar` no add-to-cart
 E no checkout (bebida na lista com produto no banco, ativo ou não; fonte/cor na
-lista; texto ≤ 30, sem HTML/emoji/Enter). Prévia `<x-custom.previa>` (imagem de
+lista e liberada pra bebida em `bebidas.*.cores`; texto ≤ 30, sem HTML/emoji/Enter). Prévia `<x-custom.previa>` (imagem de
 `public/img/custom/{slug}.jpeg` + texto sobreposto em `cqw`), mesma em carrinho,
 checkout, pedidos e admin; `<x-custom.ficha>` ao lado do nome. Chave de cor da
 paleta nunca sai da config (pedido antigo aponta pra ela). Full Custom segue no WhatsApp.
@@ -241,8 +241,9 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
    `gerar-manifesto.php` e `produtos:aplicar-fotos`. Ver ESTADO-ATUAL §12.1.
 5. Leva 10: fotos e textos provisórios, links das marcas, pontos do Clube "em breve"
    e estilo "Clássico" (fonte Blackword) do Custom — lista em ESTADO-ATUAL §11.
-6. Custom (leva 11): imagens da prévia pequenas (~420 px), pedir maiores; prévia
-   no celular sem sticky. Ver ESTADO-ATUAL §13.
+6. Custom (leva 11): imagens da prévia pequenas (~420 px), pedir maiores. SKU
+   por volume na Appmax (hoje `{sku do 750}-375`; a planilha tem o SKU de cada
+   volume). Ver ESTADO-ATUAL §13.1.
 
 ## Deploy
 
