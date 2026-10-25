@@ -2,7 +2,8 @@
     /* Carrinho ao vivo no header — uma query só, via CartService da loja. */
     $aptkCartCount = app(\App\Services\CartService::class)->count();
 
-    /* Menu leva 01: Quem Somos · Produtos · Custom · Clube · Eventos · Franquias · Collabs.
+    /* Menu leva 01: Quem Somos · Produtos · Custom · Clube · Eventos · Franquias · Collabs
+       (+ Área de Parceiros, externo, em 25/10/2026).
        Itens institucionais → rota pages.show (slug => rótulo).
        Custom tem rota própria (route('custom')) e Assinantes saiu da nav
        (a página /assinantes continua existindo para links diretos). */
@@ -120,6 +121,14 @@
     .site-header .container-aptk { gap: 20px; }
     .site-nav ul { gap: 15px; }
   }
+  /* Com "Área de Parceiros" a nav não cabe entre 881 e 1000 px no espaçamento
+     acima: aperta gaps e fonte até o menu virar hambúrguer (880). */
+  @media (min-width: 881px) and (max-width: 1000px) {
+    .site-header .container-aptk { gap: 12px; }
+    .site-nav ul { gap: 9px; }
+    .site-nav a { font-size: 13px; }
+    .header-actions { gap: 6px; }
+  }
   @media (max-width: 980px) {
     .footer-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
     .footer-news { grid-column: 1 / -1; }
@@ -164,6 +173,8 @@
           {{-- Leva 04: Franquias = LP do parceiro (lp.aptkspirits.com). --}}
           <li><a href="https://lp.aptkspirits.com/">Franquias</a></li>
           <li><a href="{{ route('pages.show', 'collabs') }}" @class(['is-active' => request()->is('collabs')])>Collabs</a></li>
+          {{-- Externo (portal de parceiros): nova aba, nunca ativo. /parceiros segue → /collabs. --}}
+          <li><a href="https://parceiro.aptkspirits.com/" target="_blank" rel="noopener">Área de Parceiros</a></li>
         </ul>
       </nav>
 
