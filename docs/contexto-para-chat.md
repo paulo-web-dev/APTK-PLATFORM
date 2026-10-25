@@ -21,7 +21,7 @@
 E-commerce Laravel da holding **Small Batches**, com três marcas:
 - **APTK Spirits**: drinks engarrafados (marca principal do site)
 - **Ice4Pros**: gelo de cristal premium (tem LP própria e domínio próprio)
-- **Barín**: destilados artesanais (LP em `/barin`)
+- **BARIN**: destilados artesanais (LP em `/barin`)
 
 - Produção: `aptk.unysystens.com.br` (VPS Ubuntu 20.04, Apache2, MySQL 8), código em `/var/www/aptk`
 - Local: Windows + XAMPP/Laragon, `localhost:8000`
@@ -84,7 +84,7 @@ Redirects 301 antigos: `/customizacao`→`/custom`, `/parceiros`→`/collabs`,
 
 **Domínio de marca** (`MarcaHost` + `config/marcas.php`): em `ice4pros.com.br` a raiz serve a
 LP com layout isolado (`layouts.marca`), qualquer outro caminho leva 301 pro domínio da APTK.
-Em dev: `http://ice4pros.localhost:8000`. Barín entra depois só adicionando uma entrada.
+Em dev: `http://ice4pros.localhost:8000`. BARIN entra depois só adicionando uma entrada.
 
 **Preço e estoque por volume.** `Product` tem `sizes` (JSON, ex. `["375ml","750ml"]`),
 `size_prices` (mapa volume→preço) e `size_stock` (mapa volume→qtd, nullable). Usar
@@ -144,7 +144,7 @@ nome de campo vale o PDF original.
   Parse da resposta do importador é palpite, confirmar no primeiro envio real.
 - **Bloqueios do lado do ERP** (dependem da Linx/gestão): nenhum dos 1237 produtos está
   marcado como B2C; empresa APTK não envia estoque; não existe tabela de preço; faltam planos
-  APPMAX de Pix e boleto; Ice4Pros fatura em CNPJ separado e Barín não existe no ERP;
+  APPMAX de Pix e boleto; Ice4Pros fatura em CNPJ separado e BARIN não existe no ERP;
   não há portal de teste (aceitação = dados reais). Dev usa `microvix:fake` (dados fictícios).
 - Painel: `/admin/microvix`.
 

@@ -4,7 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-25** (§13 — Custom: 7 bebidas e nome de exibição).
+Última revisão: **2026-10-25** (§14 — leva 13: fotos da Home, seções largas,
+BARIN sem acento; §13 — Custom: 7 bebidas e nome de exibição).
 Antes: 2026-10-20 (§13 — leva 11, Custom vira compra direta;
 §12 — fotos de produto em fundo branco com rótulo atual; fotos de ambiente com
 rótulo antigo trocadas). Antes: 2026-10-19 (§11 — leva 10, texto e layout de 6 páginas pelo
@@ -68,7 +69,7 @@ valor identificado, só não estão preenchidos no `.env`:
 Decisão pendente com a gestão: status inicial (3 ou 1) e qual tipo de
 encomenda representa o frete do site.
 
-### 1.5 Estrutura societária no ERP: Ice4Pros tem CNPJ próprio, Barín não existe
+### 1.5 Estrutura societária no ERP: Ice4Pros tem CNPJ próprio, BARIN não existe
 
 `B2CConsultaCNPJsChave` enxerga 12 CNPJs, todos no portal 18443 ("APTK
 Spirits - Franqueadora"), classificação Cliente, `b2c=False` em todos:
@@ -85,7 +86,7 @@ Implicações:
   (`MicrovixClient` injeta `config('microvix.cnpj_emp')` em toda consulta).
   Vender gelo pelo site com ERP na frente exige suporte a multi-empresa —
   não previsto na fase 1/1.5.
-- **Barín** não aparece em lugar nenhum: nem CNPJ, nem empresa. Se Barín for
+- **BARIN** não aparece em lugar nenhum: nem CNPJ, nem empresa. Se BARIN for
   vendida pelo site, ou é faturada por outra empresa do grupo (qual?) ou
   não está no ERP.
 
@@ -177,7 +178,7 @@ do servidor — mas antes, nesta ordem:
 7. ~~**Paulo:** implementar o comando do §3~~ — feito em 30/08
    (`pedidos:cancelar-cartao-preso`); falta só confirmar o cron do
    `schedule:run` no servidor (§3).
-8. **Decisão:** gelo (Ice4Pros, empresa 2) e Barín ficam fora do ERP na
+8. **Decisão:** gelo (Ice4Pros, empresa 2) e BARIN ficam fora do ERP na
    virada, ou a fase 1.5 ganha multi-empresa — §1.5.
 9. Virar `MICROVIX_FONTE_VERDADE=erp` no `.env` do servidor +
    `php artisan config:cache`. A partir daí `/admin/produtos` e `/admin/estoque`
@@ -487,7 +488,7 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
   editorial no lugar do carrossel promocional; saiu o modal do Clube. Setas do
   carrossel de produtos no meio da foto no celular.
 - **Loja:** capa nova; migration renomeia só `name` das categorias (Clássicos,
-  Criações Autorais, Bases & Ingredientes, Barín, Ice4Pros); slugs iguais.
+  Criações Autorais, Bases & Ingredientes, Barín — BARIN desde a leva 13 —, Ice4Pros); slugs iguais.
 - **Custom:** hero "Sua história. Nossa alquimia.", jornada 01/02/03, seção
   "Crie seu APTK" com o formulário reordenado (mesmos campos e validação), Full
   Custom com texto + foto. Rótulos em Espumante/Cuba Libre (tokens).
@@ -505,7 +506,7 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
 |---|---|---|
 | Quem Somos · 2016 | `featured-negroni.jpg` (rótulo antigo) | garrafa/balcão da era Apothek |
 | Quem Somos · card APTK Spirits | `franquias-hero.jpg` (§12) | produto ou loja APTK |
-| Quem Somos · card Barín | `cat-cosmopolitan.jpg` (rótulo antigo) | garrafa ou serviço da Barín |
+| Quem Somos · card BARIN | `cat-cosmopolitan.jpg` (rótulo antigo) | garrafa ou serviço da BARIN |
 | Quem Somos · galeria | `clube-hero.jpg`, `cat-evento.jpg` (§12) | — |
 | Custom · hero (2 fotos) | `cat-pessoas.jpg` (§12), `about-loja-3.jpg` | Presentes & Celebrações / Marcas & Projetos Especiais |
 | Custom · Full Custom | `cat-dry-martini.jpg` | garrafa com rótulo de marca parceira + embalagem premium |
@@ -525,7 +526,7 @@ duplicados com nome diferente: `loja-aptk`=`sobre-loja`,
   trajetória, CTAs do hero da Home, faixa 2016/Brasil/Autoral, os 4 cards da
   vitrine editorial, CTA "Faça parte do clube", legendas "Presentes &
   Celebrações" / "Marcas & Projetos Especiais" do Custom.
-- Inventados (confirmar): link "Explorar" dos cards da Home; "Conhecer a Barín" /
+- Inventados (confirmar): link "Explorar" dos cards da Home; "Conhecer a BARIN" /
   "Conhecer a Ice4Pros"; título do portfólio "Eventos que já levaram a nossa
   assinatura."; eyebrows "Eventos", "Portfólio", "Full Custom".
 - Caixa de frase onde o briefing tinha Title Case: "Feito para o ritmo do bar",
@@ -536,7 +537,7 @@ duplicados com nome diferente: `loja-aptk`=`sobre-loja`,
   linha).
 
 **Links das marcas** (`config/marcas.php` → `links`): APTK → Instagram
-@aptkspirits; Barín → `/barin` e Ice4Pros → `ice4pros.com.br` até chegarem os
+@aptkspirits; BARIN → `/barin` e Ice4Pros → `ice4pros.com.br` até chegarem os
 Instagrams.
 
 **Clube — pontos "em breve":** o sistema não tem pontos. Onde o briefing (e a
@@ -615,7 +616,7 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
   - `hero-negroni-poster.jpg` + vídeo do hero da Home (Negroni).
   - `cat-fitzgerald.jpg`: Eventos · Customização.
   - `featured-negroni.jpg`: Quem Somos · 2016; Eventos · Gifting.
-  - `cat-cosmopolitan.jpg`: Quem Somos · card Barín.
+  - `cat-cosmopolitan.jpg`: Quem Somos · card BARIN.
   - Fotos da leva 13 que a gestão mandou com garrafa de rótulo antigo (ficam,
     pela regra acima): `home-clube.jpg` (Negroni Clássico de rótulo branco) e
     `home-arte-de-presentear.jpg` (Old Fashioned).
@@ -764,6 +765,18 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
 - **Teste de fundo preto nos produtos (D):** Fundo preto nos produtos exige foto
   nova em fundo preto ou retoque manual (vidro mostra o fundo branco do
   estúdio). Recorte automático testado e descartado em 25/10/2026.
+- **BARIN sem acento** em todo texto visível. Trocado em: `layouts/public`
+  (rodapé), `shop/barin` (title, meta, textos, títulos, chips), `shop/home`
+  (eyebrow e link do ecossistema), `shop/quem-somos` (texto do ecossistema e
+  card), `config/marcas.php` (label "Conhecer a BARIN"), `ProductSeeder`
+  (categoria), `database/data/catalogo-planilha-2026-10.csv` (5 produtos) e
+  migration `2026_10_25_100000_barin_sem_acento` (categoria `barin` + produtos
+  com "Barín" no nome; só `name`, com down). Slugs, rotas e `/barin` iguais;
+  `order_items.product_name` de pedido antigo fica como foi vendido. O
+  importador em dry-run não muda nada nos 5 produtos.
+
+**Deploy da leva 13:** `migrate --force` (BARIN), `view:clear`, `config:cache`
+(`config/marcas.php`).
 
 ---
 

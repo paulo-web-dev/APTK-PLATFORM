@@ -1,15 +1,15 @@
-{{-- LP BARÍN (leva 03) — COPY PROVISÓRIO no tom do brandbook, marcado para
+{{-- LP BARIN (leva 03) — COPY PROVISÓRIO no tom do brandbook, marcado para
      ajuste pelo cliente. Estrutura pedida: Sobre · Posicionamento ·
      Diferenciais · Portfólio · Aplicações · Clientes · CTA produtos.
      Fotos: placeholders marcados até o material chegar. --}}
 @extends('layouts.public')
 
-@section('title', 'Barín — A linha artesanal da holding · APTK Spirits')
-@section('meta_description', 'Barín: bebidas artesanais com receitas próprias e identidade de bar. Conheça a marca artesanal da holding APTK Spirits.')
+@section('title', 'BARIN — A linha artesanal da holding · APTK Spirits')
+@section('meta_description', 'BARIN: bebidas artesanais com receitas próprias e identidade de bar. Conheça a marca artesanal da holding APTK Spirits.')
 
 @push('styles')
 <style>
-  /* ---- LP Barín (dark) ---- */
+  /* ---- LP BARIN (dark) ---- */
   .brn-hero { position: relative; overflow: hidden; border-bottom: 1px solid var(--color-border); }
   .brn-hero::before { content: ""; position: absolute; top: -18%; right: -8%; width: 520px; height: 520px; background: radial-gradient(circle, var(--gold-faint) 0%, transparent 65%); pointer-events: none; }
   .brn-hero .container-aptk { position: relative; z-index: 1; text-align: center; max-width: 820px; padding-block: clamp(56px, 8vw, 88px); display: flex; flex-direction: column; align-items: center; }
@@ -57,13 +57,13 @@
   {{-- HERO --}}
   <section class="brn-hero">
     <div class="container-aptk">
-      <p class="script-line">Barín</p>
+      <p class="script-line">BARIN</p>
       <h1>A alma artesanal da holding</h1>
-      {{-- COPY PROVISÓRIO — ajustar com o material oficial da Barín. --}}
-      <p class="lead">Receitas próprias, produção em pequena escala e identidade de bar em cada garrafa. A Barín é onde a coquetelaria da casa encontra o feito à mão.</p>
+      {{-- COPY PROVISÓRIO — ajustar com o material oficial da BARIN. --}}
+      <p class="lead">Receitas próprias, produção em pequena escala e identidade de bar em cada garrafa. A BARIN é onde a coquetelaria da casa encontra o feito à mão.</p>
       <div class="ctas">
         <a href="{{ route('catalog', ['categoria' => 'barin']) }}" class="btn-aptk">Conheça os produtos</a>
-        <a href="#sobre" class="btn-aptk btn-aptk--outline">Sobre a Barín</a>
+        <a href="#sobre" class="btn-aptk btn-aptk--outline">Sobre a BARIN</a>
       </div>
     </div>
   </section>
@@ -72,13 +72,13 @@
   <section class="section brn-split" id="sobre">
     <div class="container-aptk">
       <div>
-        <span class="eyebrow">Sobre a Barín</span>
+        <span class="eyebrow">Sobre a BARIN</span>
         <h2 class="section-title">Feita no ritmo do balcão</h2>
         {{-- COPY PROVISÓRIO --}}
-        <p>A Barín nasceu dentro do bar — das receitas que os bartenders da casa criavam pra si, dos lotes pequenos que acabavam antes da semana, do jeito artesanal de fazer bebida quando ninguém está com pressa.</p>
+        <p>A BARIN nasceu dentro do bar — das receitas que os bartenders da casa criavam pra si, dos lotes pequenos que acabavam antes da semana, do jeito artesanal de fazer bebida quando ninguém está com pressa.</p>
         <p>Hoje é a linha artesanal da holding APTK: destilados e preparos com receitas próprias, produção controlada e a assinatura de quem serviu cada versão no balcão antes de engarrafar.</p>
       </div>
-      <div class="brn-ph"><span>Foto — produção artesanal Barín<br>em breve</span></div>
+      <div class="brn-ph"><span>Foto — produção artesanal BARIN<br>em breve</span></div>
     </div>
   </section>
 
@@ -89,7 +89,7 @@
         <span class="eyebrow">Posicionamento</span>
         <h2 class="section-title">Artesanal de verdade, sem cerimônia</h2>
         {{-- COPY PROVISÓRIO --}}
-        <p>Entre o industrializado e o inacessível existe a Barín: bebida de produção pequena, honesta no rótulo e generosa no copo — pra quem valoriza o feito à mão sem abrir mão do dia a dia.</p>
+        <p>Entre o industrializado e o inacessível existe a BARIN: bebida de produção pequena, honesta no rótulo e generosa no copo — pra quem valoriza o feito à mão sem abrir mão do dia a dia.</p>
       </div>
     </div>
   </section>
@@ -99,7 +99,7 @@
     <div class="container-aptk">
       <div class="section-head">
         <span class="eyebrow">Diferenciais</span>
-        <h2 class="section-title">O que faz uma Barín ser Barín</h2>
+        <h2 class="section-title">O que faz uma BARIN ser BARIN</h2>
       </div>
       <div class="brn-grid-3">
         <div class="brn-card">
@@ -126,11 +126,11 @@
     <div class="container-aptk">
       <div class="section-head">
         <span class="eyebrow">Portfólio</span>
-        <h2 class="section-title">A linha Barín</h2>
+        <h2 class="section-title">A linha BARIN</h2>
         <p>Fotos e nomes oficiais entram assim que o material da marca chegar.</p>
       </div>
       <div class="brn-port">
-        {{-- Placeholders — trocar por produtos reais da linha Barín. --}}
+        {{-- Placeholders — trocar por produtos reais da linha BARIN. --}}
         <div class="port-item"><div class="port-ph"><span>Foto do produto<br>em breve</span></div><h3>Linha destilados</h3></div>
         <div class="port-item"><div class="port-ph"><span>Foto do produto<br>em breve</span></div><h3>Linha preparos</h3></div>
         <div class="port-item"><div class="port-ph"><span>Foto do produto<br>em breve</span></div><h3>Edições da casa</h3></div>
@@ -143,7 +143,7 @@
     <div class="container-aptk">
       <div class="section-head">
         <span class="eyebrow">Aplicações</span>
-        <h2 class="section-title">Onde a Barín entra</h2>
+        <h2 class="section-title">Onde a BARIN entra</h2>
       </div>
       <div class="brn-grid-4">
         <div class="brn-card"><span class="k">Bar</span><h3>Carta de drinks</h3><p>Base artesanal pra coquetéis de assinatura no seu cardápio.</p></div>
@@ -159,15 +159,15 @@
     <div class="container-aptk">
       <div class="section-head">
         <span class="eyebrow">Clientes</span>
-        <h2 class="section-title">Quem já serve Barín</h2>
+        <h2 class="section-title">Quem já serve BARIN</h2>
         <p>Lista oficial em curadoria — os nomes entram com o material da marca.</p>
       </div>
       <div class="cli-strip">
-        {{-- Placeholders — substituir pelos clientes reais da Barín. --}}
-        <span class="cli-chip">Cliente Barín</span>
-        <span class="cli-chip">Cliente Barín</span>
-        <span class="cli-chip">Cliente Barín</span>
-        <span class="cli-chip">Cliente Barín</span>
+        {{-- Placeholders — substituir pelos clientes reais da BARIN. --}}
+        <span class="cli-chip">Cliente BARIN</span>
+        <span class="cli-chip">Cliente BARIN</span>
+        <span class="cli-chip">Cliente BARIN</span>
+        <span class="cli-chip">Cliente BARIN</span>
       </div>
     </div>
   </section>
@@ -177,7 +177,7 @@
     <div class="container-aptk">
       <x-brand.sunburst style="width:110px; color:var(--color-primary); margin-bottom:18px;" />
       <h2>Prove o artesanal da casa</h2>
-      <p>A linha Barín está na loja APTK — engarrafada, pronta e com a assinatura do balcão.</p>
+      <p>A linha BARIN está na loja APTK — engarrafada, pronta e com a assinatura do balcão.</p>
       <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center;">
         <a href="{{ route('catalog', ['categoria' => 'barin']) }}" class="btn-aptk">Conheça os produtos</a>
         <a href="{{ route('pages.show', 'collabs') }}" class="btn-aptk btn-aptk--outline">Revenda e parcerias</a>

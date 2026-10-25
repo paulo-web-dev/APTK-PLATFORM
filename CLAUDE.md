@@ -1,7 +1,7 @@
 # APTK Spirits — Plataforma
 
 E-commerce Laravel da holding **Small Batches**, que reúne três marcas: **APTK Spirits**
-(drinks engarrafados), **Ice4Pros** (gelo de cristal premium) e **Barín** (destilados artesanais).
+(drinks engarrafados), **Ice4Pros** (gelo de cristal premium) e **BARIN** (destilados artesanais).
 
 Responsável técnico: Paulo (dev freelance). Cliente: time de gestão da APTK.
 

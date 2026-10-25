@@ -27,7 +27,7 @@ class ProductSeeder extends Seeder
             ['slug' => 'bases',     'name' => 'Bases',     'description' => 'Destilados com excelência de produção APTK, para criar na sua própria coquetelaria.'],
             // Leva 01: áreas de marca na página Produtos. Capa (image) e
             // produtos são cadastrados pelo admin — ficam vazias até lá.
-            ['slug' => 'barin',     'name' => 'Barin',     'description' => 'A linha artesanal da holding, com receitas próprias e identidade de bar.', 'image' => null],
+            ['slug' => 'barin',     'name' => 'BARIN',     'description' => 'A linha artesanal da holding, com receitas próprias e identidade de bar.', 'image' => null],
             ['slug' => 'ice4pros',  'name' => 'Ice4Pros',  'description' => 'Gelo, insumos e linha para empresas — o B2B da holding.', 'image' => null],
         ];
 

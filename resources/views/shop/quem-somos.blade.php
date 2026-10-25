@@ -105,7 +105,7 @@
       </div>
       <div class="qs-holding-text">
         <p class="qs-holding-lead">A Small Batches é uma holding brasileira que reúne marcas com um propósito em comum: transformar a maneira como as pessoas descobrem, consomem e se conectam com o universo da coquetelaria.</p>
-        <p>Nosso ecossistema é formado por três marcas complementares: a APTK Spirits, referência em coquetéis engarrafados, gifting e projetos especiais; a Ice4Pros, especializada em gelo profissional de alta qualidade; e a Barín, desenvolvida para atender às necessidades de bares, restaurantes, eventos e operações de grande escala.</p>
+        <p>Nosso ecossistema é formado por três marcas complementares: a APTK Spirits, referência em coquetéis engarrafados, gifting e projetos especiais; a Ice4Pros, especializada em gelo profissional de alta qualidade; e a BARIN, desenvolvida para atender às necessidades de bares, restaurantes, eventos e operações de grande escala.</p>
         <p>Unimos conhecimento, técnica, criatividade e visão de negócio para desenvolver produtos e soluções que conectam qualidade, inovação e praticidade, sem abrir mão da autenticidade.</p>
         <p>Cada marca possui sua própria identidade, mas todas compartilham o mesmo compromisso com a excelência, a atenção aos detalhes e a valorização das relações humanas.</p>
         <p>Acreditamos que a coquetelaria vai muito além do que está dentro do copo. Ela está na escolha dos ingredientes, no cuidado com cada receita, na forma de servir e, principalmente, nas histórias que nascem dos encontros.</p>
@@ -192,7 +192,7 @@
   </section>
 
   {{-- O ECOSSISTEMA (briefing p.7–8). Links em config/marcas.php ('links'):
-       o briefing pede o Instagram de cada marca; Barín e Ice4Pros ainda
+       o briefing pede o Instagram de cada marca; BARIN e Ice4Pros ainda
        apontam pra LP / site até chegarem os perfis. --}}
   @php
     $links = config('marcas.links');
@@ -210,11 +210,11 @@
       ],
       [
         'link'  => $links['barin'],
-        // FOTO: garrafa ou serviço da Barín no balcão. Provisória: drink servido no balcão
+        // FOTO: garrafa ou serviço da BARIN no balcão. Provisória: drink servido no balcão
         // (Cosmopolitan de rótulo antigo; o bartender também tem rótulo antigo).
         'img'   => asset('img/aptk/cat-cosmopolitan.jpg'),
         'alt'   => 'Drink servido no balcão ao lado da garrafa',
-        'name'  => 'Barín',
+        'name'  => 'BARIN',
         'sub'   => 'Qualidade e eficiência em cada serviço.',
         'text'  => 'Coquetelaria desenvolvida para o ritmo de bares, restaurantes e eventos. Receitas de qualidade, padronização e praticidade para operações que exigem consistência e escala.',
         'media' => '',

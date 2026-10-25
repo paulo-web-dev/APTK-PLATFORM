@@ -303,10 +303,10 @@
         <a href="{{ route('barin') }}" class="media-card hx-eco-card">
           <div class="mc-media"><img class="hx-eco-img--barin" src="{{ asset('img/aptk/home-barin.jpg') }}" alt="Bartender mexendo um drink no balcão" loading="lazy"></div>
           <div class="mc-body">
-            <span class="mc-eyebrow">Barín</span>
+            <span class="mc-eyebrow">BARIN</span>
             <h3 class="title-editorial">Feito para o ritmo do bar</h3>
             <p>Qualidade, praticidade e consistência em cada serviço.</p>
-            <span class="link-arrow">Conhecer a Barín <span class="btn-arrow">→</span></span>
+            <span class="link-arrow">Conhecer a BARIN <span class="btn-arrow">→</span></span>
           </div>
         </a>
         <a href="https://ice4pros.com.br" class="media-card hx-eco-card" target="_blank" rel="noopener noreferrer">

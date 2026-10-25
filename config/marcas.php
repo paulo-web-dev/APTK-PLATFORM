@@ -14,7 +14,7 @@
 | editar o arquivo hosts (RFC 6761), então http://ice4pros.localhost:8000
 | funciona direto com o artisan serve. A comparação ignora a porta.
 |
-| Barín entra depois só acrescentando uma entrada (e o @extends na view).
+| BARIN entra depois só acrescentando uma entrada (e o @extends na view).
 */
 
 return [
@@ -34,14 +34,14 @@ return [
     |--------------------------------------------------------------------------
     | Link de cada marca nos cards do ecossistema (Quem Somos, leva 10)
     |--------------------------------------------------------------------------
-    | O briefing pede o Instagram de cada marca. Barín e Ice4Pros ainda não
+    | O briefing pede o Instagram de cada marca. BARIN e Ice4Pros ainda não
     | mandaram o perfil: até lá apontam pra LP / site. Trocar aqui (url +
     | label) quando chegar. Caminho relativo ('/barin') abre na mesma aba;
     | URL completa abre em aba nova. Lembrar do config:cache em produção.
     */
     'links' => [
         'aptk'     => ['url' => 'https://www.instagram.com/aptkspirits/', 'label' => '@aptkspirits'],
-        'barin'    => ['url' => '/barin', 'label' => 'Conhecer a Barín'],
+        'barin'    => ['url' => '/barin', 'label' => 'Conhecer a BARIN'],
         'ice4pros' => ['url' => 'https://ice4pros.com.br', 'label' => 'Conhecer a Ice4Pros'],
     ],
 
