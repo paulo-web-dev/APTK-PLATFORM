@@ -14,7 +14,7 @@
   .nv-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
   .nv-card { display: flex; flex-direction: column; background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; text-decoration: none; transition: border-color .25s ease, transform .25s ease; }
   .nv-card:hover { border-color: var(--color-primary-muted); transform: translateY(-3px); }
-  .nv-cover { position: relative; aspect-ratio: 16 / 10; background: repeating-linear-gradient(45deg, var(--color-bg-card), var(--color-bg-card) 12px, var(--color-bg) 12px, var(--color-bg) 24px); }
+  .nv-cover { position: relative; aspect-ratio: 16 / 10; background: var(--color-ink); }
   .nv-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .nv-date { position: absolute; top: 12px; left: 12px; background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm); text-align: center; padding: 6px 10px; line-height: 1.15; }
   .nv-date .d { font-family: var(--font-mono); font-size: var(--text-lg); color: var(--color-text); display: block; }
@@ -44,9 +44,7 @@
           @foreach ($posts as $post)
             <a href="{{ route('novidades.show', $post->slug) }}" class="nv-card">
               <div class="nv-cover">
-                @if ($post->cover_path)
-                  <img src="{{ \Illuminate\Support\Facades\Storage::url($post->cover_path) }}" alt="{{ $post->title }}" loading="lazy">
-                @endif
+                <img src="{{ $post->capaUrl() }}" alt="{{ $post->title }}" loading="lazy">
                 <span class="nv-date">
                   <span class="d">{{ $post->published_at->format('d') }}</span>
                   <span class="m">{{ $post->published_at->translatedFormat('M') }}</span>

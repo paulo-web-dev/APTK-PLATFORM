@@ -10,7 +10,7 @@
   .pv-hero .meta { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-primary); margin-bottom: 12px; display: block; }
   .pv-hero h1 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); margin: 0; }
   .pv-cover { max-width: 920px; margin: clamp(28px, 4vw, 44px) auto 0; padding-inline: 20px; }
-  .pv-cover img { width: 100%; border-radius: var(--radius-lg); border: 1px solid var(--color-border); display: block; }
+  .pv-cover img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--color-border); display: block; }
   .pv-body { max-width: 720px; margin-inline: auto; padding: clamp(28px, 4vw, 44px) 20px clamp(48px, 6vw, 72px); }
   .pv-body p { color: var(--color-text-muted); font-size: var(--text-base); line-height: 1.9; margin: 0 0 20px; }
   .pv-related { border-top: 1px solid var(--color-border); }
@@ -32,11 +32,10 @@
     </div>
   </section>
 
-  @if ($post->cover_path)
-    <div class="pv-cover">
-      <img src="{{ \Illuminate\Support\Facades\Storage::url($post->cover_path) }}" alt="{{ $post->title }}">
-    </div>
-  @endif
+  {{-- Sem capa enviada, entra a padrão do post (Post::capaUrl). --}}
+  <div class="pv-cover">
+    <img src="{{ $post->capaUrl() }}" alt="{{ $post->title }}">
+  </div>
 
   <article class="pv-body">
     @foreach (preg_split('/\R{2,}/', trim($post->body)) as $paragraph)

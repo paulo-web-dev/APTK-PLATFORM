@@ -775,7 +775,25 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
   `order_items.product_name` de pedido antigo fica como foi vendido. O
   importador em dry-run não muda nada nos 5 produtos.
 
-**Deploy da leva 13:** `migrate --force` (BARIN), `view:clear`, `config:cache`
+### 14.1 Capas dos posts (Dicas e Novidades)
+
+- `posts.cover_path` (caminho no disco `public`, `storage/app/public/posts/`),
+  upload opcional no admin (`Admin\PostController`, campo `cover`, até 4 MB,
+  substitui e apaga a anterior). Os 3 posts do `PostsExemploSeeder` nunca
+  tiveram capa: aparecia o fundo listrado do CSS.
+- Migration `2026_10_25_110000_capas_dos_posts_exemplo` copia
+  `public/img/aptk/post-*.jpg` (recortes 16:10, versionados) para
+  `posts/capa-*.jpg` só em post de exemplo ainda sem capa; a gestão troca pelo
+  admin. Fotos: Negroni em casa → bartender mexendo um Negroni
+  (`hero-bartender`, rótulo antigo, ambiente); Gelo cristal → cubo da Ice4Pros
+  (`ice4pros-cubo`); Harmonizar → Cosmopolitan com prato (`cat-cosmopolitan`,
+  rótulo antigo). As `home-*` pedidas já aparecem nos cards da Home.
+- **Fallback:** `Post::capaUrl()` — sem capa, uma de `Post::CAPAS_PADRAO`
+  (`cat-pessoas`, `about-loja-3`, `cat-dry-martini`, `loja-aptk`), fixa por
+  `id`. Vale na Home, em `/novidades` e na página do post; o fundo listrado
+  saiu. Admin mostra a capa atual (ou a padrão) e prévia ao escolher arquivo.
+
+**Deploy da leva 13:** `migrate --force` (BARIN e capas dos posts), `view:clear`, `config:cache`
 (`config/marcas.php`).
 
 ---
