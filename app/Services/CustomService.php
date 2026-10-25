@@ -77,6 +77,26 @@ class CustomService
         return (string) config('custom.cor.chave');
     }
 
+    /**
+     * Nome da bebida no Custom (config `nome`; a caipirinha-arazul aparece só
+     * como "Caipirinha"). Vale também pras retiradas, pra pedido antigo.
+     * Null se a bebida não está na config.
+     */
+    public function nomeBebida(?string $bebida): ?string
+    {
+        return $this->configBebida($bebida)['nome'] ?? null;
+    }
+
+    /** Config da bebida: elegível ou retirada (só pra exibir). */
+    private function configBebida(?string $bebida): ?array
+    {
+        if ($bebida === null || $bebida === '') {
+            return null;
+        }
+
+        return config('custom.bebidas')[$bebida] ?? config('custom.retiradas', [])[$bebida] ?? null;
+    }
+
     /** Produto da bebida, se ela é elegível e existe no catálogo (ativo ou não). */
     public function produto(?string $bebida): ?Product
     {
@@ -103,9 +123,11 @@ class CustomService
         $p['cor'] ??= $this->cor();
 
         Validator::make($p, [
-            'bebida' => ['required', 'string', Rule::in(array_keys($this->bebidas())),
+            'bebida' => ['bail', 'required', 'string',
                 function ($attr, $valor, $fail) {
-                    if (! $this->produto($valor)) {
+                    if (array_key_exists($valor, config('custom.retiradas', []))) {
+                        $fail('Essa bebida não está mais disponível para personalização.');
+                    } elseif (! $this->produto($valor)) {
                         $fail('Essa bebida não está disponível para personalização.');
                     }
                 }],
@@ -114,7 +136,6 @@ class CustomService
             'texto'  => ['required', 'string', 'max:'.$this->limite(), 'not_regex:/[\r\n]/', 'regex:'.self::CARACTERES],
         ], [
             'bebida.required' => 'Escolha a bebida.',
-            'bebida.in'       => 'Essa bebida não está disponível para personalização.',
             'fonte.required'  => 'Escolha o estilo do rótulo.',
             'fonte.in'        => 'Escolha um dos estilos disponíveis.',
             'cor.in'          => 'O texto do rótulo é sempre preto.',
@@ -125,6 +146,32 @@ class CustomService
         ])->validate();
 
         return $p;
+    }
+
+    /**
+     * O que o pedido grava: os 4 campos como vieram + o nome exibido da
+     * bebida naquele momento (a config pode mudar depois).
+     */
+    public function paraPedido(array $p): array
+    {
+        $gravar = [];
+        foreach (self::CAMPOS as $campo) {
+            $gravar[$campo] = $p[$campo] ?? null;
+        }
+
+        return $gravar + ['bebida_nome' => $this->nomeBebida($p['bebida'] ?? null)];
+    }
+
+    /** Motivo da recusa (primeira mensagem do validar), ou null se a personalização vale. */
+    public function recusa(array $p): ?string
+    {
+        try {
+            $this->validar($p);
+
+            return null;
+        } catch (ValidationException $e) {
+            return collect($e->errors())->flatten()->first();
+        }
     }
 
     /** Hash curto da personalização: entra na chave da linha do carrinho. */
@@ -140,17 +187,19 @@ class CustomService
 
     /**
      * Dados de exibição (prévia, carrinho, pedido, admin). Tolera chave que
-     * saiu da config: mostra o valor cru em vez de quebrar a página.
+     * saiu da config: mostra o valor cru em vez de quebrar a página. O nome
+     * da bebida gravado no pedido (bebida_nome) vence o da config.
      */
     public function exibir(array $p): array
     {
-        $bebida = config('custom.bebidas.'.($p['bebida'] ?? ''));
+        $bebida = $this->configBebida($p['bebida'] ?? null);
         $fonte = config('custom.fontes.'.($p['fonte'] ?? ''));
         $cor = ($p['cor'] ?? null) === $this->cor() ? config('custom.cor') : null;
 
         return [
             'texto'       => (string) ($p['texto'] ?? ''),
             'bebida'      => $p['bebida'] ?? null,
+            'bebida_nome' => $p['bebida_nome'] ?? $bebida['nome'] ?? null,
             'imagem'      => $bebida ? asset($bebida['imagem']) : null,
             'proporcao'   => $bebida ? $bebida['largura'].' / '.$bebida['altura'] : '1 / 1',
             'area'        => $bebida['area'] ?? [30, 50, 40, 25],

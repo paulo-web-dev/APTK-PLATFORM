@@ -12,6 +12,7 @@
     .cart-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
     .cart-name { font-family: var(--font-script); font-size: var(--text-xl); color: var(--color-primary); text-decoration: none; line-height: 1.1; }
     .cart-name:hover { text-decoration: underline; }
+    .cart-recusa { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-danger); margin: 0; }
     .cart-unit { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--color-text-muted); }
     .cart-qty { display: flex; align-items: center; gap: 8px; }
     .qty-input { width: 64px; background: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text); border-radius: var(--radius-sm); padding: 7px 9px; font-family: var(--font-mono); text-align: center; }
@@ -69,9 +70,12 @@
                             @endif
 
                             <div class="cart-info">
-                                <a href="{{ $row->personalizacao ? route('custom') : route('product', $row->product->slug) }}" class="cart-name">{{ $row->product->name }}</a>
+                                <a href="{{ $row->personalizacao ? route('custom') : route('product', $row->product->slug) }}" class="cart-name">{{ $row->nome }}</a>
                                 @if ($row->personalizacao)
                                     <x-custom.ficha :p="$row->personalizacao" />
+                                    @if ($recusas->has($row->key))
+                                        <p class="cart-recusa">{{ $recusas[$row->key] }} Remova o item para continuar.</p>
+                                    @endif
                                 @endif
                                 <span class="cart-unit">@if ($row->size){{ $row->size }} · @endif R$ {{ number_format($row->unit_price, 2, ',', '.') }} / un</span>
                             </div>

@@ -134,8 +134,9 @@ class CartService
 
     /**
      * Itens enriquecidos: UMA query e uma coleção de objetos com
-     * key, product, size, qty, unit_price (do volume, ou o preço fixo do
-     * custom), subtotal e personalizacao (null na linha normal).
+     * key, product, nome (o do produto; na custom, o nome da bebida no
+     * Custom), size, qty, unit_price (do volume, ou o preço fixo do custom),
+     * subtotal e personalizacao (null na linha normal).
      * Produtos inexistentes são ignorados.
      */
     public function items(): Collection
@@ -167,6 +168,9 @@ class CartService
                 return (object) [
                     'key'            => $key,
                     'product'        => $product,
+                    'nome'           => $personalizacao
+                        ? (app(CustomService::class)->exibir($personalizacao)['bebida_nome'] ?? $product->name)
+                        : $product->name,
                     'size'           => $line['size'],
                     'qty'            => $line['qty'],
                     'unit_price'     => $unit,

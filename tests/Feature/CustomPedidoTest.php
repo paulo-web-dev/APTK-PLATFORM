@@ -144,17 +144,20 @@ class CustomPedidoTest extends TestCase
         $this->assertStringNotContainsString('custom/pedido', $html);
         $this->assertStringContainsString('wa.me/', $html); // Full Custom segue
         // Bebida sem produto no catálogo não aparece.
-        $this->assertStringNotContainsString('value="boulevardier"', $html);
+        $this->assertStringNotContainsString('value="caju-amigo"', $html);
     }
 
     public function test_bebidas_na_ordem_da_config(): void
     {
         $this->assertSame(
-            ['negroni-classico', 'boulevardier', 'caipirinha-arazul', 'dry-martini', 'caju-amigo',
-             'fitzgerald', 'moscow-mule', 'cosmopolitan', 'sur-lorange'],
+            ['negroni-classico', 'caipirinha-arazul', 'dry-martini', 'caju-amigo',
+             'fitzgerald', 'moscow-mule', 'cosmopolitan'],
             array_keys(config('custom.bebidas')),
         );
-        foreach (config('custom.bebidas') as $b) {
+        // As retiradas ficam só pra exibir pedido antigo; a imagem segue na pasta.
+        $this->assertSame(['boulevardier', 'sur-lorange'], array_keys(config('custom.retiradas')));
+        foreach (config('custom.bebidas') + config('custom.retiradas') as $b) {
+            $this->assertNotEmpty($b['nome']);
             $this->assertFileExists(public_path($b['imagem']));
         }
     }
@@ -224,7 +227,7 @@ class CustomPedidoTest extends TestCase
     {
         return [
             'bebida fora da lista'  => [['bebida' => 'negroni-piselli'], 'bebida'],
-            'bebida sem produto'    => [['bebida' => 'boulevardier'], 'bebida'],
+            'bebida sem produto'    => [['bebida' => 'caju-amigo'], 'bebida'],
             'fonte fora da lista'   => [['fonte' => 'Comic Sans'], 'fonte'],
             'texto vazio'           => [['texto' => ''], 'texto'],
             'texto com 31'          => [['texto' => str_repeat('a', 31)], 'texto'],
@@ -360,7 +363,7 @@ class CustomPedidoTest extends TestCase
         $order = app(OrderService::class)->placeFromCart($u, $this->dados(['shipping_method' => null]));
 
         $item = $order->items()->whereNotNull('personalizacao')->sole();
-        $this->assertSame($this->p(), $item->personalizacao);
+        $this->assertSame($this->p() + ['bebida_nome' => 'Negroni Clássico'], $item->personalizacao);
         $this->assertSame('211.00', $item->unit_price);
         $this->assertSame('422.00', $item->total_price);
         $this->assertSame('375 ml', $item->size);
@@ -456,6 +459,105 @@ class CustomPedidoTest extends TestCase
         $this->assertSame($this->p(), $item->personalizacao);
         $this->assertSame(211.0, (float) $item->unit_price);
         $this->assertSame(5, $p->refresh()->size_stock['375 ml']); // estoque devolvido
+    }
+
+    // ---- Bebidas retiradas e nome exibido (25/10/2026) ------------------------
+
+    protected function produto(string $slug, string $nome, string $sku): Product
+    {
+        return Product::create([
+            'name' => $nome, 'slug' => $slug, 'sku' => $sku, 'price' => 210.00,
+            'sizes' => ['375 ml', '750 ml'], 'size_prices' => ['375 ml' => 165.00, '750 ml' => 210.00],
+            'stock_qty' => 30, 'active' => true,
+        ]);
+    }
+
+    /** @dataProvider bebidasRetiradas */
+    public function test_bebida_retirada_e_recusada_no_carrinho_mesmo_com_produto(string $slug, string $nome): void
+    {
+        $this->produto($slug, $nome, 'X750');
+
+        $this->assertStringNotContainsString('value="'.$slug.'"', $this->get('/custom')->getContent());
+        $this->post('/custom/carrinho', $this->p(['bebida' => $slug]))
+            ->assertSessionHasErrors(['bebida' => 'Essa bebida não está mais disponível para personalização.']);
+        $this->assertTrue(app(CartService::class)->isEmpty());
+    }
+
+    /** @dataProvider bebidasRetiradas */
+    public function test_bebida_retirada_que_ja_estava_no_carrinho_avisa_e_e_recusada_no_checkout(string $slug, string $nome): void
+    {
+        $prod = $this->produto($slug, $nome, 'X750');
+        app(CartService::class)->add($prod->id, 1, '375 ml', $this->p(['bebida' => $slug]));
+
+        $this->get('/carrinho')->assertOk()
+            ->assertSee('Essa bebida não está mais disponível para personalização.')
+            ->assertSee('img/custom/'.$slug.'.jpeg');
+
+        try {
+            app(OrderService::class)->placeFromCart($this->cliente(), $this->dados(['shipping_method' => null]));
+            $this->fail('Deveria ter recusado a garrafa custom.');
+        } catch (OutOfStockException $e) {
+            $this->assertStringContainsString('Essa bebida não está mais disponível para personalização.', $e->getMessage());
+        }
+        $this->assertSame(0, Order::count());
+    }
+
+    public static function bebidasRetiradas(): array
+    {
+        return [
+            'boulevardier' => ['boulevardier', 'Boulevardier'],
+            'sur-lorange'  => ['sur-lorange', "Sur L'Orange"],
+        ];
+    }
+
+    public function test_caipirinha_aparece_como_caipirinha_no_custom_e_com_o_nome_da_loja_na_loja(): void
+    {
+        $prod = $this->produto('caipirinha-arazul', 'Caipirinha Arazul', 'CAIP750');
+        $p = $this->p(['bebida' => 'caipirinha-arazul', 'texto' => 'Saúde, Lu']);
+
+        $custom = $this->get('/custom')->assertOk()->getContent();
+        $this->assertStringContainsString('data-nome="Caipirinha"', $custom);
+        $this->assertStringNotContainsString('Caipirinha Arazul', $custom);
+
+        $this->post('/custom/carrinho', $p)->assertRedirect(route('cart.index'));
+        app(CartService::class)->add($prod->id, 1, '750 ml'); // linha normal mantém o nome da loja
+        $carrinho = $this->get('/carrinho')->assertOk()->getContent();
+        $this->assertSame(1, substr_count($carrinho, '>Caipirinha</a>'));
+        $this->assertSame(1, substr_count($carrinho, '>Caipirinha Arazul</a>'));
+
+        $u = $this->cliente();
+        $order = app(OrderService::class)->placeFromCart($u, $this->dados(['shipping_method' => null]));
+        $item = $order->items()->whereNotNull('personalizacao')->sole();
+        $this->assertSame('caipirinha-arazul', $item->personalizacao['bebida']);
+        $this->assertSame('Caipirinha', $item->personalizacao['bebida_nome']);
+        $this->assertSame('Caipirinha Arazul', $item->product_name); // snapshot do produto não muda
+
+        // O nome gravado vale mesmo se a config mudar depois.
+        config(['custom.bebidas.caipirinha-arazul.nome' => 'Outro nome']);
+        $admin = User::create(['name' => 'Admin', 'email' => 'admin@aptk.test', 'password' => bcrypt('x'), 'role' => 'admin']);
+        $this->actingAs($admin)->get(route('admin.orders.show', $order))->assertOk()
+            ->assertSee('Personalização · Caipirinha ·')
+            ->assertSee('Caipirinha <span class="td-muted">(caipirinha-arazul)</span>', false)
+            ->assertDontSee('Outro nome');
+
+        $this->actingAs($u)->get(route('orders.show', $order))->assertOk()->assertSee('1×</span> Caipirinha <small', false);
+        $this->get(route('checkout.success', $order))->assertOk()->assertSee('1×</span> Caipirinha <small', false);
+
+        // Página do produto segue com o nome do catálogo.
+        $this->get(route('product', 'caipirinha-arazul'))->assertOk()->assertSee('Caipirinha Arazul');
+    }
+
+    public function test_cartao_recusado_devolve_a_custom_sem_o_nome_gravado(): void
+    {
+        $this->fakeAppmax([
+            'POST /v1/payments/credit-card' => fn () => Http::response(['error' => ['message' => 'Transaction declined by issuer (code 05)']], 400),
+        ]);
+        $this->negroni();
+        $this->actingAs($this->cliente());
+        $this->post('/custom/carrinho', $this->p());
+        $this->post('/checkout', $this->dados());
+
+        $this->assertSame($this->p(), app(CartService::class)->items()->sole()->personalizacao);
     }
 
     // ---- Exibição -----------------------------------------------------------

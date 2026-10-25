@@ -17,10 +17,16 @@
  |   personalizacao.cor = `chave`. `token` é a variável de aptk-tokens.css
  |   usada na tela; `hex` é a referência pra impressão.
  | - bebidas: elegível = estar aqui (não depende de o produto estar ativo nem
- |   ter preço no 375). Chave = slug do produto. `area` é a parte em branco do
+ |   ter preço no 375). Chave = slug do produto; a ordem é a do seletor.
+ |   `nome` é o nome exibido no Custom (seletor, prévia, carrinho, checkout,
+ |   pedidos, admin) e vai gravado no pedido (personalizacao.bebida_nome); o
+ |   nome do produto na loja não muda. `area` é a parte em branco do
  |   rótulo, em % da imagem (x, y, largura, altura), calibrada por imagem em
  |   2026-10-20; `fonte` é o tamanho do texto em % da largura da imagem (largura da
  |   área / 8: cabem ~15 caracteres por linha, 30 em duas).
+ | - retiradas: bebidas que saíram da lista (25/10/2026). Não são aceitas no
+ |   carrinho nem no checkout; a calibração fica só pra prévia de pedido
+ |   antigo continuar com a imagem certa.
  */
 return [
     'preco'  => 211.00,
@@ -42,14 +48,17 @@ return [
     'cor' => ['chave' => 'preto', 'nome' => 'Preto', 'token' => '--color-ink', 'hex' => '#020203'],
 
     'bebidas' => [
-        'negroni-classico'  => ['imagem' => 'img/custom/negroni-classico.jpeg',  'largura' => 423, 'altura' => 413, 'area' => [37.7, 55.2, 26.4, 24.9], 'fonte' => 3.3],
-        'boulevardier'      => ['imagem' => 'img/custom/boulevardier.jpeg',      'largura' => 400, 'altura' => 421, 'area' => [39.2, 56.0, 27.9, 23.0], 'fonte' => 3.5],
-        'caipirinha-arazul' => ['imagem' => 'img/custom/caipirinha-arazul.jpeg', 'largura' => 440, 'altura' => 410, 'area' => [34.6, 56.3, 25.0, 23.9], 'fonte' => 3.1],
-        'dry-martini'       => ['imagem' => 'img/custom/dry-martini.jpeg',       'largura' => 459, 'altura' => 425, 'area' => [39.8, 55.8, 24.3, 23.5], 'fonte' => 3.0],
-        'caju-amigo'        => ['imagem' => 'img/custom/caju-amigo.jpeg',        'largura' => 399, 'altura' => 416, 'area' => [37.6, 56.5, 28.6, 23.8], 'fonte' => 3.6],
-        'fitzgerald'        => ['imagem' => 'img/custom/fitzgerald.jpeg',        'largura' => 441, 'altura' => 408, 'area' => [37.5, 56.9, 25.2, 24.5], 'fonte' => 3.1],
-        'moscow-mule'       => ['imagem' => 'img/custom/moscow-mule.jpeg',       'largura' => 423, 'altura' => 418, 'area' => [38.9, 56.0, 26.4, 24.0], 'fonte' => 3.3],
-        'cosmopolitan'      => ['imagem' => 'img/custom/cosmopolitan.jpeg',      'largura' => 455, 'altura' => 415, 'area' => [37.7, 57.1, 24.7, 23.9], 'fonte' => 3.1],
-        'sur-lorange'       => ['imagem' => 'img/custom/sur-lorange.jpeg',       'largura' => 423, 'altura' => 421, 'area' => [39.2, 57.7, 26.8, 24.0], 'fonte' => 3.4],
+        'negroni-classico'  => ['nome' => 'Negroni Clássico', 'imagem' => 'img/custom/negroni-classico.jpeg',  'largura' => 423, 'altura' => 413, 'area' => [37.7, 55.2, 26.4, 24.9], 'fonte' => 3.3],
+        'caipirinha-arazul' => ['nome' => 'Caipirinha', 'imagem' => 'img/custom/caipirinha-arazul.jpeg', 'largura' => 440, 'altura' => 410, 'area' => [34.6, 56.3, 25.0, 23.9], 'fonte' => 3.1],
+        'dry-martini'       => ['nome' => 'Dry Martini', 'imagem' => 'img/custom/dry-martini.jpeg',       'largura' => 459, 'altura' => 425, 'area' => [39.8, 55.8, 24.3, 23.5], 'fonte' => 3.0],
+        'caju-amigo'        => ['nome' => 'Caju Amigo', 'imagem' => 'img/custom/caju-amigo.jpeg',        'largura' => 399, 'altura' => 416, 'area' => [37.6, 56.5, 28.6, 23.8], 'fonte' => 3.6],
+        'fitzgerald'        => ['nome' => 'Fitzgerald', 'imagem' => 'img/custom/fitzgerald.jpeg',        'largura' => 441, 'altura' => 408, 'area' => [37.5, 56.9, 25.2, 24.5], 'fonte' => 3.1],
+        'moscow-mule'       => ['nome' => 'Moscow Mule', 'imagem' => 'img/custom/moscow-mule.jpeg',       'largura' => 423, 'altura' => 418, 'area' => [38.9, 56.0, 26.4, 24.0], 'fonte' => 3.3],
+        'cosmopolitan'      => ['nome' => 'Cosmopolitan', 'imagem' => 'img/custom/cosmopolitan.jpeg',      'largura' => 455, 'altura' => 415, 'area' => [37.7, 57.1, 24.7, 23.9], 'fonte' => 3.1],
+    ],
+
+    'retiradas' => [
+        'boulevardier'      => ['nome' => 'Boulevardier', 'imagem' => 'img/custom/boulevardier.jpeg',      'largura' => 400, 'altura' => 421, 'area' => [39.2, 56.0, 27.9, 23.0], 'fonte' => 3.5],
+        'sur-lorange'       => ['nome' => "Sur L'Orange", 'imagem' => 'img/custom/sur-lorange.jpeg',       'largura' => 423, 'altura' => 421, 'area' => [39.2, 57.7, 26.8, 24.0], 'fonte' => 3.4],
     ],
 ];

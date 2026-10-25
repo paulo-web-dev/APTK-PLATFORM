@@ -32,11 +32,12 @@ class CustomController extends Controller
 
     public function show(): View
     {
-        // Só bebida com produto no catálogo (ativo ou não), na ordem da config.
+        // Só bebida com produto no catálogo (ativo ou não), na ordem da config,
+        // com o nome do Custom (config `nome`; o da loja fica de reserva).
         $produtos = Product::whereIn('slug', array_keys($this->custom->bebidas()))->pluck('name', 'slug');
         $bebidas = collect($this->custom->bebidas())
             ->filter(fn ($b, $slug) => $produtos->has($slug))
-            ->map(fn ($b, $slug) => ['nome' => $produtos[$slug]] + $this->custom->exibir(['bebida' => $slug]));
+            ->map(fn ($b, $slug) => ['nome' => $this->custom->nomeBebida($slug) ?? $produtos[$slug]] + $this->custom->exibir(['bebida' => $slug]));
 
         return view('shop.custom', [
             'bebidas'  => $bebidas,
@@ -64,7 +65,7 @@ class CustomController extends Controller
         // no carrinho). Volume não rastreado (saldo null) não trava.
         $saldo = $produto->stockForSize($volume);
         if ($saldo !== null) {
-            $rotulo = '"'.$produto->name." ({$volume})\"";
+            $rotulo = '"'.($this->custom->nomeBebida($p['bebida']) ?? $produto->name)." ({$volume})\"";
             $noCarrinho = $this->cart->qtyDoVolume($produto->id, $volume);
 
             if ($saldo <= 0) {

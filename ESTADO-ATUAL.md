@@ -4,7 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-20** (§13 — leva 11, Custom vira compra direta;
+Última revisão: **2026-10-25** (§13 — Custom: 7 bebidas e nome de exibição).
+Antes: 2026-10-20 (§13 — leva 11, Custom vira compra direta;
 §12 — fotos de produto em fundo branco com rótulo atual; fotos de ambiente com
 rótulo antigo trocadas). Antes: 2026-10-19 (§11 — leva 10, texto e layout de 6 páginas pelo
 briefing da gestão; §10 — ativação só com preço e foto no padrão, importador sem
@@ -650,7 +651,7 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
 - **Config** (`config/custom.php`): preço, volume, limite 30 caracteres em até
   2 linhas (quebra automática, sem Enter), fontes PP Rader (Editorial) e
   Amithen (Autoral), Blacksword (Clássico), cor fixa
-  preto, 9 bebidas na ordem do comercial. Elegível = estar na lista e ter
+  preto, 9 bebidas na ordem do comercial (7 desde 25/10, ver abaixo). Elegível = estar na lista e ter
   produto no banco (ativo ou não, com ou sem preço no 375).
 - **Imagens** `public/img/custom/{slug}.jpeg`: 5 estavam com nome trocado em
   ciclo (o rótulo dizia outra bebida) e foram renomeadas com nome temporário.
@@ -701,6 +702,21 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
   - "Crie seu APTK" → **"Crie seu Drink"** (eyebrow do configurador) e
     "Personalize seu APTK" → **"Personalize seu drink"** (CTA da
     apresentação em `/custom` e card do Custom na Home; o menu não tinha).
+- **Ajuste de 25/10/2026:**
+  - **7 bebidas**, nesta ordem: negroni-classico, caipirinha-arazul,
+    dry-martini, caju-amigo, fitzgerald, moscow-mule, cosmopolitan.
+    Boulevardier e Sur L'Orange saíram para `custom.retiradas`: recusadas no
+    add-to-cart e no checkout ("Essa bebida não está mais disponível para
+    personalização."); linha que já estava no carrinho mostra o aviso na
+    própria linha. A calibração e as imagens ficam, só pra prévia de pedido
+    antigo.
+  - **Nome de exibição** (`nome` por bebida): caipirinha-arazul aparece como
+    "Caipirinha" no seletor, carrinho, checkout, Meus pedidos, sucesso e
+    bloco "Personalização" do admin. Loja e página do produto seguem com
+    "Caipirinha Arazul"; `order_items.product_name` e o nome na Appmax
+    também (snapshot do produto). O pedido grava
+    `personalizacao.bebida_nome` junto do slug, e esse nome vence a config
+    na exibição. Pedido anterior sem o campo usa a config.
 
 ### 13.1 Pendências da leva 11 (não feitas)
 

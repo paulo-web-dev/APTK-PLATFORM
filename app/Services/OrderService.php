@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -46,7 +47,7 @@ class OrderService
                     throw ValidationException::withMessages(['bebida' => 'Essa bebida não está disponível para personalização.']);
                 }
             } catch (ValidationException $e) {
-                throw new OutOfStockException('A garrafa personalizada de "'.$row->product->name.'" não pode ser confirmada: '
+                throw new OutOfStockException('A garrafa personalizada de "'.$row->nome.'" não pode ser confirmada: '
                     .collect($e->errors())->flatten()->first().' Remova o item do carrinho para continuar.');
             }
         }
@@ -196,7 +197,7 @@ class OrderService
                     'qty'          => $row->qty,
                     'unit_price'   => $row->unit_price,
                     'total_price'  => $row->subtotal,
-                    'personalizacao' => $row->personalizacao,
+                    'personalizacao' => $row->personalizacao ? $this->custom->paraPedido($row->personalizacao) : null,
                 ]);
 
                 // Baixa no MESMO model lockado da revalidação, nunca no da
@@ -377,7 +378,9 @@ class OrderService
     public function restoreCartFromOrder(Order $order): void
     {
         foreach ($order->items as $item) {
-            $this->cart->add((int) $item->product_id, (int) $item->qty, $item->size, $item->personalizacao);
+            // Só os campos do cliente: o nome da bebida volta a vir da config.
+            $p = $item->isCustom() ? Arr::only($item->personalizacao, CustomService::CAMPOS) : null;
+            $this->cart->add((int) $item->product_id, (int) $item->qty, $item->size, $p);
         }
     }
 }

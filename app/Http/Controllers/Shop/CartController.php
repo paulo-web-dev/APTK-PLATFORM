@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Services\CartService;
+use App\Services\CustomService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,11 +16,20 @@ class CartController extends Controller
     {
     }
 
-    public function index(): View
+    public function index(CustomService $custom): View
     {
+        $items = $this->cart->items();
+
+        // Garrafa custom que não passa mais na validação (ex.: bebida que saiu
+        // da lista): aviso na própria linha, antes de o checkout recusar.
+        $recusas = $items->whereNotNull('personalizacao')
+            ->mapWithKeys(fn ($row) => [$row->key => $custom->recusa($row->personalizacao)])
+            ->filter();
+
         return view('shop.cart', [
-            'items' => $this->cart->items(),
-            'total' => $this->cart->total(),
+            'items'   => $items,
+            'total'   => $this->cart->total(),
+            'recusas' => $recusas,
         ]);
     }
 

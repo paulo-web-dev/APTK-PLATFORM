@@ -61,12 +61,12 @@
             @foreach ($order->items->filter->isCustom() as $it)
                 @php $d = app(\App\Services\CustomService::class)->exibir($it->personalizacao); @endphp
                 <div class="panel adm-cst">
-                    <div class="panel-head">Personalização · {{ $it->product_name }} · {{ $it->qty }}× {{ $it->size }}</div>
+                    <div class="panel-head">Personalização · {{ $it->nomeExibido() }} · {{ $it->qty }}× {{ $it->size }}</div>
                     <div class="panel-body adm-cst__body">
                         <x-custom.previa class="adm-cst__previa" :p="$it->personalizacao" />
                         <div class="adm-cst__dados">
                             <p class="adm-cst__texto">“{{ $d['texto'] }}”</p>
-                            <div class="kv"><span class="k">Bebida</span><span class="v">{{ $it->product_name }} <span class="td-muted">({{ $d['bebida'] }})</span></span></div>
+                            <div class="kv"><span class="k">Bebida</span><span class="v">{{ $it->nomeExibido() }} <span class="td-muted">({{ $d['bebida'] }})</span></span></div>
                             <div class="kv"><span class="k">Fonte</span><span class="v">{{ $d['fonte'] }} <span class="td-muted">· {{ $d['fonte_nome'] }}</span></span></div>
                             <div class="kv"><span class="k">Cor</span><span class="v"><span class="cst-cor-dot" style="background:var({{ $d['cor_token'] }});"></span>{{ $d['cor_nome'] }}@if ($d['cor_hex']) <span class="td-muted">· {{ $d['cor_hex'] }}</span>@endif</span></div>
                             <div class="kv"><span class="k">Caracteres</span><span class="v">{{ mb_strlen($d['texto']) }}</span></div>

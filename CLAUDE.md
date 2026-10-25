@@ -104,8 +104,11 @@ eyebrow/título/texto/link, proporção via `--mc-ratio`) e `<x-photo-slot ratio
 dobra; bebida, texto, fonte — texto sempre preto) → `POST /custom/carrinho` (`custom.cart`); não cria mais lead.
 Tudo em `config/custom.php` (preço fixo R$ 211, volume 375 ml, fontes PP Rader,
 Amithen e Blacksword — licenciada pela APTK; só entra se
-`public/fonts/blacksword.woff2|ttf` existir (`CustomService::fontes`) —, cor fixa `custom.cor`, 9 bebidas com imagem e área do
-rótulo calibrada por imagem) e validado por `CustomService::validar` no add-to-cart
+`public/fonts/blacksword.woff2|ttf` existir (`CustomService::fontes`) —, cor fixa `custom.cor`, 7 bebidas com imagem, área do
+rótulo calibrada por imagem e `nome` de exibição — caipirinha-arazul = "Caipirinha"
+só no Custom, a loja segue com o nome do produto; o pedido grava
+`personalizacao.bebida_nome`; boulevardier e sur-lorange em `custom.retiradas`,
+recusadas, calibração só pra prévia de pedido antigo) e validado por `CustomService::validar` no add-to-cart
 E no checkout (bebida na lista com produto no banco, ativo ou não; fonte entre as
 disponíveis; cor = a fixa; texto ≤ 30, sem HTML/emoji/Enter). Prévia `<x-custom.previa>` (imagem de
 `public/img/custom/{slug}.jpeg` + texto sobreposto em `cqw`), mesma em carrinho,
