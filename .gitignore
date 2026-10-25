@@ -25,3 +25,6 @@ yarn-error.log
 
 # Briefings em PDF (pesados): só os .md entram
 /docs/briefing/*.pdf
+
+# Leva 13: originais das fotos do site (só as otimizadas em img/aptk vão pro git)
+/public/img/fotos_site/

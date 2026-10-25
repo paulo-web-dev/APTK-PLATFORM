@@ -35,6 +35,9 @@
   .hx-eco-card { flex-direction: row; }
   .hx-eco-card .mc-media { flex: 0 0 42%; aspect-ratio: auto; min-height: 260px; }
   .hx-eco-card .mc-body { justify-content: center; padding: 28px; }
+  /* Recorte das fotos verticais (leva 13): rosto do bartender / gelo + copo */
+  .hx-eco-img--barin { object-position: 50% 30%; }
+  .hx-eco-img--ice { object-position: 62% 65%; }
 
   /* ---- Home: produto em destaque (retangular, imagem à esquerda) ---- */
   .featured-band { background: var(--color-ink); border-block: 1px solid var(--color-border); }
@@ -133,6 +136,7 @@
     .hx-card p { font-size: var(--text-xs); }
     .hx-eco-card { flex-direction: column; }
     .hx-eco-card .mc-media { flex-basis: auto; aspect-ratio: 16 / 10; min-height: 0; }
+    .hx-eco-img--barin { object-position: 50% 42%; }
     .hero-ctas .btn-aptk { width: 100%; }
     .hero-facts-list li { padding: 16px 12px; gap: 10px; }
   }
@@ -251,18 +255,18 @@
        "Carta de Coquetéis / O que você procura". Dois blocos: Explore a APTK
        e Nosso ecossistema. --}}
   @php
+    // Fotos da leva 13 (img/aptk/home-*.jpg, originais fora do git em
+    // img/fotos_site/). `pos` = object-position do recorte 4:5.
     $explore = [
-      // FOTO: coquetel pronto servido (provisória: vitrine de garrafas da loja; a do Cosmopolitan tinha o rótulo antigo).
-      ['href' => route('catalog'), 'img' => asset('img/aptk/about-loja-2.jpg'), 'alt' => 'Vitrine de garrafas da loja APTK Spirits',
-       'h' => 'Coquetéis Prontos', 'p' => 'A excelência da alta coquetelaria, pronta para servir.', 'cls' => ''],
-      // FOTO: bases e ingredientes para criar em casa (provisória: Fitzgerald com limões, rótulo antigo; a foto do Neutral Gin já está no carrossel).
-      ['href' => route('catalog', ['categoria' => 'bases']), 'img' => asset('img/aptk/cat-fitzgerald.jpg'), 'alt' => 'Garrafa da APTK com limões',
-       'h' => 'Crie Seu Drink', 'p' => 'Ingredientes e bases para explorar sua criatividade.', 'cls' => ''],
-      // FOTO: kit/presente APTK com embalagem (provisória: Negroni em garrafas da casa, rótulo antigo). Leva pro Custom até existir categoria de kits.
-      ['href' => route('custom'), 'img' => asset('img/aptk/featured-negroni.jpg'), 'alt' => 'Garrafas de Negroni da APTK',
-       'h' => 'Arte de Presentear', 'p' => 'Presentes que transformam gestos em histórias.', 'cls' => ''],
-      ['href' => route('pages.show', 'clube'), 'img' => asset('img/aptk/clube-hero.jpg'), 'alt' => 'Convidada do Clube APTK com um drink',
-       'h' => 'Clube APTK', 'p' => 'Seleções especiais, descobertas e edições limitadas.', 'cls' => ''],
+      ['href' => route('catalog'), 'img' => asset('img/aptk/home-coqueteis-prontos.jpg'), 'alt' => 'Coquetel sendo servido de uma garrafa APTK em copo com gelo',
+       'h' => 'Coquetéis Prontos', 'p' => 'A excelência da alta coquetelaria, pronta para servir.', 'pos' => '64% center'],
+      // TEXTO PROVISÓRIO (leva 13): aprovação da gestão. O card passou de bases para o Custom.
+      ['href' => route('custom'), 'img' => asset('img/aptk/home-crie-seu-drink.jpg'), 'alt' => 'Mão escrevendo à mão no rótulo de uma garrafa APTK',
+       'h' => 'Crie Seu Drink', 'p' => 'Um coquetel. A sua assinatura.', 'pos' => 'center 55%'],
+      ['href' => route('pages.show', 'eventos').'#gifting', 'img' => asset('img/aptk/home-arte-de-presentear.jpg'), 'alt' => 'Caixa de presente APTK com garrafa de Old Fashioned',
+       'h' => 'Arte de Presentear', 'p' => 'Presentes que transformam gestos em histórias.', 'pos' => '70% center'],
+      ['href' => route('pages.show', 'clube'), 'img' => asset('img/aptk/home-clube.jpg'), 'alt' => 'Negroni sendo servido em copo de cristal ao lado da garrafa',
+       'h' => 'Clube APTK', 'p' => 'Seleções especiais, descobertas e edições limitadas.', 'pos' => 'center 60%'],
     ];
   @endphp
   <section class="section hx">
@@ -276,8 +280,8 @@
       <div class="hx-grid">
         @foreach ($explore as $card)
           <a href="{{ $card['href'] }}" class="media-card hx-card">
-            <div class="mc-media {{ $card['cls'] }}">
-              <img src="{{ $card['img'] }}" alt="{{ $card['alt'] }}" loading="lazy">
+            <div class="mc-media">
+              <img src="{{ $card['img'] }}" alt="{{ $card['alt'] }}" loading="lazy" style="object-position: {{ $card['pos'] }};">
             </div>
             <div class="mc-body">
               <h3>{{ $card['h'] }}</h3>
@@ -290,9 +294,8 @@
 
       <span class="eyebrow hx-label">Nosso ecossistema</span>
       <div class="hx-eco">
-        {{-- FOTO: garrafa ou serviço da Barín (provisória: bartender da APTK, Negroni de rótulo antigo). --}}
         <a href="{{ route('barin') }}" class="media-card hx-eco-card">
-          <div class="mc-media"><img src="{{ asset('img/aptk/hero-bartender.jpg') }}" alt="Bartender preparando um drink no balcão" loading="lazy"></div>
+          <div class="mc-media"><img class="hx-eco-img--barin" src="{{ asset('img/aptk/home-barin.jpg') }}" alt="Bartender mexendo um drink no balcão" loading="lazy"></div>
           <div class="mc-body">
             <span class="mc-eyebrow">Barín</span>
             <h3 class="title-editorial">Feito para o ritmo do bar</h3>
@@ -301,7 +304,7 @@
           </div>
         </a>
         <a href="https://ice4pros.com.br" class="media-card hx-eco-card" target="_blank" rel="noopener noreferrer">
-          <div class="mc-media"><img src="{{ asset('img/aptk/ice4pros-cubo.jpg') }}" alt="Cubo de gelo cristal Ice4Pros iluminado" loading="lazy"></div>
+          <div class="mc-media"><img class="hx-eco-img--ice" src="{{ asset('img/aptk/home-ice4pros.jpg') }}" alt="Gelo cristal lapidado Ice4Pros ao lado de um drink" loading="lazy"></div>
           <div class="mc-body">
             <span class="mc-eyebrow">Ice4Pros</span>
             <h3 class="title-editorial">O gelo faz a diferença</h3>

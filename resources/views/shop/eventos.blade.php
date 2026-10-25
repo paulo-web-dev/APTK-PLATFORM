@@ -35,6 +35,8 @@
   .evt-sol-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
   .evt-sol { --mc-ratio: 16 / 10; }
   .evt-sol .ns-sub { font-family: var(--font-editorial); color: var(--color-text); margin: 0; }
+  /* Âncora (#gifting, card "Arte de Presentear" da Home): desconta o header fixo */
+  .evt-sol[id] { scroll-margin-top: calc(var(--header-h) + 24px); }
   .evt-port-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
   .evt-port { --mc-ratio: 4 / 3; }
 
@@ -143,7 +145,7 @@
        'p' => 'Levamos a assinatura da APTK ao seu evento, com coquetéis autorais, estrutura de bar e profissionais especializados.',
        'img' => 'img/aptk/clube-hero.jpg', 'alt' => 'Convidada com um drink no bar da APTK'],
       // FOTO: kit/presente de evento (coquetéis engarrafados em embalagem premium). Provisória: Negroni em garrafas da casa.
-      ['n' => '02', 'h' => 'Gifting & Presentes', 'sub' => 'Presentes que continuam contando histórias.',
+      ['n' => '02', 'id' => 'gifting', 'h' => 'Gifting & Presentes', 'sub' => 'Presentes que continuam contando histórias.',
        'p' => 'Coquetéis engarrafados, kits exclusivos e presentes personalizados para convidados, parceiros e colaboradores.',
        'img' => 'img/aptk/featured-negroni.jpg', 'alt' => 'Garrafas de Negroni da APTK'],
       // FOTO: ativação de marca / collab em evento. Provisória: encontro com drinks e gastronomia.
@@ -165,7 +167,7 @@
       </div>
       <div class="evt-sol-grid">
         @foreach ($solucoes as $s)
-          <article class="media-card evt-sol">
+          <article class="media-card evt-sol" @isset($s['id']) id="{{ $s['id'] }}" @endisset>
             <div class="mc-media"><img src="{{ asset($s['img']) }}" alt="{{ $s['alt'] }}" loading="lazy"></div>
             <div class="mc-body">
               <span class="mc-eyebrow">{{ $s['n'] }}</span>

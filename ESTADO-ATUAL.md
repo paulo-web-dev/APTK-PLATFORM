@@ -507,10 +507,6 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
 | Quem Somos · card APTK Spirits | `franquias-hero.jpg` (§12) | produto ou loja APTK |
 | Quem Somos · card Barín | `cat-cosmopolitan.jpg` (rótulo antigo) | garrafa ou serviço da Barín |
 | Quem Somos · galeria | `clube-hero.jpg`, `cat-evento.jpg` (§12) | — |
-| Home · Coquetéis Prontos | `about-loja-2.jpg` (§12) | coquetel pronto servido |
-| Home · Crie Seu Drink | `cat-fitzgerald.jpg` (rótulo antigo) | bases e ingredientes |
-| Home · Arte de Presentear | `featured-negroni.jpg` (rótulo antigo) | kit/presente com embalagem |
-| Home · ecossistema Barín | `hero-bartender.jpg` (rótulo antigo) | garrafa ou serviço da Barín |
 | Home · vitrine Collabs | `cat-evento.jpg` | fotos das collabs / vídeo Montblanc |
 | Home · vitrine Clube | `cat-pessoas.jpg` | encontro real do Clube |
 | Home · vitrine Lojas | `loja-aptk.jpg` | foto arquitetônica autoral |
@@ -621,14 +617,16 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
   Custom da Home e Full Custom) tem o creme — ficou, até confirmar.
 - **Fotos de ambiente com rótulo antigo — trocar quando houver foto nova:**
   - `hero-negroni-poster.jpg` + vídeo do hero da Home (Negroni).
-  - `cat-fitzgerald.jpg`: Home · Crie Seu Drink; Eventos · Customização.
-  - `featured-negroni.jpg`: Home · Arte de Presentear; Quem Somos · 2016;
-    Eventos · Gifting.
-  - `hero-bartender.jpg`: Home · ecossistema Barín.
+  - `cat-fitzgerald.jpg`: Eventos · Customização.
+  - `featured-negroni.jpg`: Quem Somos · 2016; Eventos · Gifting.
   - `cat-cosmopolitan.jpg`: Quem Somos · card Barín.
+  - Fotos da leva 13 que a gestão mandou com garrafa de rótulo antigo (ficam,
+    pela regra acima): `home-clube.jpg` (Negroni Clássico de rótulo branco) e
+    `home-arte-de-presentear.jpg` (Old Fashioned).
   - `cat-dry-martini.jpg` (se o creme for o antigo): Home · vitrine Custom;
     Custom · Full Custom.
-  - Fora de uso hoje: `sobre-barman.jpg`, `sobre-interior.jpg`/`cat-loja.jpg`.
+  - Fora de uso hoje: `sobre-barman.jpg`/`hero-bartender.jpg`,
+    `sobre-interior.jpg`/`cat-loja.jpg`.
 - Bordas: `bou375-frente`, `dm750-verso` e `slo750-frente` têm canto um pouco
   mais escuro que o fundo do card (foto original); quase invisível.
 - Sem foto branca do 750: Gallo Tropicalle, Ale Tonic, Penicillin, Licor de
@@ -729,6 +727,29 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
 
 **Deploy:** `reset --hard`, `migrate --force` (coluna nova em `order_items`),
 `route:clear && route:cache`, `view:clear && config:cache` (config nova).
+
+---
+
+## 14. Leva 13 — fotos da Home, seções largas, BARIN (25/10/2026)
+
+- **Fotos da Home.** Originais da gestão em `public/img/fotos_site/` (nomes do
+  Drive, **fora do git** pelo `.gitignore`); versões otimizadas (lado maior ≤
+  1920 px, JPG 80, PNG sem transparência vira JPG) em `public/img/aptk/home-*.jpg`:
+
+  | bloco | original | otimizada |
+  |---|---|---|
+  | Coquetéis Prontos | `coqueteis prontos  - home.jpg` 1370 KB | `home-coqueteis-prontos.jpg` 150 KB |
+  | Crie Seu Drink | `CUSTOMIZADO.png` 2488 KB | `home-crie-seu-drink.jpg` 240 KB |
+  | Arte de Presentear | `arte de presentear - home.JPG` 9982 KB | `home-arte-de-presentear.jpg` 221 KB |
+  | Clube APTK | `club - home.jpg` 4027 KB | `home-clube.jpg` 258 KB |
+  | Ecossistema BARIN | `feito para o ritmo do bar - home.jpg` 4669 KB | `home-barin.jpg` 221 KB |
+  | Ecossistema Ice4Pros | `gelo - home.jpg` 184 KB | `home-ice4pros.jpg` 130 KB |
+
+  Enquadramento por `object-position` (no `$explore` da view e nas classes
+  `.hx-eco-img--*`), conferido em desktop e 390 px.
+- **Links dos cards:** Crie Seu Drink → `/custom`, texto **provisório** "Um
+  coquetel. A sua assinatura." (aprovação da gestão); Arte de Presentear →
+  `/eventos#gifting` (âncora no card "Gifting & Presentes").
 
 ---
 
