@@ -507,10 +507,6 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
 | Quem Somos · card APTK Spirits | `franquias-hero.jpg` (§12) | produto ou loja APTK |
 | Quem Somos · card Barín | `cat-cosmopolitan.jpg` (rótulo antigo) | garrafa ou serviço da Barín |
 | Quem Somos · galeria | `clube-hero.jpg`, `cat-evento.jpg` (§12) | — |
-| Home · vitrine Collabs | `cat-evento.jpg` | fotos das collabs / vídeo Montblanc |
-| Home · vitrine Clube | `cat-pessoas.jpg` | encontro real do Clube |
-| Home · vitrine Lojas | `loja-aptk.jpg` | foto arquitetônica autoral |
-| Home · vitrine Custom | `cat-dry-martini.jpg` | close de garrafa personalizada + embalagem |
 | Custom · hero (2 fotos) | `cat-pessoas.jpg` (§12), `about-loja-3.jpg` | Presentes & Celebrações / Marcas & Projetos Especiais |
 | Custom · Full Custom | `cat-dry-martini.jpg` | garrafa com rótulo de marca parceira + embalagem premium |
 | Eventos · Bar APTK | `clube-hero.jpg` (§12) | — |
@@ -613,8 +609,8 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
   antigo e `SUR-L_ORANGE.jpg` é baixa resolução (720x538). Precisa de foto em alta.
 - **NGA750** (Negroni Aged): só existe em fundo cinza, fora do padrão.
 - **Dry Martini:** `DM750` (branco) tem rótulo creme; `DM375` (branco) tem
-  rótulo azul-marinho. Confirmar qual é o atual. `cat-dry-martini.jpg` (vitrine
-  Custom da Home e Full Custom) tem o creme — ficou, até confirmar.
+  rótulo azul-marinho. Confirmar qual é o atual. `cat-dry-martini.jpg` (Full
+  Custom) tem o creme — ficou, até confirmar.
 - **Fotos de ambiente com rótulo antigo — trocar quando houver foto nova:**
   - `hero-negroni-poster.jpg` + vídeo do hero da Home (Negroni).
   - `cat-fitzgerald.jpg`: Eventos · Customização.
@@ -623,8 +619,7 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
   - Fotos da leva 13 que a gestão mandou com garrafa de rótulo antigo (ficam,
     pela regra acima): `home-clube.jpg` (Negroni Clássico de rótulo branco) e
     `home-arte-de-presentear.jpg` (Old Fashioned).
-  - `cat-dry-martini.jpg` (se o creme for o antigo): Home · vitrine Custom;
-    Custom · Full Custom.
+  - `cat-dry-martini.jpg` (se o creme for o antigo): Custom · Full Custom.
   - Fora de uso hoje: `sobre-barman.jpg`/`hero-bartender.jpg`,
     `sobre-interior.jpg`/`cat-loja.jpg`.
 - Bordas: `bou375-frente`, `dm750-verso` e `slo750-frente` têm canto um pouco
@@ -750,6 +745,25 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
 - **Links dos cards:** Crie Seu Drink → `/custom`, texto **provisório** "Um
   coquetel. A sua assinatura." (aprovação da gestão); Arte de Presentear →
   `/eventos#gifting` (âncora no card "Gifting & Presentes").
+- **Seções largas** (`.hw` em `shop/home`, mesmo `.hero-shade` e tipografia do
+  hero, `min(72vh, 640px)`), depois de "Um universo de possibilidades":
+  - **Collabs:** vídeo `youtu.be/j0ozDwpm9L8` de fundo via API do YouTube com
+    host `youtube-nocookie.com`, mudo, loop, sem controles; só carrega quando a
+    seção chega perto da tela. Poster `img/aptk/collabs-poster.jpg` (miniatura
+    `maxresdefault` do vídeo, 42 KB) fica por baixo; o player aparece 2 s
+    depois de começar a tocar (esconde o controle que o YouTube mostra no
+    início). Autoplay bloqueado, API fora do ar ou `prefers-reduced-motion` →
+    só o poster. **Com `public/video/collabs.mp4` no lugar**, a seção usa
+    `<video>` local e não carrega o YouTube (sem mudar código).
+  - **Nossas lojas:** `NOSSAS LOJAS - HOME.JPG` 13908 KB →
+    `home-nossas-lojas.jpg` 417 KB. A foto é vertical: no desktop aparece a
+    faixa do letreiro (`object-position: 50% 11%`).
+- **Vitrine editorial saiu.** Ordem da Home: hero → produtos → um universo de
+  possibilidades → Collabs → Nossas lojas → Dicas e Novidades → Clube. A
+  faixa final do Clube ganhou o título "Pertencer é só o começo."
+- **Teste de fundo preto nos produtos (D):** Fundo preto nos produtos exige foto
+  nova em fundo preto ou retoque manual (vidro mostra o fundo branco do
+  estúdio). Recorte automático testado e descartado em 25/10/2026.
 
 ---
 

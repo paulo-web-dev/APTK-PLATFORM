@@ -39,4 +39,45 @@ class HomeLeva13Test extends TestCase
         $this->get(route('pages.show', 'eventos'))->assertOk()
             ->assertSee('id="gifting"', false);
     }
+
+    public function test_vitrine_editorial_sai_e_entram_collabs_e_lojas_largas_nessa_ordem(): void
+    {
+        $html = $this->get('/')->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('class="section hv"', $html);
+        $this->assertStringNotContainsString('Histórias que vão além da garrafa.', $html);
+
+        $universo = strpos($html, 'Um universo de possibilidades.');
+        $collabs = strpos($html, 'Encontros que criam o extraordinário.');
+        $lojas = strpos($html, 'A alquimia ganha endereço.');
+        $clube = strpos($html, 'Pertencer é só o começo.');
+        $this->assertTrue($universo < $collabs && $collabs < $lojas && $lojas < $clube);
+
+        $this->assertStringContainsString('img/aptk/home-nossas-lojas.jpg', $html);
+        $this->assertStringContainsString(route('pages.show', 'quem-somos').'#onde-encontrar', $html);
+        $this->assertStringNotContainsString('Um círculo privado', $html);
+    }
+
+    public function test_collabs_usa_youtube_com_poster_e_troca_pelo_mp4_local_quando_existir(): void
+    {
+        $mp4 = public_path('video/collabs.mp4');
+        $this->assertFileDoesNotExist($mp4);
+
+        $html = $this->get('/')->assertOk()->getContent();
+        $this->assertStringContainsString('data-yt="j0ozDwpm9L8"', $html);
+        $this->assertStringContainsString('youtube-nocookie.com', $html);
+        $this->assertStringContainsString('img/aptk/collabs-poster.jpg', $html);
+        $this->assertFileExists(public_path('img/aptk/collabs-poster.jpg'));
+        $this->assertStringNotContainsString('video/collabs.mp4', $html);
+
+        file_put_contents($mp4, '');
+        try {
+            $html = $this->get('/')->assertOk()->getContent();
+            $this->assertStringContainsString('video/collabs.mp4', $html);
+            $this->assertStringNotContainsString('data-yt=', $html);
+            $this->assertStringContainsString('poster="'.asset('img/aptk/collabs-poster.jpg').'"', $html);
+        } finally {
+            unlink($mp4);
+        }
+    }
 }

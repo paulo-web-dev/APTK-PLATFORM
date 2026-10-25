@@ -57,16 +57,21 @@
   .featured-buy { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
   .featured-buy .price-tag { font-family: var(--font-mono); font-size: var(--text-2xl); color: var(--color-cream); }
 
-  /* ---- Home: vitrine editorial (leva 10) — proporções alternadas:
-         1ª linha larga | estreita, 2ª linha estreita | larga ---- */
-  .hv { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
-  .hv-grid { display: grid; gap: 20px; grid-template-columns: 1fr 0.45fr 1fr; grid-template-areas: "a a b" "c d d"; }
-  .hv-grid > :nth-child(1) { grid-area: a; }
-  .hv-grid > :nth-child(2) { grid-area: b; }
-  .hv-grid > :nth-child(3) { grid-area: c; }
-  .hv-grid > :nth-child(4) { grid-area: d; }
-  .hv-card { background: var(--color-bg); }
-  .hv-card .mc-media { aspect-ratio: auto; height: clamp(240px, 26vw, 380px); }
+  /* ---- Home: seções largas no estilo do hero (leva 13) ---- */
+  .hw { position: relative; overflow: hidden; background: var(--color-ink); border-bottom: 1px solid var(--color-border); min-height: min(72vh, 640px); display: flex; }
+  .hw-media { position: absolute; inset: 0; container-type: size; }
+  .hw-media > img, .hw-media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hw-yt { position: absolute; inset: 0; opacity: 0; transition: opacity .8s ease; pointer-events: none; }
+  .hw.is-playing .hw-yt { opacity: 1; }
+  /* 16:9 cobrindo a seção inteira (o player do YouTube não tem object-fit) */
+  .hw-yt iframe { position: absolute; top: 50%; left: 50%; width: max(100cqw, 177.78cqh); height: max(100cqh, 56.25cqw); transform: translate(-50%, -50%); border: 0; }
+  .hw-inner { position: relative; z-index: 1; flex: 1; display: flex; align-items: center; padding-block: clamp(56px, 8vw, 96px); }
+  .hw-copy { max-width: 560px; }
+  .hw-copy .eyebrow { margin-bottom: 18px; }
+  .hw h2 { font-size: clamp(2.2rem, 4.6vw, 3.6rem); color: var(--color-cream); margin: 0 0 20px; }
+  .hw p { font-size: clamp(var(--text-base), 1.6vw, var(--text-lg)); color: color-mix(in srgb, var(--color-cream) 80%, transparent); max-width: 480px; margin: 0 0 30px; }
+  /* Foto vertical (2:3): no desktop fica a fatia da fachada com o letreiro */
+  .hw--lojas .hw-media > img { object-position: 50% 11%; }
 
   /* ---- Home: clube (teaser) ---- */
   .club { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
@@ -124,7 +129,7 @@
     .hero-facts-list li:nth-child(3) { border-left: 0; padding-left: 0; }
   }
   @media (max-width: 820px) {
-    .hv-grid { grid-template-columns: 1fr; grid-template-areas: "a" "b" "c" "d"; }
+    .hw-inner { align-items: flex-end; }
     /* No celular o texto fica embaixo, com o gradiente de baixo pra cima */
     .hero-shade { background: linear-gradient(0deg, var(--color-ink) 0%, color-mix(in srgb, var(--color-ink) 78%, transparent) 55%, color-mix(in srgb, var(--color-ink) 35%, transparent) 100%); }
     .hero-inner { align-items: flex-end; }
@@ -138,6 +143,7 @@
     .hx-eco-card .mc-media { flex-basis: auto; aspect-ratio: 16 / 10; min-height: 0; }
     .hx-eco-img--barin { object-position: 50% 42%; }
     .hero-ctas .btn-aptk { width: 100%; }
+    .hw-copy .btn-aptk { width: 100%; }
     .hero-facts-list li { padding: 16px 12px; gap: 10px; }
   }
 </style>
@@ -316,57 +322,47 @@
     </div>
   </section>
 
-  {{-- VITRINE EDITORIAL (leva 10, briefing p.13): substitui o carrossel
-       promocional. Quatro cards de proporções diferentes. Textos das imagens
-       de referência. Todas as fotos são PROVISÓRIAS — ver os FOTO: abaixo. --}}
-  <section class="section hv">
-    <div class="container-aptk">
-      <div class="section-head">
-        <span class="eyebrow">Além do coquetel</span>
-        <h2 class="section-title title-editorial">Histórias que vão além da garrafa.</h2>
-        <p>Colaborações, encontros e criações que traduzem o universo APTK.</p>
+  {{-- SEÇÕES LARGAS (leva 13): no estilo do hero (mídia de fundo, mesmo
+       gradiente e tipografia). Substituem a vitrine editorial, que saiu.
+       Collabs: vídeo do YouTube (youtube-nocookie), mudo, em loop, sem
+       controles. O poster fica sempre por baixo e o player só aparece quando
+       começa a tocar (autoplay bloqueado, API fora do ar ou
+       prefers-reduced-motion = só o poster). Com public/video/collabs.mp4 no
+       lugar, usa o mp4 local e nem carrega o YouTube. --}}
+  @php $collabsMp4 = is_file(public_path('video/collabs.mp4')); @endphp
+  <section class="hw on-dark" @unless ($collabsMp4) data-yt="j0ozDwpm9L8" @endunless>
+    <div class="hw-media">
+      @if ($collabsMp4)
+        <video autoplay muted loop playsinline poster="{{ asset('img/aptk/collabs-poster.jpg') }}" aria-hidden="true">
+          <source src="{{ asset('video/collabs.mp4') }}" type="video/mp4">
+        </video>
+      @else
+        <img src="{{ asset('img/aptk/collabs-poster.jpg') }}" alt="" loading="lazy" style="object-position: 70% center;">
+        <div class="hw-yt" aria-hidden="true"><div id="collabsYt"></div></div>
+      @endif
+    </div>
+    <div class="hero-shade"></div>
+    <div class="container-aptk hw-inner">
+      <div class="hw-copy">
+        <span class="eyebrow">Collabs</span>
+        <h2 class="title-editorial">Encontros que criam o extraordinário.</h2>
+        <p>Projetos autorais que conectam marcas, criatividade e coquetelaria.</p>
+        <a href="{{ route('pages.show', 'collabs') }}" class="btn-aptk">Explore as collabs <span class="btn-arrow">→</span></a>
       </div>
-      <div class="hv-grid">
-        {{-- FOTO: fotos das nossas collabs / vídeo Montblanc (provisória: encontro com comida e drinks). --}}
-        <a href="{{ route('pages.show', 'collabs') }}" class="media-card hv-card hv-card--wide">
-          <div class="mc-media"><img src="{{ asset('img/aptk/cat-evento.jpg') }}" alt="Encontro com drinks e gastronomia" loading="lazy"></div>
-          <div class="mc-body">
-            <span class="mc-eyebrow">Collabs</span>
-            <h3 class="title-editorial">Encontros que criam o extraordinário.</h3>
-            <p>Projetos autorais que conectam marcas, criatividade e coquetelaria.</p>
-            <span class="link-arrow">Explore as collabs <span class="btn-arrow">↗</span></span>
-          </div>
-        </a>
-        {{-- FOTO: encontro real do Clube, atmosfera de exclusividade e conexão (provisória: amigos brindando). --}}
-        <a href="{{ route('pages.show', 'clube') }}" class="media-card hv-card">
-          <div class="mc-media"><img src="{{ asset('img/aptk/cat-pessoas.jpg') }}" alt="Amigos brindando com drinks da APTK" loading="lazy"></div>
-          <div class="mc-body">
-            <span class="mc-eyebrow">Clube APTK</span>
-            <h3 class="title-editorial">Pertencer é só o começo.</h3>
-            <p>Um universo de conexões, cultura e encontros exclusivos.</p>
-            <span class="link-arrow">Conheça o clube <span class="btn-arrow">↗</span></span>
-          </div>
-        </a>
-        {{-- FOTO: foto arquitetônica autoral da loja, materiais, iluminação e detalhes (provisória: fachada da loja). --}}
-        <a href="{{ route('pages.show', 'quem-somos') }}#onde-encontrar" class="media-card hv-card">
-          <div class="mc-media"><img src="{{ asset('img/aptk/loja-aptk.jpg') }}" alt="Fachada da loja APTK Spirits" loading="lazy"></div>
-          <div class="mc-body">
-            <span class="mc-eyebrow">Nossas lojas</span>
-            <h3 class="title-editorial">A alquimia ganha endereço.</h3>
-            <p>Descubra nossos espaços e mergulhe no universo da marca.</p>
-            <span class="link-arrow">Encontre uma loja <span class="btn-arrow">↗</span></span>
-          </div>
-        </a>
-        {{-- FOTO: close de garrafa personalizada com acabamento premium e embalagem de presente (provisória: Dry Martini da casa). --}}
-        <a href="{{ route('custom') }}" class="media-card hv-card hv-card--wide">
-          <div class="mc-media"><img src="{{ asset('img/aptk/cat-dry-martini.jpg') }}" alt="Garrafa de Dry Martini da APTK com taça" loading="lazy"></div>
-          <div class="mc-body">
-            <span class="mc-eyebrow">Custom APTK</span>
-            <h3 class="title-editorial">Sua história, nossa alquimia.</h3>
-            <p>Personalização de coquetéis para marcas, presentes e celebrações.</p>
-            <span class="link-arrow">Personalize seu drink <span class="btn-arrow">↗</span></span>
-          </div>
-        </a>
+    </div>
+  </section>
+
+  <section class="hw hw--lojas on-dark">
+    <div class="hw-media">
+      <img src="{{ asset('img/aptk/home-nossas-lojas.jpg') }}" alt="Fachada iluminada da loja APTK Spirits" loading="lazy">
+    </div>
+    <div class="hero-shade"></div>
+    <div class="container-aptk hw-inner">
+      <div class="hw-copy">
+        <span class="eyebrow">Nossas lojas</span>
+        <h2 class="title-editorial">A alquimia ganha endereço.</h2>
+        <p>Descubra nossos espaços e mergulhe no universo da marca.</p>
+        <a href="{{ route('pages.show', 'quem-somos') }}#onde-encontrar" class="btn-aptk">Encontre uma loja <span class="btn-arrow">→</span></a>
       </div>
     </div>
   </section>
@@ -415,7 +411,7 @@
     <div class="container-aptk" style="max-width: 780px; text-align: center;">
       <div class="section-head" style="margin-bottom: 22px;">
         <span class="eyebrow">Clube APTK</span>
-        <h2 class="section-title">Um círculo privado para quem compartilha do mesmo repertório</h2>
+        <h2 class="section-title title-editorial">Pertencer é só o começo.</h2>
         <p>Hospitalidade, cultura, gastronomia e coquetelaria. Comece grátis no Explorer, colecione no Collector e no Connoisseur — e, quem sabe um dia, receba o convite do Le Cercle.</p>
       </div>
       <a href="{{ route('pages.show', 'clube') }}" class="btn-aptk">Conhecer o Clube</a>
@@ -461,6 +457,50 @@
         });
       });
     });
+  })();
+
+  // Collabs (leva 13): vídeo do YouTube de fundo. Só carrega a API quando a
+  // seção chega perto da tela; o iframe aparece (is-playing) quando o player
+  // começa a tocar — se o autoplay for bloqueado, fica o poster.
+  (function () {
+    var sec = document.querySelector('.hw[data-yt]');
+    if (!sec || !('IntersectionObserver' in window)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    function iniciar() {
+      window.onYouTubeIframeAPIReady = function () {
+        new YT.Player('collabsYt', {
+          host: 'https://www.youtube-nocookie.com',
+          videoId: sec.getAttribute('data-yt'),
+          playerVars: {
+            autoplay: 1, mute: 1, controls: 0, loop: 1, playlist: sec.getAttribute('data-yt'),
+            playsinline: 1, rel: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1,
+          },
+          events: {
+            onReady: function (e) { e.target.mute(); e.target.playVideo(); },
+            // Revela 2 s depois de começar: o YouTube mostra um controle no
+            // meio do vídeo nos primeiros segundos. Depois fica (o loop
+            // reinicia sem voltar pro poster).
+            onStateChange: function (e) {
+              if (e.data === YT.PlayerState.PLAYING && !sec.dataset.revelado) {
+                sec.dataset.revelado = '1';
+                setTimeout(function () { sec.classList.add('is-playing'); }, 2000);
+              }
+            },
+          },
+        });
+        var f = document.querySelector('#collabsYt');
+        if (f) { f.setAttribute('tabindex', '-1'); f.setAttribute('title', 'Vídeo das collabs da APTK'); }
+      };
+      var s = document.createElement('script');
+      s.src = 'https://www.youtube.com/iframe_api';
+      document.head.appendChild(s);
+    }
+
+    var io = new IntersectionObserver(function (entradas) {
+      if (entradas[0].isIntersecting) { io.disconnect(); iniciar(); }
+    }, { rootMargin: '300px 0px' });
+    io.observe(sec);
   })();
 </script>
 @endpush
