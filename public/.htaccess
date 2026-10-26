@@ -19,3 +19,10 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Foto do admin até 30 MB (FotoUpload). Só vale com mod_php; com PHP-FPM o
+# limite fica no php.ini do servidor (ESTADO-ATUAL §16).
+<IfModule mod_php.c>
+    php_value upload_max_filesize 32M
+    php_value post_max_size 40M
+</IfModule>

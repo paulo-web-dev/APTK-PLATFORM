@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductImage;
+use App\Services\FotoUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -165,7 +166,7 @@ class ProductController extends Controller
             'size_prices'       => ['nullable', 'string', 'max:255'],
             'short_description' => ['nullable', 'string', 'max:255'],
             'description'       => ['nullable', 'string'],
-            'image'             => ['nullable', 'image', 'max:4096'], // KB ~ 4MB
+            'image'             => FotoUpload::regras(), // até 30 MB; gravada reduzida (FotoUpload)
         ]);
 
         // O arquivo é tratado à parte (handleImage), não é coluna do produto.
@@ -298,7 +299,7 @@ class ProductController extends Controller
             return;
         }
 
-        $path = $request->file('image')->store('products', 'public');
+        $path = FotoUpload::salvar($request->file('image'), 'products');
 
         ProductImage::where('product_id', $product->id)->update(['is_primary' => false]);
         ProductImage::where('product_id', $product->id)->increment('sort_order');

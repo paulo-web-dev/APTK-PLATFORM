@@ -26,7 +26,8 @@ class ProductImage extends Model
     }
 
     /**
-     * Subida pelo admin (store() do Laravel: nome aleatório de 40 caracteres).
+     * Subida pelo admin (FotoUpload, ou store() do Laravel nas antigas: nome
+     * aleatório de 40 caracteres).
      * Só esse arquivo o admin apaga do disco — foto do pacote (import) e foto
      * antiga do site não têm como ser regeradas em produção.
      */

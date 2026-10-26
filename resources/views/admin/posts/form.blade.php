@@ -47,7 +47,7 @@
             </div>
 
             <div class="field">
-                <label>Capa (opcional, até 4 MB)</label>
+                <label>Capa (opcional; JPG, PNG ou WEBP até 30 MB)</label>
                 {{-- Prévia: a capa atual (ou a padrão que o site usa sem capa) e,
                      ao escolher um arquivo, a foto nova antes de salvar. --}}
                 <img src="{{ $editing ? $post->capaUrl() : '' }}" alt="Prévia da capa" class="cover-preview" id="coverPreview" @unless ($editing) hidden @endunless>

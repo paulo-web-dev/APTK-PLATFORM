@@ -120,7 +120,7 @@
                             <p class="td-muted" style="font-size:var(--text-xs); margin:0 0 10px;">Sem foto: a loja mostra o placeholder.</p>
                         @endif
                         <input type="file" name="image" accept="image/*" class="admin-input" style="width:100%;">
-                        <p class="td-muted" style="font-size:var(--text-xs); margin:8px 0 0;">A imagem enviada entra como principal; as outras continuam na galeria.</p>
+                        <p class="td-muted" style="font-size:var(--text-xs); margin:8px 0 0;">JPG, PNG ou WEBP até 30 MB (o site guarda uma cópia reduzida). A imagem enviada entra como principal; as outras continuam na galeria.</p>
                         @error('image') <span class="err" style="color:var(--color-danger); font-size:var(--text-xs);">{{ $message }}</span> @enderror
                     </div>
                 </div>
@@ -148,7 +148,14 @@
                             @if ($editing && ! $product->temPreco())
                                 <p class="td-muted" style="font-size:var(--text-xs); margin:-4px 0 10px;">Sem preço: só pode ser ativado depois de ter preço.</p>
                             @elseif ($editing && ! $product->temFotoNoPadrao())
-                                <p class="td-muted" style="font-size:var(--text-xs); margin:-4px 0 10px;">Sem foto: envie uma foto do produto antes de ativar.</p>
+                                {{-- Não é aviso fixo: só aparece sem foto no padrão (Product::ehFotoNoPadrao). --}}
+                                <p class="td-muted" style="font-size:var(--text-xs); margin:-4px 0 10px;">
+                                    @if ($product->images->isEmpty())
+                                        Sem foto: envie uma foto do produto antes de ativar.
+                                    @else
+                                        A foto atual é antiga (rótulo antigo ou foto do site anterior) e não conta pra ativação: envie a foto nova{{ $product->active ? ' — ativo sem ela, o salvar pede foto' : ' antes de ativar' }}.
+                                    @endif
+                                </p>
                             @endif
                         @enderror
                         <label class="check" style="margin-bottom:0;">

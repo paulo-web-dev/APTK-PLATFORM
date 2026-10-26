@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Services\FotoUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -12,7 +13,8 @@ use Illuminate\View\View;
 
 /**
  * Admin → Novidades (leva 06): CRUD do mini-blog "Dicas e Novidades".
- * Capa em storage/app/public/posts (Storage::url para exibir).
+ * Capa em storage/app/public/posts (Storage::url para exibir), gravada
+ * reduzida pelo FotoUpload.
  */
 class PostController extends Controller
 {
@@ -38,7 +40,7 @@ class PostController extends Controller
         $data['active'] = $request->boolean('active');
 
         if ($request->hasFile('cover')) {
-            $data['cover_path'] = $request->file('cover')->store('posts', 'public');
+            $data['cover_path'] = FotoUpload::salvar($request->file('cover'), 'posts');
         }
         unset($data['cover']);
 
@@ -63,7 +65,7 @@ class PostController extends Controller
             if ($post->cover_path) {
                 Storage::disk('public')->delete($post->cover_path);
             }
-            $data['cover_path'] = $request->file('cover')->store('posts', 'public');
+            $data['cover_path'] = FotoUpload::salvar($request->file('cover'), 'posts');
         }
         unset($data['cover']);
 
@@ -90,7 +92,7 @@ class PostController extends Controller
             'excerpt'      => ['nullable', 'string', 'max:300'],
             'body'         => ['required', 'string'],
             'published_at' => ['required', 'date'],
-            'cover'        => ['nullable', 'image', 'max:4096'],
+            'cover'        => FotoUpload::regras(),
             'active'       => ['nullable'],
         ]);
     }

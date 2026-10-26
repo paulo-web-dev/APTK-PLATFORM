@@ -4,7 +4,9 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-26** (§15 — leva 14: fotos e ajustes de Quem Somos,
+Última revisão: **2026-10-26** (§16 — foto do admin até 30 MB, reduzida no
+servidor; mensagens de validação em pt_BR).
+Antes: 2026-10-26 (§15 — leva 14: fotos e ajustes de Quem Somos,
 Custom, Clube, Eventos e Collabs).
 Antes: 2026-10-25 (§14 — leva 13: fotos da Home, seções largas,
 BARIN sem acento; §13 — Custom: 7 bebidas e nome de exibição).
@@ -890,6 +892,46 @@ pizzaria - collabs` —, Il Barista, Freixenet — arquivo `FREXEINET`.
 Caipirinha), `view:clear`, `config:cache` (`config/collabs.php` novo e
 `config/marcas.php`). Conferir em `/clube` que a página só tem o formulário e,
 no admin, que só Explorer, Collector, Connoisseur e Le Cercle estão ativos.
+
+## 16. Foto do admin até 30 MB e validação em português (26/10/2026)
+
+A gestão sobe foto de celular/câmera de até ~20 MB; o limite era 4 MB
+("The image field must not be greater than 4096 kilobytes", em inglês).
+
+**Upload (`App\Services\FotoUpload`):** usado no produto (`image`) e na capa
+de post (`cover`); categoria não tem upload no admin. `FotoUpload::regras()`:
+até 30 MB, jpg/jpeg/png/webp (heic/heif só se o servidor tiver Imagick com
+HEIC — senão "Foto em HEIC (formato do iPhone) não é aceita. Exporte como JPG
+e envie de novo."), imagem legível e até 100 MP. `FotoUpload::salvar()`: GD,
+reduz pra no máximo 2000 px no lado maior (não amplia), gira pelo EXIF depois
+de reduzir, fundo branco sob transparência, JPG 82 progressivo sem EXIF, nome
+`{pasta}/{40 aleatórios}.jpg` (o `isUploadDoAdmin` continua valendo). O
+original nunca é gravado. Sobe o `memory_limit` pra 1 GB só durante o
+tratamento: foto de 48 MP (8064x6048, 29 MB) testada com limite inicial de
+128 MB → 1500x2000 em pé, 278 KB, ~4 s, pico de 242 MB.
+
+**Servidor (conferir no deploy):** `php -i | grep -E
+"upload_max_filesize|post_max_size"` com o PHP do Apache. Precisa de ≥ 32M e
+≥ 40M. O `public/.htaccess` ajusta isso com mod_php (`<IfModule
+mod_php.c>`); com PHP-FPM, mudar no `php.ini` do FPM e reiniciar. Arquivo
+acima do limite do PHP aparece como "O envio de foto falhou. O arquivo pode
+ser maior que o limite do servidor." HEIC: `php -r "var_dump(class_exists('Imagick')
+&& Imagick::queryFormats('HEIC'));"` diz se o servidor converte.
+
+**Locale `pt_BR`** (`config/app.php`; fallback `en`): `lang/pt_BR/`
+`validation.php` (todas as regras do Laravel 10 + nomes dos campos em
+`attributes` + "A foto pode ter no máximo 30 MB."), `auth.php`,
+`passwords.php`, `pagination.php`. As telas Breeze não usadas (perfil,
+confirmar senha, verificar e-mail) seguem com `__('...')` em inglês.
+
+**"Sem foto" no form do Penicillin:** não é aviso fixo — aparece quando o
+produto não tem foto no padrão (`Product::temFotoNoPadrao`). No banco local o
+Penicillin tem `foto-branco-pcl375-frente/verso` e o aviso não aparece; em
+produção a galeria dele deve estar só com foto antiga (`penicillin.jpg`) e o
+produto ficou ativo de antes da regra. O aviso agora distingue "sem foto" de
+"a foto atual é antiga (...) e não conta pra ativação"; ativo nessa situação, o
+salvar pede foto. Conferir no servidor: `php artisan produtos:aplicar-fotos
+--dry-run`.
 
 ---
 

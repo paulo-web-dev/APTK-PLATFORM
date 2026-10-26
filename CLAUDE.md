@@ -79,6 +79,9 @@ intended/home — nunca `/dashboard`). Login migra a sessão: carrinho preservad
 **Configurações** chave/valor na tabela `settings` via `Setting::get()` / `Setting::set()`.
 Usado inclusive para o UUID de instalação externa da Appmax.
 
+**Locale `pt_BR`**: mensagens de validação, auth e senha em `lang/pt_BR/`; campo
+novo em formulário → nome em português em `validation.attributes`.
+
 **Roles** no `User`: `admin`, `customer`, `b2b`. Helpers `isAdmin()`, `isB2b()`.
 
 **Design tokens.** Sempre usar as variáveis de `public/css/aptk-tokens.css`. Nunca
@@ -128,6 +131,9 @@ bloqueia na galeria de produto: foto de ambiente com garrafa antiga fica até ch
 nova (não trocar por `<x-photo-slot>`); lista em ESTADO-ATUAL §12.1.
 Upload do admin: nome hash de 40 caracteres (`ProductImage::isUploadDoAdmin()`) — só
 esse arquivo o admin apaga do disco. Upload ADICIONA como principal.
+Foto do admin (produto e capa de post) passa por `FotoUpload`: `regras()` (até 30 MB;
+jpg/png/webp; HEIC só com Imagick) e `salvar()` (2000 px, JPG 82, EXIF aplicado; o
+original nunca vai pro disco). Limites do PHP no servidor: ESTADO-ATUAL §16.
 
 **Catálogo: responsabilidade dividida em dois comandos.**
 - `catalogo:importar-planilha` (CSV em `database/data/`) cuida SÓ de nome,
