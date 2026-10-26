@@ -51,8 +51,9 @@ public/css/          aptk-tokens.css é a fonte única de tokens de design
 `clube|assinantes|collabs|eventos|quem-somos` → `PageController@show`. Rota nova
 literal precisa vir ANTES desse catch-all. As LPs de marca `/barin` e `/ice4pros`
 são `Route::view` diretas. Quem Somos, Clube e Eventos têm view própria
-(`shop.eventos` desde a leva 10, portfólio em `PageController::PORTFOLIO_EVENTOS`,
-seção só aparece com ≥ 1 item); Collabs e Assinantes usam o template `shop.page`.
+(`shop.eventos` desde a leva 10; portfólio = grade de collabs de
+`config/collabs.php` via `<x-portfolio-grid>`, a mesma de `/collabs`, seção só
+aparece com ≥ 1 item); Collabs e Assinantes usam o template `shop.page`.
 
 **Preço por volume.** `Product` tem `sizes` (array JSON de volumes, ex. `["375ml","750ml"]`)
 e `size_prices` (mapa volume→preço). Use `priceForSize()`, `sizeOptions()`,

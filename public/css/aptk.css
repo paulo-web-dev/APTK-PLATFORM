@@ -302,6 +302,16 @@ a.media-card:hover .mc-media > img { transform: scale(1.03); }
 }
 .photo-slot .ps-symbol { width: 56px; max-width: 30%; height: auto; color: var(--color-copper); opacity: .35; }
 
+/* Grade de portfólio (<x-portfolio-grid>, leva 14): foto 4:5 + nome da marca */
+.portfolio-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px 20px; margin: 0; padding: 0; list-style: none; }
+.portfolio-item { margin: 0; }
+.portfolio-item img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--radius-md); background: var(--color-ink); }
+.portfolio-item figcaption { font-family: var(--font-display); font-size: var(--text-base); color: var(--color-text); margin-top: 12px; line-height: 1.35; }
+@media (max-width: 760px) {
+  .portfolio-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 14px; }
+  .portfolio-item figcaption { font-size: var(--text-sm); margin-top: 10px; }
+}
+
 /* ---------------------------------------------------------------------
    4. UTILITÁRIOS
    --------------------------------------------------------------------- */

@@ -541,8 +541,7 @@ página antiga) prometia pontos/10%, texto "em breve" sem número: passos 01 e 0
 da página e perks do Explorer e do Collector (seeder + migration
 `2026_10_19_100001`, com down). Voltar quando a gestão decidir.
 
-**Eventos — portfólio:** `PageController::PORTFOLIO_EVENTOS` vazio. Falta da
-gestão: nome, cliente, data, local, foto e autorização de uso.
+**Eventos — portfólio:** desde a leva 14 é a grade de collabs (§15).
 
 **Planos antigos do Clube:** resolvido na leva 14 (§15).
 
@@ -853,9 +852,26 @@ e `bar aptk - eventos (1)` são cópias idênticas (mesmo hash), ignoradas.
 e-mail e telefone dele só em `resources/views/shop/sobre.blade.php`, view sem
 rota (não aparece no site).
 
+**Collabs (portfólio):** `config/collabs.php` (`marcas`: nome, imagem,
+ativo), na ordem da gestão; `PageController::collabs()` filtra ativas com
+foto; componente `<x-portfolio-grid>` (CSS `.portfolio-grid` no `aptk.css`:
+foto 4:5 + nome, 4 colunas no desktop, 2 até 760 px). Em `/collabs` substitui o
+carrossel de cases (mesmo título "Algumas histórias também são servidas em uma
+garrafa"); em `/eventos` preenche o portfólio ("Eventos que já levaram a nossa
+assinatura.", título inventado na leva 10). `PORTFOLIO_EVENTOS` saiu.
+Fotos recortadas em 4:5 no tratamento (`collab-{marca}.jpg`, ≤ 960x1200):
+Montblanc, Swarovski, Vivara, Iguatemi, Emiliano, Unique, Rosewood, Banco
+Inter (Orange Nation) — arquivo `ORANGE NATION` —, Pirajá, Braz — `braz
+pizzaria - collabs` —, Il Barista, Freixenet — arquivo `FREXEINET`.
+
 ### 15.1 Pendências da leva 14
 
-- **Pedir versão maior:** `apothek quem somos` (636x424, Quem Somos 2016).
+- **Pedir versão maior:** `apothek quem somos` (636x424, Quem Somos 2016),
+  `unique.avif` (380x475) e `braz pizzaria - collabs` (546x701), collabs.
+- **Collabs aguardando foto** (no `config/collabs.php` com `ativo => false`,
+  voltam com uma linha): Selvagem, Gurumê, Camolese, Barbacoa.
+- **Confirmar com a gestão:** foto do Rosewood (garrafa preta "Rabo di Galo",
+  sem marca do hotel; foi a gestão que associou).
 
 ---
 

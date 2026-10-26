@@ -10,16 +10,6 @@ use Illuminate\View\View;
 
 class PageController extends Controller
 {
-    /**
-     * Portfólio de eventos realizados (leva 10, view shop.eventos). A seção
-     * só aparece com ao menos 1 item. Cada evento:
-     *   ['titulo' => 'Nome do evento', 'quando' => '2025 · São Paulo',
-     *    'descricao' => 'Uma linha sobre o que a APTK fez',
-     *    'image' => 'img/aptk/arquivo.jpg' ou null (bloco reservado)]
-     * Aguardando a gestão: nome, cliente, data, local, foto e autorização de uso.
-     */
-    public const PORTFOLIO_EVENTOS = [];
-
     public function show(string $slug): View
     {
         // Páginas com layout próprio.
@@ -41,7 +31,8 @@ class PageController extends Controller
         if ($slug === 'eventos') {
             // Leva 10: view própria (antes usava o template shop.page).
             return view('shop.eventos', [
-                'portfolio' => self::PORTFOLIO_EVENTOS,
+                // Leva 14: portfólio = grade de collabs (só aparece com ≥ 1 item).
+                'portfolio' => self::collabs(),
                 'proposta'  => $this->mailto('Evento — solicitar proposta — APTK'),
             ]);
         }
@@ -93,6 +84,18 @@ class PageController extends Controller
         return back()->with('newsletter_ok', 'Pronto! Você entrou na lista.');
     }
 
+    /**
+     * Collabs do portfólio (config/collabs.php), na ordem do config: só as
+     * ativas e com foto. Usado em /collabs e /eventos.
+     */
+    public static function collabs(): array
+    {
+        return collect(config('collabs.marcas', []))
+            ->filter(fn ($m) => ! empty($m['ativo']) && ! empty($m['imagem']))
+            ->values()
+            ->all();
+    }
+
     /** E-mail de contato (config/marcas.php) com assunto pré-preenchido. */
     private function mailto(string $subject): string
     {
@@ -113,8 +116,8 @@ class PageController extends Controller
              |  - CTA do hero: "Falar com o comercial" (o texto do hero será
              |    alterado pelo cliente depois — manter editável).
              |  - Diferenciais sem o card "Abastecimento".
-             |  - Carrossel de projetos feitos (fotos virão — placeholders
-             |    marcados; trocar 'image' => null pelos paths quando chegarem).
+             |  - Leva 14: o carrossel de projetos virou a grade de collabs
+             |    (config/collabs.php, <x-portfolio-grid>).
              */
             'collabs' => [
                 'eyebrow'  => 'Collab',
@@ -125,21 +128,11 @@ class PageController extends Controller
                 'image'    => 'img/aptk/parceiros-hero.jpg',
                 'hero_cta' => ['label' => 'Compartilhar minha ideia', 'href' => $this->mailto('Collab / projeto personalizado — APTK')],
 
-                // Parcerias — lista oficial (doc leva 05). Fotos: aguardando material.
+                // Portfólio de collabs (leva 14): config/collabs.php.
                 'cases_eyebrow' => 'Nossas parcerias',
                 'cases_title'   => 'Algumas histórias também são servidas em uma garrafa',
                 'cases_lead'    => 'A APTK está presente em alguns dos principais destinos de gastronomia, hospitalidade e lifestyle do país — rótulos exclusivos e projetos personalizados para quem compartilha do nosso compromisso com excelência, curadoria e atenção aos detalhes.',
-                'cases' => [
-                    ['h' => 'Selvagem',           'p' => 'Projeto personalizado para a casa.', 'image' => null],
-                    ['h' => 'Hotel Unique',       'p' => 'Rótulo exclusivo da casa.', 'image' => null],
-                    ['h' => 'Rosewood São Paulo', 'p' => 'Parceria com assinatura APTK.', 'image' => null],
-                    ['h' => 'Bráz Pizzaria',      'p' => 'Limoncello Bráz, criado para a casa.', 'image' => null],
-                    ['h' => 'Gurumê',             'p' => 'Gin Gurumê, assinatura exclusiva.', 'image' => null],
-                    ['h' => 'Pirajá',             'p' => 'Projeto exclusivo para a casa.', 'image' => null],
-                    ['h' => 'Hotel Emiliano',     'p' => 'Drink Cubo, servido no hotel.', 'image' => null],
-                    ['h' => 'Camolese',           'p' => 'Rótulo personalizado da casa.', 'image' => null],
-                    ['h' => 'Barbacoa',           'p' => 'Projeto em parceria com a marca.', 'image' => null],
-                ],
+                'cases'         => self::collabs(),
                 'cases_footer' => 'Mais do que um produto, entregamos uma extensão da marca de nossos parceiros — coquetelaria autoral como elemento de conexão, memória e celebração.',
 
                 // Como funciona — passos oficiais + prazo (doc leva 05).

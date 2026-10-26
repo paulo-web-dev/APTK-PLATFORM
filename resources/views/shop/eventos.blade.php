@@ -1,7 +1,7 @@
 {{-- EVENTOS (leva 10) — view própria; antes usava o template shop.page
      (Collabs e Assinantes continuam nele). Textos do briefing p.25–30.
-     Portfólio: lista fixa em PageController::PORTFOLIO_EVENTOS — a seção
-     só aparece com ao menos 1 evento. --}}
+     Portfólio: grade de collabs (config/collabs.php, PageController::collabs)
+     — a seção só aparece com ao menos 1 item. --}}
 @extends('layouts.public')
 
 @section('title', 'Eventos · APTK Spirits')
@@ -37,8 +37,6 @@
   .evt-sol .ns-sub { font-family: var(--font-editorial); color: var(--color-text); margin: 0; }
   /* Âncora (#gifting, card "Arte de Presentear" da Home): desconta o header fixo */
   .evt-sol[id] { scroll-margin-top: calc(var(--header-h) + 24px); }
-  .evt-port-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .evt-port { --mc-ratio: 4 / 3; }
 
   /* ---- Fechamento ---- */
   .evt-closing { text-align: center; }
@@ -50,10 +48,9 @@
 
   @media (max-width: 980px) {
     .evt-seg-grid { grid-template-columns: repeat(2, 1fr); }
-    .evt-port-grid { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 640px) {
-    .evt-seg-grid, .evt-sol-grid, .evt-port-grid { grid-template-columns: 1fr; }
+    .evt-seg-grid, .evt-sol-grid { grid-template-columns: 1fr; }
     .evt-hero::after { background: linear-gradient(0deg, var(--color-ink) 0%, color-mix(in srgb, var(--color-ink) 80%, transparent) 55%, color-mix(in srgb, var(--color-ink) 35%, transparent) 100%); }
   }
 </style>
@@ -101,8 +98,8 @@
     </div>
   </section>
 
-  {{-- PORTFÓLIO (briefing p.25): eventos realizados. Só renderiza com ao
-       menos 1 item em PageController::PORTFOLIO_EVENTOS. --}}
+  {{-- PORTFÓLIO (briefing p.25; leva 14: grade de collabs de
+       config/collabs.php, a mesma de /collabs). Só renderiza com ao menos 1 item. --}}
   @if (count($portfolio))
     <section class="section evt-band">
       <div class="container-aptk">
@@ -110,29 +107,7 @@
           <span class="eyebrow">Portfólio</span>
           <h2 class="section-title title-editorial">Eventos que já levaram a nossa assinatura.</h2>
         </div>
-        <div class="evt-port-grid">
-          @foreach ($portfolio as $evento)
-            <article class="media-card evt-port">
-              <div class="mc-media">
-                @if (! empty($evento['image']))
-                  <img src="{{ asset($evento['image']) }}" alt="{{ $evento['titulo'] }}" loading="lazy">
-                @else
-                  {{-- FOTO: foto do evento "{{ $evento['titulo'] }}" (aguardando a gestão). --}}
-                  <x-photo-slot />
-                @endif
-              </div>
-              <div class="mc-body">
-                @if (! empty($evento['quando']))
-                  <span class="mc-eyebrow">{{ $evento['quando'] }}</span>
-                @endif
-                <h3 class="title-editorial">{{ $evento['titulo'] }}</h3>
-                @if (! empty($evento['descricao']))
-                  <p>{{ $evento['descricao'] }}</p>
-                @endif
-              </div>
-            </article>
-          @endforeach
-        </div>
+        <x-portfolio-grid :itens="$portfolio" />
       </div>
     </section>
   @endif
