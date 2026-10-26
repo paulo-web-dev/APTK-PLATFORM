@@ -19,6 +19,7 @@
   .cst-hero-fig img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--color-ink); }
   .cst-hero-fig figcaption { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted); margin-top: 10px; }
   .cst-hero-fig:nth-child(2) { margin-top: 48px; }
+  .cst-hero-fig .cst-hero-img--marcas { object-position: 62% 50%; }
 
   /* Passos compactos no hero */
   .steps-inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 26px 0 0; padding-top: 22px; border-top: 1px solid var(--color-border); }
@@ -89,7 +90,7 @@
   .full-band .eyebrow { margin-bottom: 16px; }
   .full-band h2 { font-size: clamp(2rem, 4.6vw, 3rem); color: var(--color-cream); margin: 0 0 16px; }
   .full-band p { color: color-mix(in srgb, var(--color-cream) 78%, transparent); font-size: var(--text-lg); line-height: 1.7; margin: 0 0 30px; max-width: 500px; }
-  .full-img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--color-border); }
+  .full-img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; object-position: 50% 40%; border-radius: var(--radius-lg); border: 1px solid var(--color-border); }
 
   @media (max-width: 900px) {
     .cst-hero .container-aptk, .full-grid { grid-template-columns: 1fr; gap: 36px; }
@@ -251,14 +252,12 @@
         </div>
       </div>
       <div class="cst-hero-media">
-        {{-- FOTO: garrafa APTK com rótulo personalizado para presente/celebração (provisória: pessoas brindando; a do Negroni tinha o rótulo antigo). --}}
         <figure class="cst-hero-fig">
-          <img src="{{ asset('img/aptk/cat-pessoas.jpg') }}" alt="Pessoas brindando com drinks da APTK">
+          <img src="{{ asset('img/aptk/custom-presentes.jpg') }}" alt="Caixa The Champions Collection da APTK">
           <figcaption>Presentes &amp; Celebrações</figcaption>
         </figure>
-        {{-- FOTO: kit com rótulo de marca parceira e embalagem premium (provisória: loja APTK). --}}
         <figure class="cst-hero-fig">
-          <img src="{{ asset('img/aptk/about-loja-3.jpg') }}" alt="Interior da loja APTK Spirits">
+          <img src="{{ asset('img/aptk/custom-marcas.jpg') }}" alt="Garrafa da collab Orange Nation sobre a mesa de um DJ" class="cst-hero-img--marcas">
           <figcaption>Marcas &amp; Projetos Especiais</figcaption>
         </figure>
       </div>
@@ -301,8 +300,7 @@
           Fale com nossa equipe <span class="btn-arrow">→</span>
         </a>
       </div>
-      {{-- FOTO: garrafa APTK com rótulo personalizado para uma marca parceira + embalagem premium (provisória: Dry Martini da casa). --}}
-      <img class="full-img" src="{{ asset('img/aptk/cat-dry-martini.jpg') }}" alt="Garrafa de Dry Martini da APTK com taça" loading="lazy">
+      <img class="full-img" src="{{ asset('img/aptk/custom-full.jpg') }}" alt="Negroni da APTK com rótulo personalizado “Melhor pai do mundo”" loading="lazy">
     </div>
   </section>
 @endsection

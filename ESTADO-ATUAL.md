@@ -506,8 +506,6 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
 
 | página / bloco | foto provisória | o que o briefing pede |
 |---|---|---|
-| Custom · hero (2 fotos) | `cat-pessoas.jpg` (§12), `about-loja-3.jpg` | Presentes & Celebrações / Marcas & Projetos Especiais |
-| Custom · Full Custom | `cat-dry-martini.jpg` | garrafa com rótulo de marca parceira + embalagem premium |
 | Eventos · Bar APTK | `clube-hero.jpg` (§12) | — |
 | Eventos · Gifting | `featured-negroni.jpg` (rótulo antigo) | kit/presente de evento |
 | Eventos · Brand Experiences | `cat-evento.jpg` | ativação de marca em evento |
@@ -608,8 +606,8 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
   antigo e `SUR-L_ORANGE.jpg` é baixa resolução (720x538). Precisa de foto em alta.
 - **NGA750** (Negroni Aged): só existe em fundo cinza, fora do padrão.
 - **Dry Martini:** `DM750` (branco) tem rótulo creme; `DM375` (branco) tem
-  rótulo azul-marinho. Confirmar qual é o atual. `cat-dry-martini.jpg` (Full
-  Custom) tem o creme — ficou, até confirmar.
+  rótulo azul-marinho. Confirmar qual é o atual. `cat-dry-martini.jpg` (creme)
+  saiu do Full Custom na leva 14.
 - **Fotos de ambiente com rótulo antigo — trocar quando houver foto nova:**
   - `hero-negroni-poster.jpg` + vídeo do hero da Home (Negroni).
   - `cat-fitzgerald.jpg`: Eventos · Customização.
@@ -617,7 +615,6 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
   - Fotos da leva 13 que a gestão mandou com garrafa de rótulo antigo (ficam,
     pela regra acima): `home-clube.jpg` (Negroni Clássico de rótulo branco) e
     `home-arte-de-presentear.jpg` (Old Fashioned).
-  - `cat-dry-martini.jpg` (se o creme for o antigo): Custom · Full Custom.
   - Fora de uso hoje: `sobre-barman.jpg`/`hero-bartender.jpg`,
     `sobre-interior.jpg`/`cat-loja.jpg`.
 - Bordas: `bou375-frente`, `dm750-verso` e `slo750-frente` têm canto um pouco
@@ -818,6 +815,16 @@ e `bar aptk - eventos (1)` são cópias idênticas (mesmo hash), ignoradas.
 - Saiu a galeria "Onde a alquimia acontece"; "APTK pelo Brasil" fica.
 - Fechamento "Vamos criar histórias juntos" centralizado, sem nome, e-mail e
   telefone do comercial; ficam "Ver a carta" e o Instagram @aptkspirits.
+
+**Custom:**
+
+| bloco | original | otimizada |
+|---|---|---|
+| Presentes & Celebrações | `Presentes e Celebrações - custom.JPG` 8445 KB | `custom-presentes.jpg` 388 KB |
+| Marcas & Projetos Especiais | `Marcas e Projetos Especiais - custom.jpeg` 139 KB | `custom-marcas.jpg` 146 KB |
+| Full Custom | `Sua identidade. Nossa criação..png` 2039 KB | `custom-full.jpg` 193 KB |
+
+- Full Custom: foto em 1:1 (era 4:3; a foto é vertical).
 
 ### 15.1 Pendências da leva 14
 
