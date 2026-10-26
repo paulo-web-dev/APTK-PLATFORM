@@ -45,10 +45,9 @@
   /* ---- Quem Somos: no que acreditamos ---- */
   .values { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
 
-  /* ---- Sobre: galeria ---- */
-  .gallery { display: grid; grid-template-columns: 1fr 1.3fr; grid-template-rows: 1fr 1fr; gap: 16px; height: 520px; }
-  .gallery img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); display: block; }
-  .gallery .g-tall { grid-row: span 2; }
+  /* Essência (leva 14): foto à esquerda, os três valores empilhados à direita */
+  .qs-ess { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(28px, 5vw, 64px); align-items: center; }
+  .qs-ess-img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: cover; object-position: 70% 50%; border-radius: var(--radius-lg); background: var(--color-ink); }
 
   /* ---- Sobre: onde encontrar ---- */
   .malls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 22px; }
@@ -59,17 +58,13 @@
 
   /* ---- Sobre: contato (faixa escura de fechamento) ---- */
   .contact-band { background: var(--color-bg); }
-  .contact-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .contact-inner { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 620px; margin-inline: auto; }
   .contact-band .sun { width: 120px; color: var(--color-primary); margin-bottom: 18px; }
   .contact-band h2 { font-family: var(--font-display); font-size: clamp(1.8rem, 4vw, 2.6rem); color: var(--color-text); margin: 0 0 12px; }
   .contact-band p.lead { color: var(--color-text-muted); font-size: var(--text-lg); margin: 0 0 26px; max-width: 460px; }
-  .contact-list { display: flex; flex-direction: column; gap: 14px; }
-  .contact-list .ct-role { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 2px; }
-  .contact-list .ct-name { font-family: var(--font-display); font-size: var(--text-xl); color: var(--color-text); }
-  .contact-list a { color: var(--color-text); display: inline-flex; align-items: center; gap: 10px; font-size: var(--text-base); transition: color .2s ease; }
-  .contact-list a:hover { color: var(--color-primary); }
-  .contact-list svg { width: 18px; height: 18px; color: var(--color-primary); flex-shrink: 0; }
-  .contact-cta { margin-top: 30px; }
+  .contact-ig { color: var(--color-text); display: inline-flex; align-items: center; gap: 10px; font-size: var(--text-base); margin-top: 22px; transition: color .2s ease; }
+  .contact-ig:hover { color: var(--color-primary); }
+  .contact-ig svg { width: 18px; height: 18px; color: var(--color-primary); flex-shrink: 0; }
 
   /* ---- Quem Somos: ecossistema (cards com foto, leva 10) ---- */
   .brands { background: var(--color-bg-card); border-block: 1px solid var(--color-border); }
@@ -83,10 +78,8 @@
   @media (max-width: 760px) {
     .timeline { grid-template-columns: 1fr; }
     .qs-tl-head { flex-direction: column; align-items: flex-start; }
-    .gallery { height: auto; grid-template-columns: 1fr; grid-template-rows: none; }
-    .gallery .g-tall { grid-row: auto; }
-    .gallery img { aspect-ratio: 4 / 3; height: auto; }
-    .contact-inner { grid-template-columns: 1fr; gap: 28px; }
+    .qs-ess { grid-template-columns: 1fr; }
+    .qs-ess-img { aspect-ratio: 4 / 3; }
     .qs-eco-grid { grid-template-columns: 1fr; }
   }
 </style>
@@ -144,8 +137,7 @@
       </div>
       <div class="timeline">
         <article class="tl-card">
-          {{-- FOTO: garrafa ou balcão da era Apothek Cocktails & Co. (2016). Provisória: Negroni em garrafas da casa (rótulo antigo). --}}
-          <img class="tl-img" src="{{ asset('img/aptk/featured-negroni.jpg') }}" alt="Garrafas de Negroni da casa" loading="lazy">
+          <img class="tl-img" src="{{ asset('img/aptk/qs-apothek-2016.jpg') }}" alt="Bartender preparando drinks no balcão da Apothek" loading="lazy">
           <div class="tl-body">
             <span class="tl-year">2016 · São Paulo</span>
             <h3>Apothek Cocktails &amp; Co.</h3>
@@ -153,7 +145,7 @@
           </div>
         </article>
         <article class="tl-card">
-          <img class="tl-img" src="{{ asset('img/aptk/about-loja-2.jpg') }}" alt="Loja da APTK Spirits com a marca iluminada" loading="lazy">
+          <img class="tl-img" src="{{ asset('img/aptk/qs-aptk-2021.jpg') }}" alt="Fachada da loja APTK Spirits à noite" loading="lazy">
           <div class="tl-body">
             <span class="tl-year">2021 · Brasil</span>
             <h3>APTK Spirits</h3>
@@ -171,7 +163,9 @@
         <span class="eyebrow">No que acreditamos</span>
         <h2 class="section-title title-editorial">Nossa essência. Nosso jeito de fazer.</h2>
       </div>
-      <ol class="num-steps">
+      <div class="qs-ess">
+        <img class="qs-ess-img" src="{{ asset('img/aptk/qs-essencia.jpg') }}" alt="Utensílios de bar em cobre com limões sobre a bancada escura" loading="lazy">
+      <ol class="num-steps num-steps--stack">
         <li>
           <span class="ns-num">01</span>
           <h3>Pioneirismo</h3>
@@ -188,6 +182,7 @@
           <p>Da escolha dos ingredientes à última gota, unimos técnica, inovação e atenção aos detalhes para levar o padrão da alta coquetelaria a qualquer ocasião.</p>
         </li>
       </ol>
+      </div>
     </div>
   </section>
 
@@ -199,10 +194,8 @@
     $ecossistema = [
       [
         'link'  => $links['aptk'],
-        // FOTO: produto ou loja APTK. Provisória: interior da loja (a garrafa
-        // do pacote fundo preto tinha o rótulo antigo).
-        'img'   => asset('img/aptk/franquias-hero.jpg'),
-        'alt'   => 'Interior da loja APTK Spirits',
+        'img'   => asset('img/aptk/qs-marca-aptk.jpg'),
+        'alt'   => 'Boulevardier da APTK servido com gelo ao lado da garrafa',
         'name'  => 'APTK Spirits',
         'sub'   => 'Alta coquetelaria. Alquimia de histórias.',
         'text'  => 'Pioneira na alta coquetelaria engarrafada no Brasil, une sofisticação, criatividade e autenticidade em coquetéis prontos para servir, gifting e projetos especiais.',
@@ -210,10 +203,8 @@
       ],
       [
         'link'  => $links['barin'],
-        // FOTO: garrafa ou serviço da BARIN no balcão. Provisória: drink servido no balcão
-        // (Cosmopolitan de rótulo antigo; o bartender também tem rótulo antigo).
-        'img'   => asset('img/aptk/cat-cosmopolitan.jpg'),
-        'alt'   => 'Drink servido no balcão ao lado da garrafa',
+        'img'   => asset('img/aptk/qs-marca-barin.jpg'),
+        'alt'   => 'Garrafa de Cajuzaço da BARIN entre cajus',
         'name'  => 'BARIN',
         'sub'   => 'Qualidade e eficiência em cada serviço.',
         'text'  => 'Coquetelaria desenvolvida para o ritmo de bares, restaurantes e eventos. Receitas de qualidade, padronização e praticidade para operações que exigem consistência e escala.',
@@ -221,8 +212,8 @@
       ],
       [
         'link'  => $links['ice4pros'],
-        'img'   => asset('img/aptk/ice4pros-cubo.jpg'),
-        'alt'   => 'Cubo de gelo cristal Ice4Pros iluminado',
+        'img'   => asset('img/aptk/qs-marca-ice4pros.jpg'),
+        'alt'   => 'Drink com cubo de gelo cristal Ice4Pros',
         'name'  => 'Ice4Pros',
         'sub'   => 'O gelo também é protagonista.',
         'text'  => 'Especialista em gelo profissional, combina precisão, tecnologia e qualidade para valorizar cada coquetel e atender às exigências da coquetelaria e da hospitalidade.',
@@ -256,24 +247,8 @@
     </div>
   </section>
 
-  {{-- GALERIA --}}
-  <section class="section">
-    <div class="container-aptk">
-      <div class="section-head">
-        <span class="eyebrow">O universo APTK</span>
-        <h2 class="section-title">Onde a alquimia acontece</h2>
-      </div>
-      <div class="gallery">
-        {{-- Bartender e prateleira da loja saíram: mostravam garrafas com o rótulo antigo. --}}
-        <img class="g-tall" src="{{ asset('img/aptk/clube-hero.jpg') }}" alt="Convidada com um drink no bar da APTK">
-        <img src="{{ asset('img/aptk/cat-evento.jpg') }}" alt="Encontro com drinks e gastronomia">
-        <img src="{{ asset('img/aptk/sobre-pessoas.jpg') }}" alt="Pessoas brindando com drinks da APTK">
-      </div>
-    </div>
-  </section>
-
   {{-- ONDE ENCONTRAR (âncora usada pela vitrine da home) --}}
-  <section class="section" id="onde-encontrar" style="padding-top:0;">
+  <section class="section" id="onde-encontrar">
     <div class="container-aptk">
       <div class="section-head">
         <span class="eyebrow">Onde encontrar</span>
@@ -327,30 +302,14 @@
   <section class="section section--dark contact-band">
     <div class="container-aptk">
       <div class="contact-inner">
-        <div>
-          <x-brand.sunburst class="sun" />
-          <h2>Vamos criar histórias juntos</h2>
-          <p class="lead">Bares, eventos, distribuição e parcerias — fale com a gente.</p>
-          <a href="{{ route('catalog') }}" class="btn-aptk contact-cta">Ver a carta</a>
-        </div>
-        <div class="contact-list">
-          <div>
-            <p class="ct-role">Comercial · Head de Marketing</p>
-            <p class="ct-name">Rafael Camperlingo</p>
-          </div>
-          <a href="mailto:rafael@aptkspirits.com">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-            rafael@aptkspirits.com
-          </a>
-          <a href="tel:+5511992788592">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8.1 9.5a16 16 0 0 0 6 6l1.1-1.1a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg>
-            +55 11 99278-8592
-          </a>
-          <a href="https://www.instagram.com/aptkspirits/" target="_blank" rel="noopener noreferrer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-            @aptkspirits
-          </a>
-        </div>
+        <x-brand.sunburst class="sun" />
+        <h2>Vamos criar histórias juntos</h2>
+        <p class="lead">Bares, eventos, distribuição e parcerias — fale com a gente.</p>
+        <a href="{{ route('catalog') }}" class="btn-aptk">Ver a carta</a>
+        <a href="https://www.instagram.com/aptkspirits/" class="contact-ig" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+          @aptkspirits
+        </a>
       </div>
     </div>
   </section>

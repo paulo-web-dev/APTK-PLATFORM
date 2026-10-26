@@ -4,7 +4,9 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-25** (§14 — leva 13: fotos da Home, seções largas,
+Última revisão: **2026-10-26** (§15 — leva 14: fotos e ajustes de Quem Somos,
+Custom, Clube, Eventos e Collabs).
+Antes: 2026-10-25 (§14 — leva 13: fotos da Home, seções largas,
 BARIN sem acento; §13 — Custom: 7 bebidas e nome de exibição).
 Antes: 2026-10-20 (§13 — leva 11, Custom vira compra direta;
 §12 — fotos de produto em fundo branco com rótulo atual; fotos de ambiente com
@@ -504,10 +506,6 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
 
 | página / bloco | foto provisória | o que o briefing pede |
 |---|---|---|
-| Quem Somos · 2016 | `featured-negroni.jpg` (rótulo antigo) | garrafa/balcão da era Apothek |
-| Quem Somos · card APTK Spirits | `franquias-hero.jpg` (§12) | produto ou loja APTK |
-| Quem Somos · card BARIN | `cat-cosmopolitan.jpg` (rótulo antigo) | garrafa ou serviço da BARIN |
-| Quem Somos · galeria | `clube-hero.jpg`, `cat-evento.jpg` (§12) | — |
 | Custom · hero (2 fotos) | `cat-pessoas.jpg` (§12), `about-loja-3.jpg` | Presentes & Celebrações / Marcas & Projetos Especiais |
 | Custom · Full Custom | `cat-dry-martini.jpg` | garrafa com rótulo de marca parceira + embalagem premium |
 | Eventos · Bar APTK | `clube-hero.jpg` (§12) | — |
@@ -615,8 +613,7 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
 - **Fotos de ambiente com rótulo antigo — trocar quando houver foto nova:**
   - `hero-negroni-poster.jpg` + vídeo do hero da Home (Negroni).
   - `cat-fitzgerald.jpg`: Eventos · Customização.
-  - `featured-negroni.jpg`: Quem Somos · 2016; Eventos · Gifting.
-  - `cat-cosmopolitan.jpg`: Quem Somos · card BARIN.
+  - `featured-negroni.jpg`: Eventos · Gifting.
   - Fotos da leva 13 que a gestão mandou com garrafa de rótulo antigo (ficam,
     pela regra acima): `home-clube.jpg` (Negroni Clássico de rótulo branco) e
     `home-arte-de-presentear.jpg` (Old Fashioned).
@@ -795,6 +792,36 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
 
 **Deploy da leva 13:** `migrate --force` (BARIN e capas dos posts), `view:clear`, `config:cache`
 (`config/marcas.php`).
+
+## 15. Leva 14 — fotos e ajustes de Quem Somos, Custom, Clube, Eventos e Collabs (26/10/2026)
+
+Originais em `public/img/fotos_site/` (fora do git), mesmo tratamento da leva
+13 (lado maior ≤ 1920 px, JPG 80) em `public/img/aptk/`. Os dois `.HEIC`
+(BARIN - TRES MARCAS, grandes encontros) são HEIC de iPhone com mapa HDR,
+íntegros (o Windows só não tem o codec HEVC pra miniatura): convertidos com
+ffmpeg. `unique.avif` e `apothek quem somos.webp` viram JPG. `CUSTOMIZADO (1)`
+e `bar aptk - eventos (1)` são cópias idênticas (mesmo hash), ignoradas.
+
+**Quem Somos:**
+
+| bloco | original | otimizada |
+|---|---|---|
+| Trajetória 2016 (Apothek) | `apothek quem somos.webp` 38 KB | `qs-apothek-2016.jpg` 57 KB |
+| Trajetória 2021 (APTK) | `aptk - quem somos.jpg` 6373 KB | `qs-aptk-2021.jpg` 474 KB |
+| Nossa essência | `nossa essencia - quem somos.jpeg` 6355 KB | `qs-essencia.jpg` 327 KB |
+| Card APTK Spirits | `APTK - TRES MARCAS.jpg` 11493 KB | `qs-marca-aptk.jpg` 366 KB |
+| Card BARIN | `BARIN - TRES MARCAS.HEIC` 1901 KB | `qs-marca-barin.jpg` 213 KB |
+| Card Ice4Pros | `ICE - TRES MARCAS.jpeg` 89 KB | `qs-marca-ice4pros.jpg` 95 KB |
+
+- "Nossa essência" em duas colunas (foto quadrada à esquerda, os três valores
+  empilhados à direita; no celular a foto vem em cima).
+- Saiu a galeria "Onde a alquimia acontece"; "APTK pelo Brasil" fica.
+- Fechamento "Vamos criar histórias juntos" centralizado, sem nome, e-mail e
+  telefone do comercial; ficam "Ver a carta" e o Instagram @aptkspirits.
+
+### 15.1 Pendências da leva 14
+
+- **Pedir versão maior:** `apothek quem somos` (636x424, Quem Somos 2016).
 
 ---
 
