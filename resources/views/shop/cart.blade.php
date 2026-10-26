@@ -73,11 +73,15 @@
                                 <a href="{{ $row->personalizacao ? route('custom') : route('product', $row->product->slug) }}" class="cart-name">{{ $row->nome }}</a>
                                 @if ($row->personalizacao)
                                     <x-custom.ficha :p="$row->personalizacao" />
-                                    @if ($recusas->has($row->key))
-                                        <p class="cart-recusa">{{ $recusas[$row->key] }} Remova o item para continuar.</p>
-                                    @endif
                                 @endif
-                                <span class="cart-unit">@if ($row->size){{ $row->size }} · @endif R$ {{ number_format($row->unit_price, 2, ',', '.') }} / un</span>
+                                @if ($recusas->has($row->key))
+                                    <p class="cart-recusa">{{ $recusas[$row->key] }} Remova o item para continuar.</p>
+                                @endif
+                                @if ($row->disponivel)
+                                    <span class="cart-unit">@if ($row->size){{ $row->size }} · @endif R$ {{ number_format($row->unit_price, 2, ',', '.') }} / un</span>
+                                @else
+                                    <span class="cart-unit">{{ $row->size }} · indisponível</span>
+                                @endif
                             </div>
 
                             {{-- Linhas do carrinho identificadas por produto + volume (key). --}}
@@ -89,7 +93,7 @@
                                 <button type="submit" class="qty-btn">Atualizar</button>
                             </form>
 
-                            <span class="cart-subtotal">R$ {{ number_format($row->subtotal, 2, ',', '.') }}</span>
+                            <span class="cart-subtotal">{{ $row->disponivel ? 'R$ '.number_format($row->subtotal, 2, ',', '.') : '—' }}</span>
 
                             <form action="{{ route('cart.remove') }}" method="POST">
                                 @csrf

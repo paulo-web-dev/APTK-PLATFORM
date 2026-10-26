@@ -37,6 +37,12 @@ class OrderService
             throw new RuntimeException('Carrinho vazio.');
         }
 
+        // Volume que saiu do produto com o item no carrinho (CartService::items).
+        if ($fora = $items->firstWhere('disponivel', false)) {
+            throw new OutOfStockException("O volume de {$fora->size} não está mais disponível. "
+                ."Remova \"{$fora->nome} ({$fora->size})\" do carrinho para continuar.");
+        }
+
         // Garrafa custom: revalida a personalização (a config pode ter mudado
         // com o item no carrinho). O preço já vem recalculado da config pelo
         // CartService::items(). Recusada → volta pro carrinho com o motivo.

@@ -26,6 +26,8 @@ use Illuminate\Support\Facades\Log;
  * - Produto existente mantém slug e categoria. Novo nasce com slug = grupo.
  * - Produto managedByErp() é pulado. Produto fora do CSV não é tocado.
  * - As colunas foto_frente/foto_verso do CSV são ignoradas.
+ * - Linha com volume em config('catalogo.volumes_desativados') é ignorada
+ *   (leva 15: 100 ml fora da venda; o CSV continua com as linhas).
  */
 class CatalogoImportarPlanilha extends Command
 {
@@ -108,6 +110,9 @@ class CatalogoImportarPlanilha extends Command
 
     private array $avisos = [];
 
+    /** Linhas do CSV puladas por volume desativado ("grupo volume"). */
+    private array $desativados = [];
+
     private array $mantidos = [];
 
     private array $resumo = [];
@@ -116,6 +121,7 @@ class CatalogoImportarPlanilha extends Command
     {
         // A instância do comando pode ser reaproveitada (testes): zera o estado.
         $this->avisos = [];
+        $this->desativados = [];
         $this->mantidos = [];
         $this->resumo = [
             'criados' => [], 'atualizados' => [], 'sem_mudanca' => [], 'pulados_erp' => [],
@@ -203,6 +209,13 @@ class CatalogoImportarPlanilha extends Command
             }
             $l = array_map('trim', array_combine($cabecalho, $valores));
             if ($l['grupo'] === '') {
+                continue;
+            }
+            // Volume fora da venda (config catalogo.volumes_desativados): a
+            // linha fica no CSV, mas não entra no produto.
+            if (in_array($this->normalizarVolume($l['volume']), config('catalogo.volumes_desativados', []), true)) {
+                $this->desativados[] = $l['grupo'].' '.$this->normalizarVolume($l['volume']);
+
                 continue;
             }
 
@@ -498,6 +511,9 @@ class CatalogoImportarPlanilha extends Command
         $this->line('  atualizados: '.count($r['atualizados']));
         $this->line('  sem mudança: '.count($r['sem_mudanca']));
         $this->line('  pulados (ERP): '.count($r['pulados_erp']).($r['pulados_erp'] ? ' ('.implode(', ', $r['pulados_erp']).')' : ''));
+        if ($this->desativados) {
+            $this->line('  linhas ignoradas por volume desativado (catalogo.volumes_desativados): '.count($this->desativados));
+        }
         foreach ($r['sem_preco'] as $motivo => $grupos) {
             $this->line('  '.$motivo.' ('.count($grupos).'): '.implode(', ', $grupos));
         }

@@ -78,8 +78,9 @@ class CatalogoImportarPlanilhaTest extends TestCase
 
         $p = Product::where('slug', 'boulevardier')->firstOrFail();
 
-        $this->assertSame(['100 ml', '375 ml'], $p->sizes); // 750 sem preço fica fora
-        $this->assertEquals(['100 ml' => 80.0, '375 ml' => 165.0], $p->size_prices);
+        // 750 sem preço fica fora; 100 ml é volume desativado (leva 15).
+        $this->assertSame(['375 ml'], $p->sizes);
+        $this->assertEquals(['375 ml' => 165.0], $p->size_prices);
         $this->assertSame('375 ml', $p->defaultSize());
         $this->assertEquals(165.0, (float) $p->price);
         $this->assertSame('BOU375', $p->sku);

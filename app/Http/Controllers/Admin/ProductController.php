@@ -53,6 +53,8 @@ class ProductController extends Controller
     {
         $data = $this->validateData($request);
 
+        $this->recusaVolumeDesativado($data['sizes'] ?? null, []);
+
         $data['slug']     = $this->uniqueSlug($data['name']);
         $data['active']   = $request->boolean('active');
         $data['featured'] = $request->boolean('featured');
@@ -90,6 +92,8 @@ class ProductController extends Controller
         if ($erpManaged) {
             unset($data['price'], $data['size_prices'], $data['stock_qty']);
         }
+
+        $this->recusaVolumeDesativado($data['sizes'] ?? null, $product->sizes ?? []);
 
         // Salvar sem mexer não pode regravar o JSON (80 virava 80.0): volume
         // e preço por volume só entram quando mudaram de fato.
@@ -207,6 +211,23 @@ class ProductController extends Controller
                 ? 'Produto sem preço não pode ser ativado. Preencha o preço (ou os preços por volume) e salve de novo.'
                 : 'Envie uma foto do produto antes de ativar.',
         ]);
+    }
+
+    /**
+     * Volume fora da venda (config catalogo.volumes_desativados, ex.: 100 ml)
+     * não entra como volume novo. Produto que já o tem (o "Teste" de
+     * pagamento) segue salvando normalmente.
+     */
+    private function recusaVolumeDesativado(?array $sizes, array $atuais): void
+    {
+        $novos = array_diff($sizes ?? [], $atuais);
+        $fora = array_values(array_intersect($novos, config('catalogo.volumes_desativados', [])));
+
+        if ($fora) {
+            throw ValidationException::withMessages([
+                'sizes' => 'O volume de '.implode(', ', $fora).' não está mais à venda e não pode ser adicionado.',
+            ]);
+        }
     }
 
     /** Mesmo conteúdo, na mesma ordem, comparando número como número (80 == 80.0). */

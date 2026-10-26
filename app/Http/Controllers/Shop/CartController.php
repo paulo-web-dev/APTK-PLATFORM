@@ -25,6 +25,10 @@ class CartController extends Controller
         $recusas = $items->whereNotNull('personalizacao')
             ->mapWithKeys(fn ($row) => [$row->key => $custom->recusa($row->personalizacao)])
             ->filter();
+        // Volume que saiu do produto (ex.: 100 ml): indisponível na linha.
+        foreach ($items->where('disponivel', false) as $row) {
+            $recusas[$row->key] = "O volume de {$row->size} não está mais disponível.";
+        }
 
         return view('shop.cart', [
             'items'   => $items,

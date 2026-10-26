@@ -4,9 +4,9 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-26** (§16 — foto do admin até 30 MB, reduzida no
-servidor; mensagens de validação em pt_BR).
-Antes: 2026-10-26 (§15 — leva 14: fotos e ajustes de Quem Somos,
+Última revisão: **2026-10-27** (§17 — leva 15: 100 ml fora da venda).
+Antes: 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
+servidor; mensagens de validação em pt_BR; §15 — leva 14: fotos e ajustes de Quem Somos,
 Custom, Clube, Eventos e Collabs).
 Antes: 2026-10-25 (§14 — leva 13: fotos da Home, seções largas,
 BARIN sem acento; §13 — Custom: 7 bebidas e nome de exibição).
@@ -932,6 +932,42 @@ produto ficou ativo de antes da regra. O aviso agora distingue "sem foto" de
 "a foto atual é antiga (...) e não conta pra ativação"; ativo nessa situação, o
 salvar pede foto. Conferir no servidor: `php artisan produtos:aplicar-fotos
 --dry-run`.
+
+## 17. Leva 15 — 100 ml fora da venda (27/10/2026)
+
+**Migration `2026_10_27_100000_remover_volume_100ml`:** tira "100 ml" de
+`sizes`, `size_prices` e `size_stock` de todos os produtos, menos o `teste`
+(produto de pagamento, só 100 ml a R$ 1,00 — continua igual). O volume padrão
+é calculado (maior de `sizes`), então se ajustou sozinho. Produto que fica sem
+volume vira inativo **e com preço 0** (senão o preço base, que era o do 100 ml,
+deixaria o `produtos:aplicar-fotos`/admin reativá-lo vendendo sem volume).
+Valor bruto das colunas em `backup_volume_100ml`; o down restaura exatamente e
+apaga a tabela. Pedidos não mudam.
+
+No banco local: 18 produtos afetados. Ficam só com 375: caipirinha-arazul,
+old-fashioned, penicillin; só com 750: vodka-vdk; 375/750: boulevardier,
+caju-amigo, coffee-negroni, cosmopolitan, dry-martini, espresso-martini,
+fitzgerald, squadra-amendoas, squadra-coco, limoncello, moscow-mule,
+negroni-classico, sur-lorange. Sem volume (inativo, preço 0): **manhattan**.
+
+**Importador:** `config('catalogo.volumes_desativados')` = `['100 ml']`. O
+`catalogo:importar-planilha` ignora essas linhas (18 no CSV atual, que
+continuam lá) e conta no resumo; grupo só com volume desativado (manhattan)
+nem é criado. Tirar da config + importar traz o volume de volta.
+
+**Carrinho/checkout:** linha cujo volume saiu do produto
+(`CartService::items()->disponivel = false`) aparece "100 ml · indisponível",
+com "O volume de 100 ml não está mais disponível.", preço fora do total; `GET`
+e `POST /checkout` voltam pro carrinho com a mensagem. Conferido no fluxo real
+(item adicionado antes da migration).
+
+**Admin:** volumes são texto livre; recusa adicionar volume desativado como
+volume novo ("O volume de 100 ml não está mais à venda..."). Produto que já tem
+(o `teste`) salva normal.
+
+**Deploy da leva 15:** `migrate --force`, `config:cache` (`config/catalogo.php`
+novo). Conferir depois: `Product::where('sizes','like','%100 ml%')->pluck('slug')`
+só com `teste` (se existir).
 
 ---
 

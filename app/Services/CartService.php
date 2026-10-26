@@ -136,7 +136,8 @@ class CartService
      * Itens enriquecidos: UMA query e uma coleção de objetos com
      * key, product, nome (o do produto; na custom, o nome da bebida no
      * Custom), size, qty, unit_price (do volume, ou o preço fixo do custom),
-     * subtotal e personalizacao (null na linha normal).
+     * subtotal, personalizacao (null na linha normal) e disponivel (false se
+     * o volume saiu do produto: preço 0, o checkout recusa).
      * Produtos inexistentes são ignorados.
      */
     public function items(): Collection
@@ -161,9 +162,14 @@ class CartService
                 }
 
                 $personalizacao = $line['personalizacao'] ?? null;
+                // Volume que saiu do produto (ex.: o 100 ml, leva 15) com o
+                // item ainda na sessão: fica na lista como indisponível, fora
+                // do total, e o checkout recusa (OrderService).
+                $disponivel = $line['size'] === null
+                    || (is_array($product->sizes) && in_array($line['size'], $product->sizes, true));
                 $unit = $personalizacao
                     ? app(CustomService::class)->preco()
-                    : $product->priceForSize($line['size']);
+                    : ($disponivel ? $product->priceForSize($line['size']) : 0.0);
 
                 return (object) [
                     'key'            => $key,
@@ -176,6 +182,7 @@ class CartService
                     'unit_price'     => $unit,
                     'subtotal'       => $unit * $line['qty'],
                     'personalizacao' => $personalizacao,
+                    'disponivel'     => $disponivel,
                 ];
             })
             ->filter()

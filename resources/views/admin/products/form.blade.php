@@ -87,6 +87,7 @@
                             <label>Volumes</label>
                             <input type="text" name="sizes" class="admin-input" style="width:100%;" value="{{ old('sizes', is_array($product->sizes) ? implode(', ', $product->sizes) : '') }}" placeholder="375 ml, 750 ml">
                             <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:6px;">Separe por vírgula. Viram o seletor de volume na loja.</p>
+                            @error('sizes') <span class="err">{{ $message }}</span> @enderror
                         </div>
                         <div class="field" style="margin-bottom:0;">
                             <label>Preços por volume (R$)</label>

@@ -153,6 +153,11 @@ original nunca vai pro disco). Limites do PHP no servidor: ESTADO-ATUAL §16.
 - O admin usa a mesma regra: sem preço ou sem foto no padrão não ativa ("Envie
   uma foto do produto antes de ativar."). Foto enviada no mesmo salvar conta.
 
+**Volume desativado** (leva 15): `config/catalogo.php` → `volumes_desativados`
+(hoje `['100 ml']`). O importador ignora essas linhas do CSV; o admin não deixa
+adicioná-lo; item na sessão com volume que saiu do produto fica indisponível no
+carrinho (`disponivel` em `CartService::items()`) e o checkout recusa.
+
 `catalogo:produto-teste [--remover]`: produto "Teste" (slug `teste`, 100 ml a
 R$ 1,00, Bases) para teste de pagamento real; o importador nunca toca nele.
 
@@ -283,4 +288,4 @@ qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 - Não rodar `migrate:fresh` sem avisar — apaga dados locais.
 - Depois de mexer em rota, rodar `php artisan route:clear`.
 - Mudanças do cliente vêm agrupadas em "levas" numeradas, cada uma com escopo fechado
-  antes da execução. As levas 01 a 11 já foram concluídas.
+  antes da execução. As levas 01 a 15 já foram concluídas.

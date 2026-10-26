@@ -64,6 +64,12 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index');
         }
 
+        // Volume que saiu do produto (ex.: 100 ml): resolve no carrinho antes.
+        if ($fora = $this->cart->items()->firstWhere('disponivel', false)) {
+            return redirect()->route('cart.index')
+                ->with('stock_error', "O volume de {$fora->size} não está mais disponível. Remova o item do carrinho para continuar.");
+        }
+
         $user = $request->user();
 
         return view('shop.checkout', [
