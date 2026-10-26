@@ -544,8 +544,7 @@ da página e perks do Explorer e do Collector (seeder + migration
 **Eventos — portfólio:** `PageController::PORTFOLIO_EVENTOS` vazio. Falta da
 gestão: nome, cliente, data, local, foto e autorização de uso.
 
-**Local:** os planos antigos do Clube (Admirador, Bronze, Prata, Ouro) seguem
-ativos no banco local porque o `ClubePlanos2026Seeder` não rodou aqui.
+**Planos antigos do Clube:** resolvido na leva 14 (§15).
 
 **Deploy da leva 10:** `migrate --force` (nomes das categorias + perks do
 Clube), `config:cache` (`config/marcas.php`), `view:clear`.
@@ -825,6 +824,28 @@ e `bar aptk - eventos (1)` são cópias idênticas (mesmo hash), ignoradas.
 | Full Custom | `Sua identidade. Nossa criação..png` 2039 KB | `custom-full.jpg` 193 KB |
 
 - Full Custom: foto em 1:1 (era 4:3; a foto é vertical).
+
+**Clube:**
+
+| bloco | original | otimizada |
+|---|---|---|
+| Hero | `CLUBE - CLUBE.JPG` 8474 KB | `clube-hero-2.jpg` 271 KB |
+| Faça parte (ao lado do formulário) | `FAÇA PARTE - CLUBE.jpeg` 127 KB | `clube-faca-parte.jpg` 132 KB |
+
+- Saiu a seção de planos "Do primeiro gole ao colecionador". O CTA "Faça parte
+  do clube" vai pra `#clube-form` (formulário de interesse, lead tipo
+  `clube`), agora em duas colunas com a foto. Le Cercle continua.
+- **Collector e Connoisseur só por URL direta** (`/clube/assinar/{plan}`, com
+  login); a página não tem mais caminho pros planos pagos (a cobrança
+  recorrente nem existe ainda).
+- **Planos antigos ativos em produção:** o `ClubePlanos2026Seeder` desativava
+  por `admirador|bronze|prata|ouro|aged`, mas os slugs reais são
+  `descoberta|classicos|premium|small-batch|corporativo` (o
+  `SubscriptionPlanSeeder` só renomeou). Migration
+  `2026_10_26_100000_desativar_planos_antigos_do_clube` (só `active`, com down)
+  + seeder corrigido + `DatabaseSeeder` chama o `ClubePlanos2026Seeder` depois
+  do antigo. Ativos: APTK Explorer, APTK Collector, APTK Connoisseur e Le
+  Cercle APTK. Assinatura existente não é tocada.
 
 ### 15.1 Pendências da leva 14
 

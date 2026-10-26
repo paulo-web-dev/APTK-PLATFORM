@@ -22,8 +22,9 @@ class ClubePlanos2026Seeder extends Seeder
 {
     public function run(): void
     {
-        // 1) Desativa a vitrine antiga (registros preservados).
-        SubscriptionPlan::whereIn('slug', ['admirador', 'bronze', 'prata', 'ouro', 'aged'])
+        // 1) Desativa a vitrine antiga (registros preservados). Os slugs são os
+        //    originais (o SubscriptionPlanSeeder só renomeou os planos).
+        SubscriptionPlan::whereIn('slug', ['descoberta', 'classicos', 'premium', 'small-batch', 'corporativo'])
             ->update(['active' => false]);
 
         // 2) Estrutura 2026.

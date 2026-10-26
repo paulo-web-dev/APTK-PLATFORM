@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             ProductSeeder::class,           // categorias + produtos
-            SubscriptionPlanSeeder::class,  // planos do Clube
+            SubscriptionPlanSeeder::class,  // planos antigos do Clube (ficam inativos)
+            ClubePlanos2026Seeder::class,   // planos atuais do Clube
             CustomerSeeder::class,          // clientes de demonstração
             OrderSeeder::class,             // pedidos variados (depende dos dois acima)
         ]);
