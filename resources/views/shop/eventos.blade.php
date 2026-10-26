@@ -59,7 +59,7 @@
 @section('content')
   {{-- HERO (briefing p.25–26) --}}
   <section class="evt-hero">
-    <img src="{{ asset('img/aptk/eventos-hero.jpg') }}" alt="Convidados brindando com drinks da APTK">
+    <img src="{{ asset('img/aptk/eventos-hero-2.jpg') }}" alt="Balcão do IL BAR by APTK com as garrafas da casa">
     <div class="container-aptk">
       <div class="evt-hero-copy">
         <span class="eyebrow">Eventos</span>
@@ -112,25 +112,23 @@
     </section>
   @endif
 
-  {{-- SOLUÇÕES (briefing p.27–28). Fotos provisórias. O bartender saiu do Bar
-       APTK (rótulo antigo em destaque); Negroni e Fitzgerald ficam até chegar foto nova. --}}
+  {{-- SOLUÇÕES (briefing p.27–28). Fotos da leva 14; 'pos' = object-position
+       no recorte 16:10 (as fotos verticais). Customização usa a mesma foto do
+       card Crie Seu Drink da Home. --}}
   @php
     $solucoes = [
       ['n' => '01', 'h' => 'Bar APTK', 'sub' => 'Alta coquetelaria, onde seu evento acontecer.',
        'p' => 'Levamos a assinatura da APTK ao seu evento, com coquetéis autorais, estrutura de bar e profissionais especializados.',
-       'img' => 'img/aptk/clube-hero.jpg', 'alt' => 'Convidada com um drink no bar da APTK'],
-      // FOTO: kit/presente de evento (coquetéis engarrafados em embalagem premium). Provisória: Negroni em garrafas da casa.
+       'img' => 'img/aptk/eventos-bar.jpg', 'alt' => 'Bartender servindo Negroni no Bar APTK', 'pos' => '50% 50%'],
       ['n' => '02', 'id' => 'gifting', 'h' => 'Gifting & Presentes', 'sub' => 'Presentes que continuam contando histórias.',
        'p' => 'Coquetéis engarrafados, kits exclusivos e presentes personalizados para convidados, parceiros e colaboradores.',
-       'img' => 'img/aptk/featured-negroni.jpg', 'alt' => 'Garrafas de Negroni da APTK'],
-      // FOTO: ativação de marca / collab em evento. Provisória: encontro com drinks e gastronomia.
+       'img' => 'img/aptk/eventos-gifting.jpg', 'alt' => 'Kit de presente com oito coquetéis APTK', 'pos' => '50% 55%'],
       ['n' => '03', 'h' => 'Brand Experiences & Collabs', 'sub' => 'Sua marca encontra a nossa criatividade.',
        'p' => 'Projetos personalizados, ativações e colaborações que conectam marcas ao universo da coquetelaria e da hospitalidade.',
-       'img' => 'img/aptk/cat-evento.jpg', 'alt' => 'Encontro com drinks e gastronomia'],
-      // FOTO: garrafa com rótulo personalizado para evento. Provisória: Fitzgerald da casa.
+       'img' => 'img/aptk/eventos-brand.jpg', 'alt' => 'Convidadas brindando na loja da APTK', 'pos' => '50% 42%'],
       ['n' => '04', 'h' => 'Customização', 'sub' => 'Cada detalhe com a sua identidade.',
        'p' => 'Rótulos, embalagens e coquetéis personalizados para transformar produtos em lembranças únicas.',
-       'img' => 'img/aptk/cat-fitzgerald.jpg', 'alt' => 'Garrafa de Fitzgerald da APTK'],
+       'img' => 'img/aptk/home-crie-seu-drink.jpg', 'alt' => 'Rótulo personalizado “Te Amo” sendo escrito à mão', 'pos' => '50% 62%'],
     ];
   @endphp
   <section class="section evt-band">
@@ -143,7 +141,7 @@
       <div class="evt-sol-grid">
         @foreach ($solucoes as $s)
           <article class="media-card evt-sol" @isset($s['id']) id="{{ $s['id'] }}" @endisset>
-            <div class="mc-media"><img src="{{ asset($s['img']) }}" alt="{{ $s['alt'] }}" loading="lazy"></div>
+            <div class="mc-media"><img src="{{ asset($s['img']) }}" alt="{{ $s['alt'] }}" style="object-position: {{ $s['pos'] }}" loading="lazy"></div>
             <div class="mc-body">
               <span class="mc-eyebrow">{{ $s['n'] }}</span>
               <h3 class="title-editorial">{{ $s['h'] }}</h3>

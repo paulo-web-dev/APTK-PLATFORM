@@ -506,10 +506,6 @@ são só referência de composição — nenhuma foi usada no site. Um commit po
 
 | página / bloco | foto provisória | o que o briefing pede |
 |---|---|---|
-| Eventos · Bar APTK | `clube-hero.jpg` (§12) | — |
-| Eventos · Gifting | `featured-negroni.jpg` (rótulo antigo) | kit/presente de evento |
-| Eventos · Brand Experiences | `cat-evento.jpg` | ativação de marca em evento |
-| Eventos · Customização | `cat-fitzgerald.jpg` (rótulo antigo) | garrafa com rótulo personalizado de evento |
 
 Nenhuma foto aparece duas vezes na mesma página (incluindo os arquivos
 duplicados com nome diferente: `loja-aptk`=`sobre-loja`,
@@ -608,12 +604,11 @@ passa a usar essas. **Substitui a decisão da §10 de recusar fundo branco.**
   saiu do Full Custom na leva 14.
 - **Fotos de ambiente com rótulo antigo — trocar quando houver foto nova:**
   - `hero-negroni-poster.jpg` + vídeo do hero da Home (Negroni).
-  - `cat-fitzgerald.jpg`: Eventos · Customização.
-  - `featured-negroni.jpg`: Eventos · Gifting.
   - Fotos da leva 13 que a gestão mandou com garrafa de rótulo antigo (ficam,
     pela regra acima): `home-clube.jpg` (Negroni Clássico de rótulo branco) e
     `home-arte-de-presentear.jpg` (Old Fashioned).
-  - Fora de uso hoje: `sobre-barman.jpg`/`hero-bartender.jpg`,
+  - Fora de uso hoje: `cat-fitzgerald.jpg`, `featured-negroni.jpg` (saíram de
+    Eventos e Quem Somos na leva 14), `sobre-barman.jpg`/`hero-bartender.jpg`,
     `sobre-interior.jpg`/`cat-loja.jpg`.
 - Bordas: `bou375-frente`, `dm750-verso` e `slo750-frente` têm canto um pouco
   mais escuro que o fundo do card (foto original); quase invisível.
@@ -845,6 +840,19 @@ e `bar aptk - eventos (1)` são cópias idênticas (mesmo hash), ignoradas.
   + seeder corrigido + `DatabaseSeeder` chama o `ClubePlanos2026Seeder` depois
   do antigo. Ativos: APTK Explorer, APTK Collector, APTK Connoisseur e Le
   Cercle APTK. Assinatura existente não é tocada.
+
+**Eventos:**
+
+| bloco | original | otimizada |
+|---|---|---|
+| Hero | `grandes encontros - eventos.HEIC` 1130 KB | `eventos-hero-2.jpg` 299 KB |
+| Bar APTK | `bar aptk - eventos.jpeg` 115 KB | `eventos-bar.jpg` 121 KB |
+| Gifting & Presentes | `gifts - eventos.JPG` 5526 KB | `eventos-gifting.jpg` 271 KB |
+| Brand Experiences & Collabs | `brand experience - eventos.JPG` 10665 KB | `eventos-brand.jpg` 276 KB |
+| Customização | `CUSTOMIZADO.png` (a mesma da Home) | `home-crie-seu-drink.jpg` (reusada) |
+
+- Cards de formato em 16:10 com `object-position` por card (`pos` no array
+  `$solucoes` da view), porque três das fotos são verticais.
 
 **E-mail de contato:** todos os CTAs de e-mail (Collabs, Eventos, via
 `PageController::mailto`) vão pra `config('marcas.email_contato')` =
