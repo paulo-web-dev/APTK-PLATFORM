@@ -847,6 +847,12 @@ e `bar aptk - eventos (1)` são cópias idênticas (mesmo hash), ignoradas.
   do antigo. Ativos: APTK Explorer, APTK Collector, APTK Connoisseur e Le
   Cercle APTK. Assinatura existente não é tocada.
 
+**E-mail de contato:** todos os CTAs de e-mail (Collabs, Eventos, via
+`PageController::mailto`) vão pra `config('marcas.email_contato')` =
+`contato@aptkspirits.com` (era o e-mail pessoal do comercial). Sobra do nome,
+e-mail e telefone dele só em `resources/views/shop/sobre.blade.php`, view sem
+rota (não aparece no site).
+
 ### 15.1 Pendências da leva 14
 
 - **Pedir versão maior:** `apothek quem somos` (636x424, Quem Somos 2016).

@@ -45,4 +45,14 @@ return [
         'ice4pros' => ['url' => 'https://ice4pros.com.br', 'label' => 'Conhecer a Ice4Pros'],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | E-mail de contato (leva 14)
+    |--------------------------------------------------------------------------
+    | Destino de todos os CTAs de e-mail do site (Collabs, Eventos), com
+    | assunto pré-preenchido (PageController::mailto). Lembrar do
+    | config:cache em produção.
+    */
+    'email_contato' => 'contato@aptkspirits.com',
+
 ];

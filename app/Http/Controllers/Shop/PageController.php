@@ -93,10 +93,10 @@ class PageController extends Controller
         return back()->with('newsletter_ok', 'Pronto! Você entrou na lista.');
     }
 
-    /** E-mail comercial com assunto pré-preenchido. */
+    /** E-mail de contato (config/marcas.php) com assunto pré-preenchido. */
     private function mailto(string $subject): string
     {
-        return 'mailto:rafael@aptkspirits.com?subject='.rawurlencode($subject);
+        return 'mailto:'.config('marcas.email_contato').'?subject='.rawurlencode($subject);
     }
 
     /**

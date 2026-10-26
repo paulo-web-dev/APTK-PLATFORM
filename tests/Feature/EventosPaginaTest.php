@@ -22,7 +22,7 @@ class EventosPaginaTest extends TestCase
             ->assertSee('Diferentes formatos. A mesma excelência.')
             ->assertSee('Da primeira ideia ao último brinde.')
             ->assertSee('Seu próximo evento merece algo extraordinário.')
-            ->assertSee('mailto:rafael@aptkspirits.com', false)
+            ->assertSee('mailto:contato@aptkspirits.com', false)
             ->assertDontSee('Ver a carta')
             ->assertDontSee('Eventos que já levaram a nossa assinatura.');
     }
