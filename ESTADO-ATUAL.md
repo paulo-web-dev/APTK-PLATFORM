@@ -693,9 +693,9 @@ Simples deixou de ser criado (leads antigos ficam no admin); o mailable
     antigo.
   - **Nome de exibição** (`nome` por bebida): caipirinha-arazul aparece como
     "Caipirinha" no seletor, carrinho, checkout, Meus pedidos, sucesso e
-    bloco "Personalização" do admin. Loja e página do produto seguem com
-    "Caipirinha Arazul"; `order_items.product_name` e o nome na Appmax
-    também (snapshot do produto). O pedido grava
+    bloco "Personalização" do admin. Desde a leva 14 o produto também se
+    chama "Caipirinha" (§15); `order_items.product_name` e o nome na Appmax
+    seguem o nome do produto (snapshot). O pedido grava
     `personalizacao.bebida_nome` junto do slug, e esse nome vence a config
     na exibição. Pedido anterior sem o campo usa a config.
 
@@ -854,6 +854,13 @@ e `bar aptk - eventos (1)` são cópias idênticas (mesmo hash), ignoradas.
 - Cards de formato em 16:10 com `object-position` por card (`pos` no array
   `$solucoes` da view), porque três das fotos são verticais.
 
+**Caipirinha:** "Caipirinha Arazul" vira "Caipirinha" no site todo. Migration
+`2026_10_26_110000_caipirinha_sem_arazul` (só `name` do slug
+`caipirinha-arazul`, com down) e planilha do importador com o nome novo
+(dry-run local: sem mudança nos produtos). Slug, SKU e rota iguais; pedido
+antigo mantém "Caipirinha Arazul" em `order_items.product_name`. No Custom já
+era "Caipirinha" (`custom.bebidas.caipirinha-arazul.nome`).
+
 **E-mail de contato:** todos os CTAs de e-mail (Collabs, Eventos, via
 `PageController::mailto`) vão pra `config('marcas.email_contato')` =
 `contato@aptkspirits.com` (era o e-mail pessoal do comercial). Sobra do nome,
@@ -880,6 +887,11 @@ pizzaria - collabs` —, Il Barista, Freixenet — arquivo `FREXEINET`.
   voltam com uma linha): Selvagem, Gurumê, Camolese, Barbacoa.
 - **Confirmar com a gestão:** foto do Rosewood (garrafa preta "Rabo di Galo",
   sem marca do hotel; foi a gestão que associou).
+
+**Deploy da leva 14:** `migrate --force` (planos antigos do Clube e
+Caipirinha), `view:clear`, `config:cache` (`config/collabs.php` novo e
+`config/marcas.php`). Conferir em `/clube` que a página só tem o formulário e,
+no admin, que só Explorer, Collector, Connoisseur e Le Cercle estão ativos.
 
 ---
 

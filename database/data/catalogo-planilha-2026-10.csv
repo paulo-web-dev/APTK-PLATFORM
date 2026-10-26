@@ -2,9 +2,9 @@ grupo,nome,marca,volume,sku,preco,foto_frente,foto_verso
 boulevardier,Boulevardier,aptk,100ml,BOU100,80.00,,
 boulevardier,Boulevardier,aptk,375ml,BOU375,165.00,Fundo Preto_016.jpg,Fundo Preto_017.jpg
 boulevardier,Boulevardier,aptk,750ml,BOU750,210.00,Fundo Preto_049.jpg,Fundo Preto_050.jpg
-caipirinha-arazul,Caipirinha Arazul,aptk,100ml,CAIP100,80.00,,
-caipirinha-arazul,Caipirinha Arazul,aptk,375ml,CAIP375,165.00,,
-caipirinha-arazul,Caipirinha Arazul,aptk,750ml,CAIP750,,,
+caipirinha-arazul,Caipirinha,aptk,100ml,CAIP100,80.00,,
+caipirinha-arazul,Caipirinha,aptk,375ml,CAIP375,165.00,,
+caipirinha-arazul,Caipirinha,aptk,750ml,CAIP750,,,
 canarinha,Canarinha,aptk,375ml,CNA375,165.00,,
 caju-amigo,Caju Amigo,aptk,100ml,CA100,80.00,,
 caju-amigo,Caju Amigo,aptk,375ml,CA375,165.00,,

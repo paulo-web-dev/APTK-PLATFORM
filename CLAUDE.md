@@ -107,7 +107,7 @@ Tudo em `config/custom.php` (preço fixo R$ 211, volume 375 ml, fontes PP Rader,
 Amithen e Blacksword — licenciada pela APTK; só entra se
 `public/fonts/blacksword.woff2|ttf` existir (`CustomService::fontes`) —, cor fixa `custom.cor`, 7 bebidas com imagem, área do
 rótulo calibrada por imagem e `nome` de exibição — caipirinha-arazul = "Caipirinha"
-só no Custom, a loja segue com o nome do produto; o pedido grava
+(desde a leva 14 é também o nome do produto na loja; slug igual); o pedido grava
 `personalizacao.bebida_nome`; boulevardier e sur-lorange em `custom.retiradas`,
 recusadas, calibração só pra prévia de pedido antigo) e validado por `CustomService::validar` no add-to-cart
 E no checkout (bebida na lista com produto no banco, ativo ou não; fonte entre as
