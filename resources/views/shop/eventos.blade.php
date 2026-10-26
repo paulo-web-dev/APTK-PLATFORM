@@ -105,7 +105,7 @@
       <div class="container-aptk">
         <div class="section-head">
           <span class="eyebrow">Portfólio</span>
-          <h2 class="section-title title-editorial">Eventos que já levaram a nossa assinatura.</h2>
+          <h2 class="section-title title-editorial">Marcas que já brindaram com a APTK.</h2>
         </div>
         <x-portfolio-grid :itens="$portfolio" />
       </div>

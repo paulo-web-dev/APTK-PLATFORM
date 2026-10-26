@@ -31,7 +31,7 @@ class EventosPaginaTest extends TestCase
     {
         $this->withViewErrors([])
             ->view('shop.eventos', ['portfolio' => [], 'proposta' => 'mailto:teste@exemplo.test'])
-            ->assertDontSee('Eventos que já levaram a nossa assinatura.');
+            ->assertDontSee('Marcas que já brindaram com a APTK.');
     }
 
     public function test_collabs_segue_no_template_institucional(): void

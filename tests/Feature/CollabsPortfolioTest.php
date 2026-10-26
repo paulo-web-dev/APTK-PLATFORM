@@ -64,7 +64,7 @@ class CollabsPortfolioTest extends TestCase
     {
         $html = $this->get('/eventos')->assertOk()->getContent();
 
-        $this->assertStringContainsString('Eventos que já levaram a nossa assinatura.', $html);
+        $this->assertStringContainsString('Marcas que já brindaram com a APTK.', $html);
         $this->assertSame(self::ORDEM, $this->legendas($html));
     }
 

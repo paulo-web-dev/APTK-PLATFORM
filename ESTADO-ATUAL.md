@@ -511,7 +511,7 @@ Nenhuma foto aparece duas vezes na mesma página (incluindo os arquivos
 duplicados com nome diferente: `loja-aptk`=`sobre-loja`,
 `cat-pessoas`=`eventos-hero`=`sobre-pessoas`, `hero-bartender`=`sobre-barman`,
 `about-loja-2`=`parceiros-hero`, `about-loja-3`=`franquias-hero`,
-`cat-loja`=`sobre-interior`). As views `shop.about` e `shop.sobre` não têm rota.
+`cat-loja`=`sobre-interior`). A view `shop.about` não tem rota (`shop.sobre` foi apagada na leva 14).
 
 **Textos que não vieram no texto do briefing:**
 - Da imagem de referência (aprovados pelo Paulo): banda do rodapé, título da
@@ -519,8 +519,7 @@ duplicados com nome diferente: `loja-aptk`=`sobre-loja`,
   vitrine editorial, CTA "Faça parte do clube", legendas "Presentes &
   Celebrações" / "Marcas & Projetos Especiais" do Custom.
 - Inventados (confirmar): link "Explorar" dos cards da Home; "Conhecer a BARIN" /
-  "Conhecer a Ice4Pros"; título do portfólio "Eventos que já levaram a nossa
-  assinatura."; eyebrows "Eventos", "Portfólio", "Full Custom".
+  "Conhecer a Ice4Pros"; eyebrows "Eventos", "Portfólio", "Full Custom".
 - Caixa de frase onde o briefing tinha Title Case: "Feito para o ritmo do bar",
   "O gelo faz a diferença", "Alquimia de histórias". Nomes de card ficaram como
   no briefing.
@@ -863,17 +862,16 @@ era "Caipirinha" (`custom.bebidas.caipirinha-arazul.nome`).
 
 **E-mail de contato:** todos os CTAs de e-mail (Collabs, Eventos, via
 `PageController::mailto`) vão pra `config('marcas.email_contato')` =
-`contato@aptkspirits.com` (era o e-mail pessoal do comercial). Sobra do nome,
-e-mail e telefone dele só em `resources/views/shop/sobre.blade.php`, view sem
-rota (não aparece no site).
+`contato@aptkspirits.com` (era o e-mail pessoal do comercial). A view sem rota `shop.sobre`, que
+ainda tinha nome, e-mail e telefone dele, foi apagada.
 
 **Collabs (portfólio):** `config/collabs.php` (`marcas`: nome, imagem,
 ativo), na ordem da gestão; `PageController::collabs()` filtra ativas com
 foto; componente `<x-portfolio-grid>` (CSS `.portfolio-grid` no `aptk.css`:
 foto 4:5 + nome, 4 colunas no desktop, 2 até 760 px). Em `/collabs` substitui o
 carrossel de cases (mesmo título "Algumas histórias também são servidas em uma
-garrafa"); em `/eventos` preenche o portfólio ("Eventos que já levaram a nossa
-assinatura.", título inventado na leva 10). `PORTFOLIO_EVENTOS` saiu.
+garrafa"); em `/eventos` preenche o portfólio (título "Marcas que já brindaram com a
+APTK.", eyebrow "Portfólio"). `PORTFOLIO_EVENTOS` saiu.
 Fotos recortadas em 4:5 no tratamento (`collab-{marca}.jpg`, ≤ 960x1200):
 Montblanc, Swarovski, Vivara, Iguatemi, Emiliano, Unique, Rosewood, Banco
 Inter (Orange Nation) — arquivo `ORANGE NATION` —, Pirajá, Braz — `braz
