@@ -33,6 +33,7 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/pedidos/{order}', [OrderController::class, 'show'])->name('orders.show');
     Route::patch('/pedidos/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::post('/pedidos/{order}/estorno', [OrderController::class, 'refund'])->name('orders.refund');
+    Route::post('/pedidos/{order}/aviso-email', [OrderController::class, 'notify'])->name('orders.notify');
 
     // Produtos (CRUD)
     Route::get('/produtos', [ProductController::class, 'index'])->name('products.index');

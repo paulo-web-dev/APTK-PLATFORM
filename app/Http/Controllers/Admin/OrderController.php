@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Exceptions\AppmaxException;
 use App\Models\Order;
 use App\Services\AppmaxService;
+use App\Services\AvisoPedido;
 use App\Services\ReconciliacaoPagamento;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Throwable;
 
 class OrderController extends Controller
 {
@@ -74,6 +76,26 @@ class OrderController extends Controller
             ->route('admin.orders.show', $order)
             ->with('status', 'Status do pedido atualizado.');
     }
+    /**
+     * Botão "Enviar aviso via e-mail" (leva 16): envia na hora para
+     * PEDIDOS_NOTIFICAR, mesmo que o aviso automático já tenha saído. O
+     * resultado (ou o erro do SMTP) volta no flash e fica gravado no pedido.
+     */
+    public function notify(Order $order, AvisoPedido $aviso): RedirectResponse
+    {
+        try {
+            $aviso->enviar($order);
+        } catch (Throwable $e) {
+            return redirect()
+                ->route('admin.orders.show', $order)
+                ->with('error', 'O aviso não foi enviado: '.$e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.orders.show', $order)
+            ->with('status', 'Aviso enviado para '.implode(', ', AvisoPedido::destinatarios()).'.');
+    }
+
     /**
      * Estorno total via Appmax (só para pedidos pagos e vinculados ao gateway).
      * A confirmação definitiva vem pelo webhook (OrderRefund).

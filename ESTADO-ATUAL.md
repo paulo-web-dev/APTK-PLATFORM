@@ -4,8 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-27** (§17 — leva 15: 100 ml fora da venda).
-Antes: 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
+Última revisão: **2026-10-27** (§18 — leva 16: aviso de pedido por e-mail).
+Antes: 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
 servidor; mensagens de validação em pt_BR; §15 — leva 14: fotos e ajustes de Quem Somos,
 Custom, Clube, Eventos e Collabs).
 Antes: 2026-10-25 (§14 — leva 13: fotos da Home, seções largas,
@@ -968,6 +968,36 @@ volume novo ("O volume de 100 ml não está mais à venda..."). Produto que já 
 **Deploy da leva 15:** `migrate --force`, `config:cache` (`config/catalogo.php`
 novo). Conferir depois: `Product::where('sizes','like','%100 ml%')->pluck('slug')`
 só com `teste` (se existir).
+
+## 18. Leva 16 — aviso de pedido por e-mail (27/10/2026)
+
+E-mail "Novo pedido APTK-000XX" para a equipe quando o pagamento é
+confirmado. Cartão recusado não avisa (cancela antes de chegar aos pontos de
+aprovação). Troca manual de status pra "Pago" no admin não avisa (decisão da
+gestão: é a equipe mexendo). Conteúdo: cliente, entrega (ship_*), frete,
+itens com bloco destacado para garrafa custom (bebida, texto, fonte, cor),
+totais, pagamento e botão pro admin (`aptk_route`, então sai com `APP_URL` —
+no servidor `https://aptkspirits.com`).
+
+**Envio automático:** fila `notificacoes`, processada pelo mesmo `queue:work`
+do scheduler (agora `--queue=notificacoes,microvix`). Precisa de
+`QUEUE_CONNECTION=database` no servidor (o padrão da config é `sync`). Falha:
+3 tentativas (1 min, 5 min), depois fica parado com o erro no pedido; o botão
+do admin reenvia.
+
+**SMTP:** `MAIL_TIMEOUT` (padrão 20 s) segura o botão do admin se o servidor
+travar. O comando `pedidos:testar-email` não imprime a conversa SMTP (ela tem
+o AUTH em base64).
+
+**`.env` do servidor (Paulo preenche):** `MAIL_MAILER=smtp`, `MAIL_HOST`,
+`MAIL_PORT`, `MAIL_ENCRYPTION`, `MAIL_USERNAME`, `MAIL_PASSWORD`,
+`MAIL_FROM_ADDRESS` (do domínio unipublicabrasil.com.br), `MAIL_FROM_NAME`,
+`MAIL_REPLY_TO=contato@aptkspirits.com`, `PEDIDOS_NOTIFICAR`.
+
+**Deploy da leva 16:** `migrate --force` (colunas `notificado_em`,
+`notificacao_erro`, `notificacao_erro_em` em `orders`), `route:cache`,
+`config:cache`. Pedidos pagos antes do deploy ficam "Ainda não enviado" — não
+há disparo retroativo.
 
 ---
 

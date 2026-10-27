@@ -31,7 +31,8 @@ app/Http/Controllers/
   Shop/              loja pública (Home, Product, Cart, Checkout, Custom, Page, Novidades)
   Admin/             12 módulos CRUD do painel
   Webhooks/          Appmax (webhook + install/health + callback genérico logado)
-app/Mail/            CustomOrderRequested (único mailable; sem Jobs, Commands ou queue)
+app/Mail/            PedidoNovo (aviso de pedido pago à equipe) e CustomOrderRequested (casca, desligado)
+app/Jobs/            EnviarAvisoPedido (fila notificacoes), EnviarPedidoMicrovix (fila microvix)
 routes/
   web.php            loja pública + área logada
   admin.php          prefixo /admin, nomes admin.*, middleware AdminMiddleware
@@ -195,6 +196,21 @@ implementação do `FreteService`. Frete zero só com carrinho 100% de slugs em
 `frete.isentos` (hoje só `teste`): opção única `teste`, R$ 0,00; carrinho misto
 cobra frete normal sobre o peso de tudo e rejeita `shipping_method=teste`.
 
+**Aviso de pedido por e-mail** (leva 16): SMTP só no `.env` (Locaweb, remetente
+do domínio unipublicabrasil.com.br; `MAIL_REPLY_TO` = reply-to, vazio = sem).
+Destinatários em `config/pedidos.php` ← `PEDIDOS_NOTIFICAR` (vírgula; inválido
+descartado). `AvisoPedido::agendar()` dispara SÓ na confirmação do pagamento
+(cartão aprovado no checkout e na cobrança indefinida, `aprovarPagamento` =
+webhook/reconciliação/polling, webhook que reativa cancelado,
+`pedidos:cancelar-cartao-preso`), nunca na criação; troca manual de status no
+admin não dispara. Job `EnviarAvisoPedido` (fila `notificacoes`, mesmo worker do
+scheduler, `ShouldBeUnique`, 3 tentativas), idempotente por
+`orders.notificado_em`; erro em `notificacao_erro(_em)`, nunca sobe pro checkout
+nem pro webhook. Admin: botão "Enviar aviso via e-mail" (`admin.orders.notify`)
+envia na hora, mesmo já enviado. `pedidos:testar-email {pedido} [--para=]`
+envia síncrono e mostra o erro do SMTP (não marca `notificado_em`). Valores com
+`moeda_br()`.
+
 **Linx Microvix ERP** (WS B2C): fase 1 implementada — espelho somente-leitura.
 Doc em `docs/linx-microvix-ws-b2c.md`; **em divergência de nome de campo, vale o
 PDF original** (`docs/linx-microvix-ws-b2c-original.pdf`) — o .md é conversão e
@@ -288,4 +304,4 @@ qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 - Não rodar `migrate:fresh` sem avisar — apaga dados locais.
 - Depois de mexer em rota, rodar `php artisan route:clear`.
 - Mudanças do cliente vêm agrupadas em "levas" numeradas, cada uma com escopo fechado
-  antes da execução. As levas 01 a 15 já foram concluídas.
+  antes da execução. As levas 01 a 16 já foram concluídas.
