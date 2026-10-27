@@ -103,6 +103,7 @@ class PedidoNovo extends Mailable
             'cliente'  => [
                 'nome'     => $o->user->name ?? $o->ship_name ?? '—',
                 'email'    => $o->user->email ?? '—',
+                'cpf'      => cpf_formatado($o->ship_cpf ?: $o->user?->cpf) ?? '—',
                 'telefone' => $o->ship_phone ?: ($o->user->phone ?? '—'),
             ],
             'destinatario' => $o->ship_name,

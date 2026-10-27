@@ -198,7 +198,7 @@
                         <div class="grid-2">
                             <div class="field">
                                 <label for="cpf">CPF (titular do pagamento)</label>
-                                <input type="text" id="cpf" name="cpf" value="{{ old('cpf') }}" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
+                                <input type="text" id="cpf" name="cpf" value="{{ old('cpf', cpf_formatado(auth()->user()?->cpf)) }}" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
                                 @error('cpf') <span class="err">{{ $message }}</span> @enderror
                             </div>
                             <div class="field">
@@ -465,6 +465,8 @@
 
       var nome = document.getElementById('name');
       if (nome && !nome.value) nome.value = j.nome || '';
+      var cpfEl = document.getElementById('cpf');
+      if (cpfEl && !cpfEl.value) cpfEl.value = j.cpf || '';
       document.getElementById('contaEmail').textContent = j.email || '';
       document.getElementById('contaLinha').hidden = false;
 

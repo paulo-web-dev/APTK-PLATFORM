@@ -36,12 +36,32 @@ class OrderController extends Controller
             $query->whereIn('id', ReconciliacaoPagamento::aConferir()->select('id'));
         }
 
+        // Busca: CPF (com ou sem pontuação), número (APTK-00012 ou 12), nome ou e-mail.
+        $search = trim((string) $request->query('q'));
+        if ($search !== '') {
+            $digitos = preg_replace('/\D+/', '', $search);
+
+            $query->where(function ($q) use ($search, $digitos) {
+                $q->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
+                  ->orWhere('ship_name', 'like', "%{$search}%");
+
+                if (strlen($digitos) >= 3) {
+                    $q->orWhere('ship_cpf', 'like', "%{$digitos}%")
+                      ->orWhereHas('user', fn ($u) => $u->where('cpf', 'like', "%{$digitos}%"));
+                }
+                if ($digitos !== '' && strlen($digitos) <= 9) {
+                    $q->orWhere('id', (int) $digitos);
+                }
+            });
+        }
+
         $orders = $query->paginate(20)->withQueryString();
 
         return view('admin.orders.index', [
             'orders'    => $orders,
             'statuses'  => Order::STATUS_FILTROS,
             'active'    => $active,
+            'search'    => $search,
             'aConferir' => ReconciliacaoPagamento::aConferir()->count(),
         ]);
     }

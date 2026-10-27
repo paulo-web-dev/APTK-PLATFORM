@@ -93,7 +93,7 @@ class CheckoutIdentificacaoController extends Controller
         return $this->identificado($request);
     }
 
-    /** Dados que o checkout precisa pra seguir: nome, e-mail, CSRF e o 18+. */
+    /** Dados que o checkout precisa pra seguir: nome, e-mail, CPF salvo, CSRF e o 18+. */
     protected function identificado(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -102,6 +102,7 @@ class CheckoutIdentificacaoController extends Controller
             'ok'                  => true,
             'nome'                => $user->name,
             'email'               => $user->email,
+            'cpf'                 => cpf_formatado($user->cpf),
             'csrf'                => csrf_token(),
             'precisa_maior_idade' => ! $user->declarouMaioridade(),
         ]);

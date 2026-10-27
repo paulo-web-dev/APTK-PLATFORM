@@ -36,6 +36,7 @@
         <div style="{{ $label }}">Cliente</div>
         <div style="{{ $txt }}">
             <strong>{{ $cliente['nome'] }}</strong><br>
+            CPF {{ $cliente['cpf'] }}<br>
             <a href="mailto:{{ $cliente['email'] }}" style="color:#BF6300;">{{ $cliente['email'] }}</a><br>
             {{ $cliente['telefone'] }}
         </div>

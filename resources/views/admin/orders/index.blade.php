@@ -24,16 +24,26 @@
         @endif
     </div>
 
+    <form method="GET" action="{{ route('admin.orders.index') }}" style="margin-bottom:22px; display:flex; gap:10px; max-width:520px;">
+        @if ($active)<input type="hidden" name="status" value="{{ $active }}">@endif
+        <input type="text" name="q" value="{{ $search }}" placeholder="Buscar por CPF, número, nome ou e-mail…" class="admin-input" style="flex:1;">
+        <button type="submit" class="admin-btn">Buscar</button>
+        @if ($search !== '')
+            <a href="{{ route('admin.orders.index', array_filter(['status' => $active])) }}" class="admin-btn admin-btn--ghost">Limpar</a>
+        @endif
+    </form>
+
     <div class="data-card">
         <table class="data-table">
             <thead>
-                <tr><th>Pedido</th><th>Cliente</th><th>Data</th><th>Itens</th><th>Frete</th><th>Total</th><th>Pagamento</th><th>Status</th></tr>
+                <tr><th>Pedido</th><th>Cliente</th><th>CPF</th><th>Data</th><th>Itens</th><th>Frete</th><th>Total</th><th>Pagamento</th><th>Status</th></tr>
             </thead>
             <tbody>
                 @forelse ($orders as $o)
                     <tr>
                         <td class="td-id" data-label="Pedido"><a href="{{ route('admin.orders.show', $o) }}" style="color:inherit;">APTK-{{ str_pad($o->id, 5, '0', STR_PAD_LEFT) }}</a>@if ($o->tem_custom) <span class="cst-selo">Custom</span>@endif</td>
                         <td data-label="Cliente"><div class="cust"><span class="cust-av">{{ strtoupper(mb_substr($o->user->name ?? '?', 0, 2)) }}</span>{{ $o->user->name ?? '—' }}</div></td>
+                        <td class="td-muted" data-label="CPF" style="white-space:nowrap;">{{ cpf_formatado($o->ship_cpf ?: $o->user?->cpf) ?? '—' }}</td>
                         <td class="td-muted" data-label="Data">{{ data_br($o->created_at) }}</td>
                         <td class="td-num" data-label="Itens">{{ $o->items_count }}</td>
                         <td class="td-muted" data-label="Frete">{{ $o->shippingName() ?? '—' }}@if ($o->shipping_cost > 0) <span class="td-num">· R$ {{ number_format($o->shipping_cost, 2, ',', '.') }}</span>@endif</td>
@@ -42,7 +52,7 @@
                         <td data-label="Status">@include('admin.partials.status', ['order' => $o])</td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="td-muted" style="text-align:center; padding:48px;">Nenhum pedido encontrado{{ $active ? ' com esse status' : '' }}.</td></tr>
+                    <tr><td colspan="9" class="td-muted" style="text-align:center; padding:48px;">Nenhum pedido encontrado{{ $search !== '' ? ' para "'.$search.'"' : '' }}{{ $active ? ' com esse status' : '' }}.</td></tr>
                 @endforelse
             </tbody>
         </table>

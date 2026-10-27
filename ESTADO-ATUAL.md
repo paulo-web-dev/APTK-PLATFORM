@@ -4,8 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-27** (§18 — leva 16: aviso de pedido por e-mail).
-Antes: 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
+Última revisão: **2026-10-27** (§19 — CPF do cliente para cadastro na Linx).
+Antes: 2026-10-27 (§18 — leva 16: aviso de pedido por e-mail); 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
 servidor; mensagens de validação em pt_BR; §15 — leva 14: fotos e ajustes de Quem Somos,
 Custom, Clube, Eventos e Collabs).
 Antes: 2026-10-25 (§14 — leva 13: fotos da Home, seções largas,
@@ -998,6 +998,27 @@ o AUTH em base64).
 `notificacao_erro`, `notificacao_erro_em` em `orders`), `route:cache`,
 `config:cache`. Pedidos pagos antes do deploy ficam "Ainda não enviado" — não
 há disparo retroativo.
+
+## 19. CPF do cliente para cadastro na Linx (27/10/2026, pedido do Rafael)
+
+Conferido no código: o CPF já era obrigatório nos três métodos e já era
+gravado no pedido antes da cobrança (o pedido cancelado por recusa guarda o
+CPF) e no cadastro do cliente quando vazio. Faltava: dígito verificador (só
+regex — `123.456.789-00` passava) e o checkout vir preenchido com o CPF salvo
+(logado e via login AJAX da identificação). Corrigidos.
+
+Admin: CPF formatado + telefone + e-mail no bloco Cliente, com "Copiar";
+pedido antigo sem `ship_cpf` mostra o do cadastro. Listagem: coluna CPF e
+busca (CPF com ou sem pontuação, número, nome, e-mail). E-mail de aviso traz o
+CPF.
+
+Pedidos sem CPF em produção (rodar no servidor):
+
+```
+php artisan tinker --execute='$s=App\Models\Order::where(fn($q)=>$q->whereNull("ship_cpf")->orWhere("ship_cpf",""));echo "pedidos sem CPF: ".(clone $s)->count()." de ".App\Models\Order::count()."\npagos sem CPF: ".(clone $s)->where("payment_status","paid")->count()."\nsem CPF no pedido mas com CPF no cadastro: ".(clone $s)->whereHas("user",fn($u)=>$u->whereNotNull("cpf")->where("cpf","<>",""))->count()."\n";'
+```
+
+Sem migration; deploy só `route:cache`/`view:clear`.
 
 ---
 

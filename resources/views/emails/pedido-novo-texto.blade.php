@@ -3,6 +3,7 @@ Novo pedido {!! $numero !!}
 
 CLIENTE
 {!! $cliente['nome'] !!}
+CPF {!! $cliente['cpf'] !!}
 {!! $cliente['email'] !!}
 {!! $cliente['telefone'] !!}
 

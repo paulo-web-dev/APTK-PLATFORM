@@ -76,6 +76,11 @@ Declaração 18+ em `users.maior_idade_em` (cadastro, `/register` e, para conta
 antiga, checkbox no checkout). Pós-login de `/login` e `/register`:
 `DestinoPosLogin` (checkout → checkout; carrinho cheio → carrinho; senão
 intended/home — nunca `/dashboard`). Login migra a sessão: carrinho preservado.
+CPF obrigatório em todo método com dígito verificador (`App\Rules\Cpf`), gravado
+em `orders.ship_cpf` antes da Appmax (fica mesmo com pagamento recusado) e em
+`users.cpf` se vazio; o checkout vem preenchido com ele. Exibição sempre via
+`cpf_formatado()`; admin mostra CPF/telefone/e-mail com "Copiar" (cadastro na
+Linx) e busca pedido por CPF, número, nome ou e-mail.
 
 **Configurações** chave/valor na tabela `settings` via `Setting::get()` / `Setting::set()`.
 Usado inclusive para o UUID de instalação externa da Appmax.

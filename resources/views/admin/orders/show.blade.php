@@ -3,6 +3,9 @@
 @php
     $payLabels    = ['pix'=>'Pix','cartao'=>'Cartão','boleto'=>'Boleto'];
     $num          = 'APTK-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+    // Dados pra cadastro na Linx: o do pedido (snapshot) manda; pedido antigo cai no cadastro.
+    $cpfCliente   = cpf_formatado($order->ship_cpf ?: $order->user?->cpf);
+    $telCliente   = $order->ship_phone ?: $order->user?->phone;
 @endphp
 
 @section('admin_title', 'Pedido ' . $num)
@@ -12,6 +15,9 @@
     .adm-cst { border-color: var(--color-primary); }
     .adm-cst__body { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: center; }
     .adm-cst__previa { width: 100%; }
+    .adm-copiar { display: inline-flex; align-items: center; gap: 8px; }
+    .adm-copiar button { font: inherit; font-size: var(--text-xs); padding: 2px 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: transparent; color: var(--color-text-muted); cursor: pointer; }
+    .adm-copiar button:hover { color: var(--color-text); border-color: var(--color-text); }
     .adm-cst__texto { font-size: 1.6rem; line-height: 1.25; color: var(--color-text); margin: 0 0 14px; overflow-wrap: anywhere; }
     @media (max-width: 640px) { .adm-cst__body { grid-template-columns: 1fr; } .adm-cst__previa { max-width: 240px; } }
 </style>
@@ -147,7 +153,9 @@
                 <div class="panel-head">Cliente</div>
                 <div class="panel-body">
                     <div class="kv"><span class="k">Nome</span><span class="v" style="font-family:var(--font-body);">{{ $order->user->name ?? '—' }}</span></div>
-                    <div class="kv"><span class="k">E-mail</span><span class="v" style="font-family:var(--font-body);">{{ $order->user->email ?? '—' }}</span></div>
+                    <div class="kv"><span class="k">CPF</span><span class="v">@if ($cpfCliente)<span class="adm-copiar"><span data-copiar-valor>{{ $cpfCliente }}</span><button type="button" data-copiar>Copiar</button></span>@else — @endif</span></div>
+                    <div class="kv"><span class="k">Telefone</span><span class="v">@if ($telCliente)<span class="adm-copiar"><span data-copiar-valor>{{ $telCliente }}</span><button type="button" data-copiar>Copiar</button></span>@else — @endif</span></div>
+                    <div class="kv"><span class="k">E-mail</span><span class="v" style="font-family:var(--font-body);">@if ($order->user?->email)<span class="adm-copiar"><span data-copiar-valor>{{ $order->user->email }}</span><button type="button" data-copiar>Copiar</button></span>@else — @endif</span></div>
                     <div class="kv"><span class="k">Pagamento</span><span class="v">{{ $payLabels[$order->payment_method] ?? ($order->payment_method ?? '—') }}</span></div>
                     <div class="kv"><span class="k">Pag. status</span><span class="v">{{ ucfirst($order->payment_status) }}</span></div>
                 </div>
@@ -193,3 +201,18 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+  // Copiar CPF/telefone/e-mail (cadastro na Linx).
+  document.querySelectorAll('[data-copiar]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var valor = btn.parentNode.querySelector('[data-copiar-valor]').textContent.trim();
+      navigator.clipboard.writeText(valor).then(function () {
+        btn.textContent = 'Copiado';
+        setTimeout(function () { btn.textContent = 'Copiar'; }, 1500);
+      });
+    });
+  });
+</script>
+@endpush

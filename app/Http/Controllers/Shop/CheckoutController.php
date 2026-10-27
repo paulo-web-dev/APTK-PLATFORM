@@ -6,6 +6,7 @@ use App\Exceptions\AppmaxException;
 use App\Exceptions\OutOfStockException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Rules\Cpf;
 use App\Services\AppmaxService;
 use App\Services\AvisoPedido;
 use App\Services\CartService;
@@ -359,7 +360,9 @@ class CheckoutController extends Controller
         $rules = [
             'name'            => ['required', 'string', 'max:255'],
             'phone'           => ['required', 'string', 'max:20'],
-            'cpf'             => ['required', 'string', 'regex:/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/'],
+            // Obrigatório em Pix, cartão e boleto (Appmax e Microvix exigem);
+            // dígito verificador na regra.
+            'cpf'             => ['required', 'string', new Cpf()],
             'zipcode'         => ['required', 'string', 'regex:/^\d{5}-?\d{3}$/'],
             'street'          => ['required', 'string', 'max:255'],
             'number'          => ['required', 'string', 'max:20'],
@@ -402,7 +405,6 @@ class CheckoutController extends Controller
     protected function messages(): array
     {
         return [
-            'cpf.regex'         => 'Informe um CPF válido (000.000.000-00).',
             'zipcode.regex'     => 'Informe um CEP válido (00000-000).',
             'shipping_method.required' => 'Escolha uma opção de frete.',
             'shipping_method.in'       => 'Escolha uma opção de frete.',

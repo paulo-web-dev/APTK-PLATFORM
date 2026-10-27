@@ -52,3 +52,19 @@ if (! function_exists('moeda_br')) {
         return 'R$ '.number_format((float) $valor, 2, ',', '.');
     }
 }
+
+if (! function_exists('cpf_formatado')) {
+    /** "12345678909" → "123.456.789-09". Vazio = null; fora de 11 dígitos volta como veio. */
+    function cpf_formatado(?string $cpf): ?string
+    {
+        $digitos = preg_replace('/\D+/', '', (string) $cpf);
+
+        if ($digitos === '') {
+            return null;
+        }
+
+        return strlen($digitos) === 11
+            ? substr($digitos, 0, 3).'.'.substr($digitos, 3, 3).'.'.substr($digitos, 6, 3).'-'.substr($digitos, 9, 2)
+            : (string) $cpf;
+    }
+}
