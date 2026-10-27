@@ -7,6 +7,7 @@ use App\Exceptions\OutOfStockException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\AppmaxService;
+use App\Services\AvisoPedido;
 use App\Services\CartService;
 use App\Services\FreteService;
 use App\Services\OrderService;
@@ -254,6 +255,8 @@ class CheckoutController extends Controller
             ],
         ]);
 
+        AvisoPedido::agendar($order);
+
         return redirect()->route('checkout.success', $order);
     }
 
@@ -296,6 +299,7 @@ class CheckoutController extends Controller
                 'paid_at'         => now(),
                 'payment_details' => $details,
             ]);
+            AvisoPedido::agendar($order);
         } else {
             $order->update([
                 'payment_details' => $details + [

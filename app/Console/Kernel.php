@@ -26,12 +26,13 @@ class Kernel extends ConsoleKernel
             ->everyFiveMinutes()
             ->withoutOverlapping();
 
-        // Fase 2 Microvix: worker da fila database SEM supervisor — roda até
-        // 50s e morre; o cron do minuto seguinte sobe outro. O lock
-        // WithoutOverlapping do próprio job garante concorrência 1 mesmo se
-        // dois workers coexistirem; o withoutOverlapping daqui só evita
+        // Worker da fila database SEM supervisor — roda até 50s e morre; o
+        // cron do minuto seguinte sobe outro. Filas: notificacoes (aviso de
+        // pedido pago por e-mail, leva 16) e microvix (fase 2). O lock
+        // WithoutOverlapping do job do Microvix garante concorrência 1 mesmo
+        // se dois workers coexistirem; o withoutOverlapping daqui só evita
         // processo acumulado quando um lote passa de 1 minuto.
-        $schedule->command('queue:work --queue=microvix --stop-when-empty --max-time=50')
+        $schedule->command('queue:work --queue=notificacoes,microvix --stop-when-empty --max-time=50')
             ->everyMinute()
             ->withoutOverlapping();
     }

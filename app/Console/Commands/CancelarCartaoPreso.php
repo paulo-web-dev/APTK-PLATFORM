@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Exceptions\AppmaxException;
 use App\Models\Order;
 use App\Services\AppmaxService;
+use App\Services\AvisoPedido;
 use App\Services\OrderService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -96,6 +97,8 @@ class CancelarCartaoPreso extends Command
                 'order_id'        => $order->id,
                 'appmax_order_id' => $order->appmax_order_id,
             ]);
+
+            AvisoPedido::agendar($order);
         }
 
         foreach ($cancelar as [$order, $plano]) {

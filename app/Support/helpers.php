@@ -44,3 +44,11 @@ if (! function_exists('data_br')) {
             ->translatedFormat(is_string($formato) ? $formato : ($formato ? 'd/m/Y H:i' : 'd/m/Y'));
     }
 }
+
+if (! function_exists('moeda_br')) {
+    /** Valor em reais no padrão brasileiro: "R$ 1.524,00". */
+    function moeda_br(mixed $valor): string
+    {
+        return 'R$ '.number_format((float) $valor, 2, ',', '.');
+    }
+}

@@ -42,7 +42,9 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'tls'),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            // Segundos: o botão do admin envia na hora, SMTP travado não pode
+            // segurar a requisição pelo default do socket.
+            'timeout' => env('MAIL_TIMEOUT', 20),
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
         ],
 

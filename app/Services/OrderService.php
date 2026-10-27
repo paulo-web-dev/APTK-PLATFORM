@@ -296,7 +296,8 @@ class OrderService
     /**
      * Pagamento confirmado pela Appmax num pedido ainda aberto (webhook ou
      * reconciliação): pending → processing, pago. Idempotente. Enfileira a
-     * confirmação no ERP (fora de transação; falha nunca derruba o pagamento).
+     * confirmação no ERP e o aviso por e-mail à equipe (fora de transação;
+     * falha nunca derruba o pagamento).
      */
     public function aprovarPagamento(Order $order): void
     {
@@ -317,6 +318,8 @@ class OrderService
         } catch (Throwable $e) {
             report($e);
         }
+
+        AvisoPedido::agendar($order);
     }
 
     /**

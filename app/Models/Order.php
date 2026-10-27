@@ -60,6 +60,8 @@ class Order extends Model
         'microvix_synced_at' => 'datetime',
         'microvix_reserved'  => 'boolean',
         'microvix_envio_em'  => 'datetime',
+        'notificado_em'       => 'datetime',
+        'notificacao_erro_em' => 'datetime',
         'shipping_days'      => 'integer',
     ];
 

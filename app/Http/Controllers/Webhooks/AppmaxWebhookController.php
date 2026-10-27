@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\EnviarPedidoMicrovix;
 use App\Models\Order;
 use App\Services\AppmaxService;
+use App\Services\AvisoPedido;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -209,6 +210,7 @@ class AppmaxWebhookController extends Controller
             ]);
 
             $this->enfileiraEnvioErp($order, 'confirmar');
+            AvisoPedido::agendar($order);
 
             return true;
         }
