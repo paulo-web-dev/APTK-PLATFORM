@@ -4,8 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-27** (§19 — CPF do cliente para cadastro na Linx).
-Antes: 2026-10-27 (§18 — leva 16: aviso de pedido por e-mail); 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
+Última revisão: **2026-10-28** (§20 — leva 17: aviso de todo pedido + valor cobrado).
+Antes: 2026-10-27 (§19 — CPF do cliente para cadastro na Linx); 2026-10-27 (§18 — leva 16: aviso de pedido por e-mail); 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
 servidor; mensagens de validação em pt_BR; §15 — leva 14: fotos e ajustes de Quem Somos,
 Custom, Clube, Eventos e Collabs).
 Antes: 2026-10-25 (§14 — leva 13: fotos da Home, seções largas,
@@ -1019,6 +1019,53 @@ php artisan tinker --execute='$s=App\Models\Order::where(fn($q)=>$q->whereNull("
 ```
 
 Sem migration; deploy só `route:cache`/`view:clear`.
+
+## 20. Leva 17 — aviso de todo pedido + valor cobrado (28/10/2026)
+
+**Aviso (muda a regra da leva 16, §18):** todo pedido do checkout avisa a
+equipe, qualquer método e desfecho, com o status do pagamento em destaque
+("Novo pedido APTK-000XX · Pago | Aguardando pagamento | Pagamento
+recusado"). Disparo no `finally` do `POST /checkout` (status do fim da
+requisição: cartão já sai Pago ou Recusado; Pix/boleto Aguardando). Pix/boleto
+pagos depois → segundo e-mail curto "Pagamento confirmado APTK-000XX", uma vez
+só (`orders.pagamento_notificado_em`, migration
+`2026_10_28_100000`). Além do webhook, a reconciliação, o polling da tela de
+sucesso e o `pedidos:cancelar-cartao-preso` também confirmam — mesmo e-mail,
+mesma trava. Pedidos anteriores ao deploy não recebem nada retroativo.
+
+**Valor cobrado — conferido, sem divergência.** Em Pix, cartão à vista e
+parcelado e boleto a Appmax recebe `products_value − discount_value +
+shipping_value` igual ao `orders.total` (centavos) e os pagamentos cobram o
+pedido pelo `order_id`, sem valor próprio. O frete do pedido é o da cotação da
+tela: o servidor recalcula com a mesma `FreteService::cotar`, do mesmo
+carrinho e CEP (o front recota a cada mudança de CEP e descarta resposta de CEP
+antigo); campos de valor vindos do front são ignorados. Frete hoje = tabela
+Correios + 20% (SuperFrete ainda sem conta).
+
+**Achado:** cupom não existe no checkout. O admin tem CRUD de cupons, mas o
+`OrderService::placeFromCart` grava `discount = 0` sempre — nenhum cupom é
+aplicado na loja. A fórmula com desconto está travada no
+`AppmaxService::createOrder` (teste), pronta para quando o cupom entrar.
+
+Pedidos com total divergente em produção (rodar no servidor):
+
+```
+php artisan tinker --execute='$r=App\Models\Order::whereRaw("ABS(total - (subtotal - COALESCE(discount,0) + COALESCE(shipping_cost,0))) > 0.005")->orderBy("id")->get();echo $r->count()." pedido(s) com total divergente\n";foreach($r as $o){echo "APTK-".str_pad($o->id,5,"0",STR_PAD_LEFT)." | ".$o->created_at." | ".$o->payment_status." | ".$o->subtotal." - ".(float)$o->discount." + ".(float)$o->shipping_cost." = ".round($o->subtotal-$o->discount+$o->shipping_cost,2)." | gravado ".$o->total."\n";}'
+```
+
+**Worker:** o aviso sai pela fila `notificacoes`, processada pelo
+`queue:work` que o scheduler sobe a cada minuto. Depende de (a)
+`QUEUE_CONNECTION=database` no `.env` — com `sync`, o e-mail é enviado dentro
+da requisição do checkout/webhook (não quebra, mas o cliente espera o SMTP);
+(b) o cron do scheduler:
+`* * * * * cd /var/www/aptk && php artisan schedule:run >> /dev/null 2>&1`
+no crontab do usuário do Apache (`www-data`). O mesmo cron já é necessário
+para `pagamentos:reconciliar` e `pedidos:cancelar-cartao-preso`. Sem worker
+os jobs ficam na tabela `jobs` (nada se perde) e saem todos quando o cron
+entrar.
+
+**Deploy da leva 17:** `migrate --force` (coluna `pagamento_notificado_em`),
+`route:cache`, `view:clear`, `config:cache`.
 
 ---
 

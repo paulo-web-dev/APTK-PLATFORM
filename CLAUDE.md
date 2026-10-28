@@ -201,20 +201,32 @@ implementação do `FreteService`. Frete zero só com carrinho 100% de slugs em
 `frete.isentos` (hoje só `teste`): opção única `teste`, R$ 0,00; carrinho misto
 cobra frete normal sobre o peso de tudo e rejeita `shipping_method=teste`.
 
-**Aviso de pedido por e-mail** (leva 16): SMTP só no `.env` (Locaweb, remetente
-do domínio unipublicabrasil.com.br; `MAIL_REPLY_TO` = reply-to, vazio = sem).
-Destinatários em `config/pedidos.php` ← `PEDIDOS_NOTIFICAR` (vírgula; inválido
-descartado). `AvisoPedido::agendar()` dispara SÓ na confirmação do pagamento
-(cartão aprovado no checkout e na cobrança indefinida, `aprovarPagamento` =
-webhook/reconciliação/polling, webhook que reativa cancelado,
-`pedidos:cancelar-cartao-preso`), nunca na criação; troca manual de status no
-admin não dispara. Job `EnviarAvisoPedido` (fila `notificacoes`, mesmo worker do
-scheduler, `ShouldBeUnique`, 3 tentativas), idempotente por
-`orders.notificado_em`; erro em `notificacao_erro(_em)`, nunca sobe pro checkout
-nem pro webhook. Admin: botão "Enviar aviso via e-mail" (`admin.orders.notify`)
-envia na hora, mesmo já enviado. `pedidos:testar-email {pedido} [--para=]`
-envia síncrono e mostra o erro do SMTP (não marca `notificado_em`). Valores com
-`moeda_br()`.
+**Aviso de pedido por e-mail** (leva 16, regra da leva 17): SMTP só no `.env`
+(Locaweb, remetente do domínio unipublicabrasil.com.br; `MAIL_REPLY_TO` =
+reply-to, vazio = sem). Destinatários em `config/pedidos.php` ←
+`PEDIDOS_NOTIFICAR` (vírgula; inválido descartado). Dois avisos (`AvisoPedido`):
+1) **pedido criado** — `agendar()` no `finally` do `POST /checkout`, todo
+método e desfecho (pago / aguardando / recusado, em destaque no e-mail e no
+assunto), job `EnviarAvisoPedido`, trava `orders.notificado_em`; 2) **pagamento
+confirmado** depois — `agendarPagamento()` em `aprovarPagamento`
+(webhook/reconciliação/polling), webhook que reativa cancelado e
+`pedidos:cancelar-cartao-preso`; job `EnviarAvisoPagamento`, trava
+`orders.pagamento_notificado_em`. Se o aviso 1 saiu com o pedido já pago, ele
+conta como confirmação (o 2 não sai); o 2 também não sai antes do 1. Troca
+manual de status no admin não dispara. Fila `notificacoes` com `afterCommit`
+(mesmo worker do scheduler, `ShouldBeUnique`, 3 tentativas); erro em
+`notificacao_erro(_em)`, nunca sobe pro checkout nem pro webhook. Admin: botão
+"Enviar aviso via e-mail" (`admin.orders.notify`) reenvia o aviso 1 na hora.
+`pedidos:testar-email {pedido} [--para=]` envia síncrono e mostra o erro do SMTP
+(não marca nada). Valores com `moeda_br()`.
+
+**Valor cobrado** (travado na leva 17, `ValorCobradoTest`): Appmax recebe
+`products_value − discount_value + shipping_value` = `orders.total` em
+centavos; os pagamentos cobram o pedido da Appmax (`order_id`), sem valor
+próprio — parcelado divide o mesmo total. Frete = `FreteService::cotar`, a
+mesma função do `/frete/cotar` da tela, do carrinho e do CEP enviados; valor
+do front nunca entra. **Cupom não é aplicado no checkout** (`discount` sempre
+0; os cupons do admin ainda não têm uso na loja).
 
 **Linx Microvix ERP** (WS B2C): fase 1 implementada — espelho somente-leitura.
 Doc em `docs/linx-microvix-ws-b2c.md`; **em divergência de nome de campo, vale o
@@ -309,4 +321,4 @@ qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 - Não rodar `migrate:fresh` sem avisar — apaga dados locais.
 - Depois de mexer em rota, rodar `php artisan route:clear`.
 - Mudanças do cliente vêm agrupadas em "levas" numeradas, cada uma com escopo fechado
-  antes da execução. As levas 01 a 16 já foram concluídas.
+  antes da execução. As levas 01 a 17 já foram concluídas.
