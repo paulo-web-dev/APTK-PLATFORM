@@ -6,10 +6,10 @@
 <style>
     .pdp { padding-block: 48px; }
     .pdp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
-    .pdp-gallery .main-img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: contain; background: var(--color-bg-media); padding: 22px; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
+    .pdp-gallery .main-img { display: block; width: 100%; aspect-ratio: 1 / 1; object-fit: contain; object-position: center; background: var(--media-bg, var(--color-bg-media)); padding: 22px; border: 1px solid var(--color-border); border-radius: var(--radius-md); }
     .pdp-thumbs { display: flex; gap: 12px; margin-top: 14px; }
-    .pdp-thumbs .thumb { width: 72px; height: 72px; flex-shrink: 0; padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg-media); cursor: pointer; overflow: hidden; transition: border-color .2s ease; }
-    .pdp-thumbs .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .pdp-thumbs .thumb { width: 72px; height: 72px; flex-shrink: 0; padding: 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--media-bg, var(--color-bg-media)); cursor: pointer; overflow: hidden; transition: border-color .2s ease; }
+    .pdp-thumbs .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; background: var(--media-bg, var(--color-bg-media)); }
     .pdp-thumbs .thumb:hover { border-color: var(--color-primary-muted); }
     .pdp-thumbs .thumb.is-active { border-color: var(--color-primary); }
     .pdp-breadcrumb { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: 24px; }
@@ -61,6 +61,7 @@
                             @foreach ($product->images as $img)
                                 <button type="button" class="thumb {{ $loop->first ? 'is-active' : '' }}"
                                         data-src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}"
+                                        data-fundo="{{ $img->corFundo() }}"
                                         aria-label="Ver imagem {{ $loop->iteration }}">
                                     <x-product.image :image="$img" alt="" />
                                 </button>
@@ -163,7 +164,7 @@
                             <a href="{{ route('product', $rel->slug) }}" class="card-aptk"
                                style="display:flex; flex-direction:column; padding:0; overflow:hidden; text-decoration:none;">
                                 <x-product.image :image="$rel->primaryImage" :alt="$rel->name"
-                                    style="aspect-ratio:1/1; width:calc(100% - 20px); margin:10px 10px 0; object-fit:contain; background:var(--color-bg-media); border:none; border-radius:var(--radius-md); padding:16px;" />
+                                    style="aspect-ratio:1/1; width:calc(100% - 20px); margin:10px 10px 0; object-fit:contain; background:var(--media-bg, var(--color-bg-media)); border:none; border-radius:var(--radius-md); padding:16px;" />
                                 <div style="padding:18px;">
                                     <p style="font-family:var(--font-script); font-size:var(--text-xl); color:var(--color-primary); margin:0 0 8px;">{{ $rel->name }}</p>
                                     <span style="font-family:var(--font-mono); color:var(--color-text);">R$ {{ number_format($rel->price, 2, ',', '.') }}</span>
@@ -190,6 +191,8 @@
         var src = btn.getAttribute('data-src');
         if (!src) return;
         main.src = src;
+        // Moldura acompanha a foto escolhida (vazio = fundo padrão).
+        main.style.setProperty('--media-bg', btn.getAttribute('data-fundo') || 'var(--color-bg-media)');
         thumbs.forEach(function (b) { b.classList.remove('is-active'); });
         btn.classList.add('is-active');
       });

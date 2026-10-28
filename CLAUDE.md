@@ -128,9 +128,15 @@ checkout, pedidos e admin; `<x-custom.ficha>` ao lado do nome. Full Custom segue
 `<x-product.placeholder>`, moldura 2:3 "Produto ainda sem foto"). CSS em
 `public/css/aptk-produto.css` (linkado também no layout admin, que não carrega o
 `aptk.css`). Foto de produto é fundo branco (rótulo atual):
-`products/foto-branco-{sku|grupo-Nml}-{frente|verso}.jpg`, sobre `--color-bg-media`
-(`#FEFEFE`, o branco das fotos, nos dois temas) com `--radius-md`; placeholder no mesmo
-fundo, texto/símbolo em `--color-text-on-media`. `--color-bg-media` é SÓ pra foto de
+`products/foto-branco-{sku|grupo-Nml}-{frente|verso}.jpg`. **A moldura acompanha o
+fundo de cada foto** (branca e preta convivem): `product_images.fundo` (#RRGGBB,
+`FundoFoto`, mediana de um anel recuado das bordas) é calculado ao gravar
+(`ProductImage::booted` — upload do admin e `aplicar-fotos`) e
+`produtos:detectar-fundo [--dry-run]` preenche as existentes. O componente põe
+`style="--media-bg: #xxx"` e toda moldura de foto usa
+`var(--media-bg, var(--color-bg-media))` (fallback `#FEFEFE`); a galeria troca o
+`--media-bg` junto com a foto. Placeholder é escuro (`--color-bg-placeholder`,
+`--color-text-on-placeholder`). `--color-bg-media` é SÓ pra foto de
 produto: foto de ambiente usa `--color-ink`. O pacote fundo preto
 (`{grupo}-{vol}-{lado}.jpg`) tem rótulo antigo e não é mais usado. Rótulo antigo só
 bloqueia na galeria de produto: foto de ambiente com garrafa antiga fica até chegar a

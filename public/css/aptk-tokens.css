@@ -29,8 +29,10 @@
   --color-bg:           var(--color-cream);
   --color-bg-card:      #F2EBDD;
   --color-bg-elevated:  #EDE4D3;
-  --color-bg-media:     #FEFEFE;  /* fundo de foto de produto: o branco das fotos (amostrado nos cantos) */
-  --color-text-on-media:#6F6353;  /* texto/simbolo sobre o fundo de foto (placeholder): escuro nos dois temas */
+  --color-bg-media:     #FEFEFE;  /* fundo padrao de foto de produto (sem product_images.fundo): o branco das fotos */
+  --color-bg-placeholder:     var(--color-ink);       /* produto sem foto: escuro nos dois temas */
+  --color-text-on-placeholder:#B7AB95;
+  --color-border-placeholder: rgba(229,219,201,.16);
   --color-border:       #D8CBB4;
 
   --color-primary:      var(--color-scotch);

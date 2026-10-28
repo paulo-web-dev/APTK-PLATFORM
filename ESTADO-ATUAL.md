@@ -4,8 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-28** (§20 — leva 17: aviso de todo pedido + valor cobrado).
-Antes: 2026-10-27 (§19 — CPF do cliente para cadastro na Linx); 2026-10-27 (§18 — leva 16: aviso de pedido por e-mail); 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
+Última revisão: **2026-10-28** (§21 — moldura da foto acompanha o fundo).
+Antes: 2026-10-28 (§20 — leva 17: aviso de todo pedido + valor cobrado); 2026-10-27 (§19 — CPF do cliente para cadastro na Linx); 2026-10-27 (§18 — leva 16: aviso de pedido por e-mail); 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
 servidor; mensagens de validação em pt_BR; §15 — leva 14: fotos e ajustes de Quem Somos,
 Custom, Clube, Eventos e Collabs).
 Antes: 2026-10-25 (§14 — leva 13: fotos da Home, seções largas,
@@ -1066,6 +1066,21 @@ entrar.
 
 **Deploy da leva 17:** `migrate --force` (coluna `pagamento_notificado_em`),
 `route:cache`, `view:clear`, `config:cache`.
+
+## 21. Moldura da foto acompanha o fundo (28/10/2026)
+
+A gestão passou a subir pelo admin fotos de fundo PRETO (ex.: Cosmopolitan);
+a moldura era sempre branca (`--color-bg-media`). Agora cada
+`product_images` tem `fundo` (#RRGGBB, migration `2026_10_28_200000`),
+detectado nas bordas da imagem já reduzida ao gravar, e a moldura (card da
+loja, home, página do produto e miniaturas, relacionados, carrinho, checkout,
+meus pedidos, admin) pinta com ele via `--media-bg`; sem cor = branco de
+antes. Placeholder "Produto ainda sem foto" ficou escuro.
+
+**Deploy:** `migrate --force` e depois
+`php artisan produtos:detectar-fundo --dry-run` (confere a lista) →
+`php artisan produtos:detectar-fundo` (grava). Sem isso as fotos antigas
+seguem com moldura branca (fallback), inclusive a preta já enviada.
 
 ---
 

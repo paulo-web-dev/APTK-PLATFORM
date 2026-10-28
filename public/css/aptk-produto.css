@@ -8,11 +8,14 @@
 /* Produto sem foto (leva 08) — <x-product.placeholder> / <x-product.image>.
    A caixa ocupa o lugar da <img> (tamanho vem de quem usa: aspect-ratio ou
    width/height); a área absoluta herda o padding dela e dá altura definida
-   para a moldura 2:3 caber — height: 100% não resolve contra aspect-ratio. */
+   para a moldura 2:3 caber — height: 100% não resolve contra aspect-ratio.
+   Fundo escuro do site; vai em --media-bg para que a regra de moldura de
+   quem chama (background: var(--media-bg, ...)) também fique escura. */
 .prod-ph-box {
+  --media-bg: var(--color-bg-placeholder);
   display: block;
   position: relative;
-  background: var(--color-bg-media);
+  background: var(--media-bg);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
@@ -35,15 +38,15 @@
   height: 100%;
   max-width: 100%;
   max-height: 100%;
-  background: var(--color-bg-media);
-  border: 1px solid var(--color-border);
+  background: var(--color-bg-placeholder);
+  border: 1px solid var(--color-border-placeholder);
   border-radius: var(--radius-sm);
-  color: var(--color-text-on-media);
+  color: var(--color-text-on-placeholder);
   text-align: center;
   padding: 12%;
   box-sizing: border-box;
 }
-.prod-ph__symbol { width: 34%; max-width: 72px; height: auto; color: var(--color-text-on-media); opacity: .8; }
+.prod-ph__symbol { width: 34%; max-width: 72px; height: auto; color: var(--color-text-on-placeholder); opacity: .8; }
 .prod-ph__txt {
   font-family: var(--font-mono);
   font-size: var(--text-xs);
@@ -54,12 +57,14 @@
 .prod-ph--compact { gap: 0; padding: 0; border-radius: var(--radius-sm); }
 .prod-ph--compact .prod-ph__symbol { width: 48%; }
 
-/* Miniatura (carrinho, checkout, pedidos, admin): o tamanho vem de quem usa. */
+/* Miniatura (carrinho, checkout, pedidos, admin): o tamanho vem de quem usa.
+   Fundo = o da foto (--media-bg do <x-product.image>). */
 .prod-thumb {
   display: block;
   flex-shrink: 0;
   object-fit: contain;
-  background: var(--color-bg-media);
+  object-position: center;
+  background: var(--media-bg, var(--color-bg-media));
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 4px;
