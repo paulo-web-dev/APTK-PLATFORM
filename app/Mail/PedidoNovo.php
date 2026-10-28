@@ -30,6 +30,23 @@ class PedidoNovo extends Mailable
         'chargeback' => 'Chargeback',
     ];
 
+    /**
+     * Status do pagamento em destaque (leva 17): rótulo + cores do selo.
+     * Hex dos tokens --color-success/--color-warning/--color-danger (e-mail
+     * não lê variável CSS).
+     */
+    public static function destaque(Order $order): array
+    {
+        return match ($order->payment_status) {
+            'paid'       => ['rotulo' => 'Pago', 'cor' => '#3F8F63', 'fundo' => '#E8F3EC'],
+            'failed'     => ['rotulo' => 'Pagamento recusado', 'cor' => '#BE3B33', 'fundo' => '#F8E7E6'],
+            'expired'    => ['rotulo' => 'Pagamento expirado', 'cor' => '#BE3B33', 'fundo' => '#F8E7E6'],
+            'refunded'   => ['rotulo' => 'Estornado', 'cor' => '#BE3B33', 'fundo' => '#F8E7E6'],
+            'chargeback' => ['rotulo' => 'Chargeback', 'cor' => '#BE3B33', 'fundo' => '#F8E7E6'],
+            default      => ['rotulo' => 'Aguardando pagamento', 'cor' => '#BF6300', 'fundo' => '#FBF0E5'],
+        };
+    }
+
     public function __construct(public Order $order)
     {
         $this->order->loadMissing('items', 'user');
@@ -45,7 +62,7 @@ class PedidoNovo extends Mailable
         $replyTo = config('pedidos.reply_to');
 
         return new Envelope(
-            subject: 'Novo pedido '.$this->numero(),
+            subject: 'Novo pedido '.$this->numero().' · '.self::destaque($this->order)['rotulo'],
             replyTo: $replyTo ? [new Address($replyTo)] : [],
         );
     }
@@ -98,6 +115,7 @@ class PedidoNovo extends Mailable
 
         return [
             'numero'   => $this->numero(),
+            'destaque' => self::destaque($o),
             'data'     => data_br($o->created_at),
             'pago_em'  => $o->paid_at ? data_br($o->paid_at) : null,
             'cliente'  => [

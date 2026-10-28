@@ -2,12 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\EnviarAvisoPagamento;
 use App\Jobs\EnviarAvisoPedido;
+use App\Mail\PagamentoConfirmado;
 use App\Mail\PedidoNovo;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\AvisoPedido;
 use App\Services\CartService;
 use App\Services\ReconciliacaoPagamento;
 use Illuminate\Console\Scheduling\Schedule;
@@ -21,10 +24,14 @@ use Symfony\Component\Mailer\Exception\TransportException;
 use Tests\TestCase;
 
 /**
- * Leva 16: aviso de pedido pago por e-mail para a equipe. Sai na
- * confirmação do pagamento (nunca na criação), uma vez só pelo fluxo
- * automático; o botão do admin reenvia na hora. Falha no SMTP nunca
- * derruba checkout nem webhook.
+ * Avisos de pedido por e-mail para a equipe (leva 16, revista na leva 17).
+ *
+ * 1. Todo pedido do checkout avisa, qualquer método e desfecho, com o status
+ *    do pagamento em destaque (pago / aguardando / recusado).
+ * 2. Pagamento confirmado depois (webhook, reconciliação) manda um segundo
+ *    aviso curto — uma vez só.
+ * Falha no SMTP nunca derruba checkout nem webhook. O botão do admin
+ * reenvia na hora.
  *
  * Fila sync no phpunit: o job roda na hora do dispatch.
  */
@@ -140,9 +147,20 @@ class AvisoPedidoTest extends TestCase
         return User::create(['name' => 'Admin', 'email' => 'admin@aptk.test', 'password' => bcrypt('x12345678'), 'role' => 'admin']);
     }
 
-    // ---- disparo automático --------------------------------------------------
+    protected function num(Order $order): string
+    {
+        return 'APTK-'.str_pad((string) $order->id, 5, '0', STR_PAD_LEFT);
+    }
 
-    public function test_cartao_aprovado_no_checkout_avisa_a_equipe(): void
+    protected function webhookAprovado(): void
+    {
+        $this->appmaxDiz('aprovado');
+        $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_approved', 'data' => ['id' => 20]])->assertOk();
+    }
+
+    // ---- 1. aviso de pedido criado -----------------------------------------------
+
+    public function test_cartao_aprovado_avisa_como_pago_e_nao_manda_segundo_aviso(): void
     {
         $this->fakeAppmax();
         $this->comCarrinho();
@@ -155,12 +173,19 @@ class AvisoPedidoTest extends TestCase
             return $m->order->is($order)
                 && $m->hasTo(self::EQUIPE[0]) && $m->hasTo(self::EQUIPE[1]) && $m->hasTo(self::EQUIPE[2])
                 && $m->hasReplyTo('contato@aptkspirits.com')
-                && $m->envelope()->subject === 'Novo pedido APTK-'.str_pad((string) $order->id, 5, '0', STR_PAD_LEFT);
+                && $m->envelope()->subject === 'Novo pedido '.$this->num($order).' · Pago';
         });
+        Mail::assertNotSent(PagamentoConfirmado::class);
         $this->assertNotNull($order->notificado_em);
+        $this->assertNotNull($order->pagamento_notificado_em); // o aviso já disse "Pago"
+
+        // Webhook de aprovação chegando depois: nada novo.
+        $this->webhookAprovado();
+        Mail::assertSent(PedidoNovo::class, 1);
+        Mail::assertNotSent(PagamentoConfirmado::class);
     }
 
-    public function test_cartao_recusado_nao_avisa(): void
+    public function test_cartao_recusado_avisa_como_recusado(): void
     {
         $this->fakeAppmax([
             'POST /v1/payments/credit-card' => fn () => Http::response(['error' => ['message' => 'declined']], 400),
@@ -169,61 +194,98 @@ class AvisoPedidoTest extends TestCase
 
         $this->post('/checkout', $this->dados())->assertRedirect(route('checkout.index'));
 
-        $this->assertSame('cancelled', Order::sole()->status);
-        Mail::assertNothingSent();
+        $order = Order::sole();
+        $this->assertSame('cancelled', $order->status);
+        Mail::assertSent(PedidoNovo::class, fn (PedidoNovo $m) => $m->envelope()->subject === 'Novo pedido '.$this->num($order).' · Pagamento recusado'
+            && str_contains($m->render(), 'Pagamento recusado'));
+        $this->assertNull($order->pagamento_notificado_em);
     }
 
-    public function test_pix_criado_nao_avisa_e_webhook_pago_avisa_uma_vez_so(): void
+    public function test_falha_no_gateway_antes_da_cobranca_tambem_avisa(): void
+    {
+        $this->fakeAppmax([
+            'POST /v1/orders' => fn () => Http::response(['error' => ['message' => 'Service Unavailable']], 503),
+        ]);
+        $this->comCarrinho();
+
+        $this->post('/checkout', $this->dados(['payment_method' => 'boleto']))->assertRedirect(route('checkout.index'));
+
+        Mail::assertSent(PedidoNovo::class, 1);
+    }
+
+    public function test_pix_avisa_aguardando_e_webhook_manda_pagamento_confirmado_uma_vez_so(): void
     {
         $order = $this->pedidoPixPendente();
-        Mail::assertNothingSent(); // criação do pedido não avisa
 
-        $this->appmaxDiz('aprovado');
-        $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_approved', 'data' => ['id' => 20]])->assertOk();
+        Mail::assertSent(PedidoNovo::class, fn (PedidoNovo $m) => $m->envelope()->subject === 'Novo pedido '.$this->num($order).' · Aguardando pagamento'
+            && str_contains($m->render(), 'Aguardando pagamento'));
+        Mail::assertNotSent(PagamentoConfirmado::class);
+
+        $this->webhookAprovado();
         // Reentrega do evento e outro evento de pagamento: não repete.
         $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_approved', 'data' => ['id' => 20]])->assertOk();
         $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_paid', 'data' => ['id' => 20]])->assertOk();
 
         Mail::assertSent(PedidoNovo::class, 1);
-        $this->assertNotNull($order->refresh()->notificado_em);
+        Mail::assertSent(PagamentoConfirmado::class, 1);
+        Mail::assertSent(PagamentoConfirmado::class, fn (PagamentoConfirmado $m) => $m->hasTo(self::EQUIPE[0])
+            && $m->hasReplyTo('contato@aptkspirits.com')
+            && $m->envelope()->subject === 'Pagamento confirmado '.$this->num($order));
+        $this->assertNotNull($order->refresh()->pagamento_notificado_em);
     }
 
-    public function test_reconciliacao_que_aprova_avisa(): void
+    public function test_reconciliacao_que_aprova_manda_pagamento_confirmado(): void
     {
         $order = $this->pedidoPixPendente();
         $this->appmaxDiz('aprovado');
 
         app(ReconciliacaoPagamento::class)->reconciliar($order->refresh());
+        app(ReconciliacaoPagamento::class)->reconciliar($order->refresh()); // de novo: nada
 
         $this->assertTrue($order->refresh()->isPaid());
-        Mail::assertSent(PedidoNovo::class, 1);
+        Mail::assertSent(PagamentoConfirmado::class, 1);
     }
 
-    public function test_pedido_ja_avisado_nao_reenvia_pelo_fluxo_automatico(): void
+    public function test_avisos_vao_pra_fila_notificacoes(): void
+    {
+        Queue::fake();
+        $order = $this->pedidoPixPendente();
+
+        Queue::assertPushedOn('notificacoes', EnviarAvisoPedido::class, fn ($job) => $job->orderId === $order->id);
+
+        $order->forceFill(['notificado_em' => now()])->save();
+        $this->webhookAprovado();
+
+        Queue::assertPushedOn('notificacoes', EnviarAvisoPagamento::class, fn ($job) => $job->orderId === $order->id);
+    }
+
+    public function test_travas_nao_deixam_reenviar_pelo_fluxo_automatico(): void
     {
         $order = $this->pedidoPixPendente();
-        $order->forceFill(['notificado_em' => now()->subHour()])->save();
+        $order->forceFill(['pagamento_notificado_em' => now()->subHour()])->save();
 
         Queue::fake();
-        $this->appmaxDiz('aprovado');
-        $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_approved', 'data' => ['id' => 20]])->assertOk();
+        $this->webhookAprovado();
+        Queue::assertNotPushed(EnviarAvisoPagamento::class);
 
-        Queue::assertNotPushed(EnviarAvisoPedido::class);
-
-        // E o job, se já estivesse na fila, também não reenvia.
-        (new EnviarAvisoPedido($order->id))->handle(app(\App\Services\AvisoPedido::class));
-        Mail::assertNothingSent();
+        // E os jobs, se já estivessem na fila, também não reenviam.
+        (new EnviarAvisoPedido($order->id))->handle(app(AvisoPedido::class));
+        (new EnviarAvisoPagamento($order->id))->handle(app(AvisoPedido::class));
+        Mail::assertSent(PedidoNovo::class, 1); // só o da criação
+        Mail::assertNotSent(PagamentoConfirmado::class);
     }
 
-    public function test_aviso_vai_pra_fila_notificacoes(): void
+    public function test_confirmacao_antes_do_primeiro_aviso_nao_sai_e_o_primeiro_ja_diz_pago(): void
     {
-        Queue::fake();
-        $this->fakeAppmax();
-        $this->comCarrinho();
+        $order = $this->pedidoPixPendente();
+        $order->forceFill(['notificado_em' => null, 'payment_status' => 'paid', 'status' => 'processing', 'paid_at' => now()])->save();
 
-        $this->post('/checkout', $this->dados())->assertRedirect();
+        (new EnviarAvisoPagamento($order->id))->handle(app(AvisoPedido::class));
+        Mail::assertNotSent(PagamentoConfirmado::class);
 
-        Queue::assertPushedOn('notificacoes', EnviarAvisoPedido::class);
+        (new EnviarAvisoPedido($order->id))->handle(app(AvisoPedido::class));
+        $this->assertNotNull($order->refresh()->pagamento_notificado_em);
+        Mail::assertSent(PedidoNovo::class, fn (PedidoNovo $m) => str_ends_with($m->envelope()->subject, '· Pago'));
     }
 
     public function test_worker_do_scheduler_processa_a_fila_de_notificacoes(): void
@@ -235,23 +297,36 @@ class AvisoPedidoTest extends TestCase
         $this->assertStringContainsString('--queue=notificacoes,microvix', $comando);
     }
 
-    public function test_falha_no_smtp_nao_derruba_o_webhook_e_fica_no_pedido(): void
+    public function test_falha_no_smtp_nao_derruba_o_checkout_e_fica_no_pedido(): void
     {
-        $order = $this->pedidoPixPendente();
-
         Mail::shouldReceive('to')->andThrow(new TransportException('Expected response code "250" but got code "554".'));
-        $this->appmaxDiz('aprovado');
+        $this->fakeAppmax();
+        $this->comCarrinho();
 
-        $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_approved', 'data' => ['id' => 20]])->assertOk();
+        $resposta = $this->post('/checkout', $this->dados());
 
-        $order->refresh();
+        $order = Order::sole();
+        $resposta->assertRedirect(route('checkout.success', $order));
         $this->assertTrue($order->isPaid());
         $this->assertNull($order->notificado_em);
         $this->assertStringContainsString('554', $order->notificacao_erro);
         $this->assertNotNull($order->notificacao_erro_em);
     }
 
-    public function test_troca_manual_de_status_no_admin_nao_avisa(): void
+    public function test_falha_no_smtp_nao_derruba_o_webhook_e_fica_no_pedido(): void
+    {
+        $order = $this->pedidoPixPendente();
+
+        Mail::shouldReceive('to')->andThrow(new TransportException('Expected response code "250" but got code "554".'));
+        $this->webhookAprovado();
+
+        $order->refresh();
+        $this->assertTrue($order->isPaid());
+        $this->assertNull($order->pagamento_notificado_em);
+        $this->assertStringContainsString('554', $order->notificacao_erro);
+    }
+
+    public function test_troca_manual_de_status_no_admin_nao_manda_pagamento_confirmado(): void
     {
         $order = $this->pedidoPixPendente();
 
@@ -260,7 +335,8 @@ class AvisoPedidoTest extends TestCase
             ->assertRedirect();
 
         $this->assertTrue($order->refresh()->isPaid());
-        Mail::assertNothingSent();
+        Mail::assertSent(PedidoNovo::class, 1); // só o da criação
+        Mail::assertNotSent(PagamentoConfirmado::class);
     }
 
     // ---- botão do admin --------------------------------------------------------
@@ -275,12 +351,23 @@ class AvisoPedidoTest extends TestCase
             ->assertRedirect(route('admin.orders.show', $order))
             ->assertSessionHas('status', 'Aviso enviado para '.implode(', ', self::EQUIPE).'.');
 
-        Mail::assertSent(PedidoNovo::class, 1);
+        Mail::assertSent(PedidoNovo::class, 2); // criação + reenvio
         $this->assertTrue($order->refresh()->notificado_em->isToday());
 
         $this->get(route('admin.orders.show', $order))
             ->assertSee('Aviso enviado em '.data_br($order->notificado_em))
             ->assertSee('Enviar aviso via e-mail');
+    }
+
+    public function test_admin_mostra_quando_o_pagamento_confirmado_foi_avisado(): void
+    {
+        $order = $this->pedidoPixPendente();
+        $this->webhookAprovado();
+        $order->refresh();
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.orders.show', $order))
+            ->assertSee('Pagamento confirmado avisado em '.data_br($order->pagamento_notificado_em));
     }
 
     public function test_botao_do_admin_mostra_o_erro_do_smtp(): void
@@ -301,10 +388,10 @@ class AvisoPedidoTest extends TestCase
         $order = $this->pedidoPixPendente(); // logado como cliente
 
         $this->post(route('admin.orders.notify', $order))->assertForbidden();
-        Mail::assertNothingSent();
+        Mail::assertSent(PedidoNovo::class, 1); // só o da criação
     }
 
-    // ---- corpo do e-mail ---------------------------------------------------------
+    // ---- corpo dos e-mails ---------------------------------------------------------
 
     public function test_corpo_do_email_tem_dados_do_pedido_e_custom_em_destaque(): void
     {
@@ -336,22 +423,40 @@ class AvisoPedidoTest extends TestCase
         $html = $mail->render();
 
         foreach ([
-            'APTK-'.str_pad((string) $order->id, 5, '0', STR_PAD_LEFT), '27/10/2026 12:30',
+            $this->num($order), '27/10/2026 12:30',
             'Cliente', 'cliente@aptk.test', '11 98888-7777',
             'Bia Souza', 'Rua XV, 100 — ap 12', 'Curitiba / PR', 'CEP 80000-000', 'SEDEX', 'até 4 dias úteis',
             '750 ml', '6 × R$ 210,00', 'R$ 1.260,00',
             'Garrafa personalizada', 'Bia &amp; Eduardo', 'PP Rader (Editorial)', 'Preto (#020203)',
             '− R$ 50,00', 'R$ 74,00', 'R$ 1.524,00',
-            'Cartão de crédito', '3x', 'Pago',
+            'Cartão de crédito', '3x', 'Pago', '#3F8F63',
             'Ver pedido no admin', route('admin.orders.show', $order),
         ] as $trecho) {
             $this->assertStringContainsString($trecho, $html, "faltou no HTML: {$trecho}");
         }
 
         $texto = view('emails.pedido-novo-texto', $mail->dados())->render();
+        $this->assertStringContainsString('PAGAMENTO: PAGO', $texto);
         $this->assertStringContainsString('GARRAFA PERSONALIZADA', $texto);
         $this->assertStringContainsString('Texto: "Bia & Eduardo"', $texto);
         $this->assertStringContainsString('TOTAL: R$ 1.524,00', $texto);
+    }
+
+    public function test_corpo_do_pagamento_confirmado(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-28 13:00:00', 'UTC')); // 10:00 em Brasília
+        $order = Order::create([
+            'user_id' => $this->cliente()->id, 'status' => 'processing', 'payment_status' => 'paid', 'payment_method' => 'pix',
+            'paid_at' => now(), 'subtotal' => 210, 'discount' => 0, 'shipping_cost' => 86.40, 'total' => 296.40,
+        ]);
+
+        $mail = new PagamentoConfirmado($order);
+        $html = $mail->render();
+
+        foreach (['Pagamento confirmado', $this->num($order), 'Cliente', 'Pix', 'R$ 296,40', '28/10/2026 10:00', route('admin.orders.show', $order)] as $trecho) {
+            $this->assertStringContainsString($trecho, $html, "faltou no HTML: {$trecho}");
+        }
+        $this->assertStringContainsString('R$ 296,40', view('emails.pagamento-confirmado-texto', $mail->dados())->render());
     }
 
     public function test_sem_reply_to_configurado_o_email_sai_sem(): void
@@ -370,13 +475,14 @@ class AvisoPedidoTest extends TestCase
     public function test_comando_testar_email_envia_e_nao_marca_o_pedido(): void
     {
         $order = $this->pedidoPixPendente();
+        $antes = $order->notificado_em;
 
-        $this->artisan('pedidos:testar-email', ['pedido' => 'APTK-'.str_pad((string) $order->id, 5, '0', STR_PAD_LEFT), '--para' => ['paulo@teste.dev']])
+        $this->artisan('pedidos:testar-email', ['pedido' => $this->num($order), '--para' => ['paulo@teste.dev']])
             ->expectsOutputToContain('SMTP aceitou o e-mail.')
             ->assertSuccessful();
 
         Mail::assertSent(PedidoNovo::class, fn (PedidoNovo $m) => $m->hasTo('paulo@teste.dev') && ! $m->hasTo(self::EQUIPE[0]));
-        $this->assertNull($order->refresh()->notificado_em);
+        $this->assertEquals($antes, $order->refresh()->notificado_em);
     }
 
     public function test_comando_testar_email_mostra_o_erro_completo(): void

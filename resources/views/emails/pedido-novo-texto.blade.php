@@ -1,4 +1,5 @@
 Novo pedido {!! $numero !!}
+PAGAMENTO: {!! mb_strtoupper($destaque['rotulo']) !!}
 {!! $data !!} (horário de Brasília)
 
 CLIENTE

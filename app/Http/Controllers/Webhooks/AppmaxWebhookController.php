@@ -210,7 +210,7 @@ class AppmaxWebhookController extends Controller
             ]);
 
             $this->enfileiraEnvioErp($order, 'confirmar');
-            AvisoPedido::agendar($order);
+            AvisoPedido::agendarPagamento($order);
 
             return true;
         }

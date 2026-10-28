@@ -26,9 +26,20 @@
 
     {{-- Cabeçalho --}}
     <tr><td style="padding:24px;background:#020203;border-radius:8px 8px 0 0;">
-        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#E5DBC9;">APTK Spirits · pedido pago</div>
+        <div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#E5DBC9;">APTK Spirits · novo pedido</div>
         <div style="padding-top:6px;font-size:24px;font-weight:bold;color:#ffffff;">{{ $numero }}</div>
         <div style="padding-top:4px;font-size:14px;color:#E5DBC9;">{{ $data }} (horário de Brasília)</div>
+    </td></tr>
+
+    {{-- Status do pagamento em destaque (leva 17) --}}
+    <tr><td style="padding:20px 24px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{{ $destaque['fundo'] }};border-left:4px solid {{ $destaque['cor'] }};border-radius:4px;">
+            <tr><td style="padding:14px 16px;">
+                <div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#7a6f63;">Pagamento</div>
+                <div style="padding-top:2px;font-size:20px;font-weight:bold;color:{{ $destaque['cor'] }};">{{ $destaque['rotulo'] }}</div>
+                <div style="padding-top:2px;font-size:14px;color:#020203;">{{ $pagamento['forma'] }}@if ($pagamento['parcelas']) · {{ $pagamento['parcelas'] }}@endif · {{ $total }}</div>
+            </td></tr>
+        </table>
     </td></tr>
 
     {{-- Cliente --}}

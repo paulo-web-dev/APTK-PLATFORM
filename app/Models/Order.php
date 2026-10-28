@@ -62,6 +62,7 @@ class Order extends Model
         'microvix_envio_em'  => 'datetime',
         'notificado_em'       => 'datetime',
         'notificacao_erro_em' => 'datetime',
+        'pagamento_notificado_em' => 'datetime',
         'shipping_days'      => 'integer',
     ];
 

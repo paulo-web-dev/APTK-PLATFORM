@@ -98,7 +98,7 @@ class CancelarCartaoPreso extends Command
                 'appmax_order_id' => $order->appmax_order_id,
             ]);
 
-            AvisoPedido::agendar($order);
+            AvisoPedido::agendarPagamento($order);
         }
 
         foreach ($cancelar as [$order, $plano]) {

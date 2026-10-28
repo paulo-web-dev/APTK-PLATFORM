@@ -166,9 +166,12 @@
                 <div class="panel-head">Aviso por e-mail</div>
                 <div class="panel-body">
                     @if ($order->notificado_em)
-                        <p class="addr-note" style="margin:0 0 12px;">Aviso enviado em {{ data_br($order->notificado_em) }}</p>
+                        <p class="addr-note" style="margin:0 0 6px;">Aviso enviado em {{ data_br($order->notificado_em) }}</p>
+                        @if ($order->pagamento_notificado_em)
+                            <p class="addr-note" style="margin:0 0 12px;">Pagamento confirmado avisado em {{ data_br($order->pagamento_notificado_em) }}</p>
+                        @endif
                     @elseif (! $order->notificacao_erro)
-                        <p class="addr-note" style="margin:0 0 12px;">Ainda não enviado. O aviso sai sozinho quando o pagamento é confirmado.</p>
+                        <p class="addr-note" style="margin:0 0 12px;">Ainda não enviado. O aviso sai sozinho ao fechar o pedido no checkout.</p>
                     @endif
                     @if ($order->notificacao_erro)
                         <div class="alert-ok" style="color:var(--color-danger); border-left-color:var(--color-danger); margin-bottom:12px; overflow-wrap:anywhere;">

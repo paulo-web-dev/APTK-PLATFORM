@@ -184,6 +184,12 @@ class CheckoutController extends Controller
                 ->route('checkout.index')
                 ->withInput($request->except([...self::CAMPOS_CARTAO_PROIBIDOS, 'appmax_token']))
                 ->with('payment_error', $e->getMessage());
+        } finally {
+            // Leva 17: todo pedido criado avisa a equipe, com o status do
+            // pagamento do fim desta requisição (pago / aguardando /
+            // recusado). Pix/boleto pagos depois ganham o segundo aviso
+            // (AvisoPedido::agendarPagamento). Nunca derruba o checkout.
+            AvisoPedido::agendar($order->refresh());
         }
     }
 
@@ -256,8 +262,6 @@ class CheckoutController extends Controller
             ],
         ]);
 
-        AvisoPedido::agendar($order);
-
         return redirect()->route('checkout.success', $order);
     }
 
@@ -300,7 +304,6 @@ class CheckoutController extends Controller
                 'paid_at'         => now(),
                 'payment_details' => $details,
             ]);
-            AvisoPedido::agendar($order);
         } else {
             $order->update([
                 'payment_details' => $details + [

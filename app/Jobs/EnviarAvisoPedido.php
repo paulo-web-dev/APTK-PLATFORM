@@ -11,10 +11,11 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 
 /**
- * Aviso automático de pedido pago para a equipe (leva 16). Fila
- * 'notificacoes', processada pelo mesmo worker do scheduler da fila
- * microvix. Já avisado (notificado_em) = não envia de novo; webhook e
- * polling chegando juntos não enfileiram dois (ShouldBeUnique).
+ * Aviso automático de pedido criado para a equipe (leva 16; na leva 17
+ * passou a sair para todo pedido do checkout, com o status do pagamento).
+ * Fila 'notificacoes', processada pelo mesmo worker do scheduler da fila
+ * microvix. Já avisado (notificado_em) = não envia de novo; dois dispatches
+ * do mesmo pedido não enfileiram dois (ShouldBeUnique).
  */
 class EnviarAvisoPedido implements ShouldQueue, ShouldBeUnique
 {
