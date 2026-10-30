@@ -110,6 +110,11 @@ eyebrow/título/texto/link, proporção via `--mc-ratio`) e `<x-photo-slot ratio
 **Links das marcas** nos cards do ecossistema (Quem Somos): `config/marcas.php`
 → `links` (url + label). Mudou → `config:cache` em produção.
 
+**WhatsApp único:** `config('marcas.whatsapp')` ← `APTK_WHATSAPP` (padrão
+5511934298435). Link sempre `whatsapp_link(?$mensagem)` (aba nova,
+`rel="noopener"`); número escrito `whatsapp_formatado()` → "(11) 93429-8435".
+Nunca número no código. `WhatsappTest` varre as páginas.
+
 **Custom Simples (leva 11): compra direta.** Configurador em `/custom` (primeira
 dobra; bebida, texto, fonte — texto sempre preto) → `POST /custom/carrinho` (`custom.cart`); não cria mais lead.
 Tudo em `config/custom.php` (preço fixo R$ 211, volume 375 ml, fontes PP Rader,

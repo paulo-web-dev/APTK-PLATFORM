@@ -269,7 +269,7 @@
             <a href="https://www.linkedin.com/company/aptk-spirits/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn da APTK">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M7 10.5v6"/><circle cx="7" cy="7.7" r="0.6" fill="currentColor" stroke="none"/><path d="M11 16.5v-6"/><path d="M11 13.3a2.3 2.3 0 0 1 4.6 0v3.2"/></svg>
             </a>
-            <a href="#" aria-label="WhatsApp da APTK">
+            <a href="{{ whatsapp_link() }}" target="_blank" rel="noopener" aria-label="WhatsApp da APTK: {{ whatsapp_formatado() }}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a9 9 0 0 1-13.5 7.8L3 21l1.2-4.5A9 9 0 1 1 21 12Z"/><path d="M8.5 9.5c0 3 2 5 5 5"/></svg>
             </a>
           </div>

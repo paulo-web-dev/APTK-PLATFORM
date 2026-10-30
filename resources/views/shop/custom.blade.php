@@ -288,15 +288,15 @@
   </section>
 
   {{-- FULL CUSTOM (briefing p.22): texto à esquerda, foto à direita, CTA em
-       contorno com seta. Mesmo WhatsApp da equipe de criação. --}}
+       contorno com seta. WhatsApp da APTK (whatsapp_link). --}}
   <section class="section full-band" id="full-custom">
     <div class="container-aptk full-grid">
       <div>
         <span class="eyebrow">Full Custom</span>
         <h2 class="title-editorial">Sua identidade. Nossa criação.</h2>
         <p>Muito além de um rótulo personalizado. Desenvolvemos projetos exclusivos que conectam sua marca ao universo da alta coquetelaria, com criatividade, sofisticação e atenção a cada detalhe.</p>
-        <a href="https://wa.me/{{ $whatsapp }}?text={{ rawurlencode('Olá! Quero um orçamento de Full Custom (rótulo com arte própria) da APTK.') }}"
-           target="_blank" rel="noopener noreferrer" class="btn-aptk btn-aptk--outline">
+        <a href="{{ whatsapp_link('Olá! Quero um orçamento de Full Custom (rótulo com arte própria) da APTK.') }}"
+           target="_blank" rel="noopener" class="btn-aptk btn-aptk--outline">
           Fale com nossa equipe <span class="btn-arrow">→</span>
         </a>
       </div>

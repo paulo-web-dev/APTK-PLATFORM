@@ -68,3 +68,26 @@ if (! function_exists('cpf_formatado')) {
             : (string) $cpf;
     }
 }
+
+if (! function_exists('whatsapp_link')) {
+    /**
+     * Link do WhatsApp da APTK (config marcas.whatsapp), com mensagem
+     * pré-preenchida opcional. Todo link de WhatsApp do site passa por aqui.
+     */
+    function whatsapp_link(?string $mensagem = null): string
+    {
+        $link = 'https://wa.me/'.config('marcas.whatsapp');
+
+        return filled($mensagem) ? $link.'?text='.rawurlencode($mensagem) : $link;
+    }
+}
+
+if (! function_exists('whatsapp_formatado')) {
+    /** Número da APTK para exibição: "(11) 93429-8435" (sem o DDI 55). */
+    function whatsapp_formatado(): string
+    {
+        $n = preg_replace('/^55(?=\d{10,11}$)/', '', (string) config('marcas.whatsapp'));
+
+        return preg_match('/^(\d{2})(\d{4,5})(\d{4})$/', $n, $m) ? "({$m[1]}) {$m[2]}-{$m[3]}" : $n;
+    }
+}

@@ -17,13 +17,10 @@ use Illuminate\View\View;
  *  - Custom Simples (leva 11): compra direta. O configurador escolhe bebida,
  *    texto e fonte (config/custom.php; a cor é fixa, preto) e põe a garrafa 375 ml no
  *    carrinho a preço fixo. Não cria mais lead.
- *  - Full Custom: contato direto via WhatsApp (link na view).
+ *  - Full Custom: contato direto via WhatsApp da APTK (whatsapp_link na view).
  */
 class CustomController extends Controller
 {
-    /** WhatsApp da equipe de criação (Full Custom). */
-    public const WHATSAPP = '5511941766319';
-
     public function __construct(
         protected CartService $cart,
         protected CustomService $custom,
@@ -47,7 +44,6 @@ class CustomController extends Controller
             'volume'   => $this->custom->volume(),
             'limite'   => $this->custom->limite(),
             'aviso'    => config('custom.aviso'),
-            'whatsapp' => self::WHATSAPP,
         ]);
     }
 

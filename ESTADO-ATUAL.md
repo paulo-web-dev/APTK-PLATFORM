@@ -4,8 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-30** (§22 — leva 18: foto por volume, garrafa grande × pequena).
-Antes: 2026-10-28 (§21 — moldura da foto acompanha o fundo); 2026-10-28 (§20 — leva 17: aviso de todo pedido + valor cobrado); 2026-10-27 (§19 — CPF do cliente para cadastro na Linx); 2026-10-27 (§18 — leva 16: aviso de pedido por e-mail); 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
+Última revisão: **2026-10-30** (§23 — WhatsApp único da APTK).
+Antes: 2026-10-30 (§22 — leva 18: foto por volume, garrafa grande × pequena); 2026-10-28 (§21 — moldura da foto acompanha o fundo); 2026-10-28 (§20 — leva 17: aviso de todo pedido + valor cobrado); 2026-10-27 (§19 — CPF do cliente para cadastro na Linx); 2026-10-27 (§18 — leva 16: aviso de pedido por e-mail); 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
 servidor; mensagens de validação em pt_BR; §15 — leva 14: fotos e ajustes de Quem Somos,
 Custom, Clube, Eventos e Collabs).
 Antes: 2026-10-25 (§14 — leva 13: fotos da Home, seções largas,
@@ -1112,6 +1112,19 @@ carrinho, checkout e meus pedidos. E-mail de aviso segue sem miniatura
 pode haver upload do admin que o local não tem — upload fica geral) →
 `php artisan produtos:marcar-volume` (grava). Sem isso tudo fica geral e o
 site se comporta como antes (todas as fotos em todo volume) — não quebra nada.
+
+---
+
+## 23. WhatsApp único da APTK (30/10/2026)
+
+Todo link de WhatsApp vai para (11) 93429-8435 (`wa.me/5511934298435`), via
+`config('marcas.whatsapp')` ← `APTK_WHATSAPP` (opcional no `.env`; padrão é
+esse número) e `whatsapp_link()`. Antes: rodapé com `href="#"` e Full Custom
+no número da equipe de criação (5511941766319, const removida do
+`CustomController`; a mensagem pré-preenchida ficou). `welcome.blade.php`
+(órfã, sem rota) tem um botão de WhatsApp sem link — não mexido.
+
+**Deploy:** `config:cache` (já faz parte).
 
 ---
 

@@ -55,4 +55,15 @@ return [
     */
     'email_contato' => 'contato@aptkspirits.com',
 
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp da APTK
+    |--------------------------------------------------------------------------
+    | Número único de todos os links de WhatsApp do site (rodapé, Full
+    | Custom): só dígitos, com DDI e DDD. Link sempre via whatsapp_link();
+    | número escrito via whatsapp_formatado(). Lembrar do config:cache em
+    | produção.
+    */
+    'whatsapp' => preg_replace('/\D+/', '', (string) env('APTK_WHATSAPP', '5511934298435')),
+
 ];
