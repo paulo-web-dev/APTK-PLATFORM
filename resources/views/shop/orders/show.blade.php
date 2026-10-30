@@ -48,7 +48,7 @@
                     @if ($item->isCustom())
                         <x-custom.previa class="cst-previa--thumb od-thumb" :p="$item->personalizacao" />
                     @else
-                        <x-product.image class="prod-thumb od-thumb" :image="$item->product?->primaryImage" :alt="$item->product_name" compact />
+                        <x-product.image class="prod-thumb od-thumb" :image="$item->product?->fotoDoVolume($item->size)" :alt="$item->product_name" compact />
                     @endif
                     <span><span class="q">{{ $item->qty }}×</span> {{ $item->nomeExibido() }}@if ($item->size) <small style="color:var(--color-text-muted);">({{ $item->size }})</small>@endif
                         @if ($item->isCustom()) <x-custom.ficha :p="$item->personalizacao" /> @endif</span>

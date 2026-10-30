@@ -66,7 +66,7 @@
                                      (o produto pode estar inativo e a página dele dar 404). --}}
                                 <x-custom.previa class="cst-previa--thumb cart-thumb" :p="$row->personalizacao" />
                             @else
-                                <x-product.image class="prod-thumb cart-thumb" :image="$row->product->primaryImage" :alt="$row->product->name" compact />
+                                <x-product.image class="prod-thumb cart-thumb" :image="$row->foto" :alt="$row->product->name" compact />
                             @endif
 
                             <div class="cart-info">

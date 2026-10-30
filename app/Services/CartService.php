@@ -149,7 +149,7 @@ class CartService
         }
 
         $products = Product::whereIn('id', array_unique(array_column($raw, 'product_id')))
-            ->with('primaryImage') // miniatura no carrinho e no checkout
+            ->with('images') // miniatura do volume da linha no carrinho e no checkout (foto)
             ->get()
             ->keyBy('id');
 
@@ -178,6 +178,7 @@ class CartService
                         ? (app(CustomService::class)->exibir($personalizacao)['bebida_nome'] ?? $product->name)
                         : $product->name,
                     'size'           => $line['size'],
+                    'foto'           => $product->fotoDoVolume($line['size']),
                     'qty'            => $line['qty'],
                     'unit_price'     => $unit,
                     'subtotal'       => $unit * $line['qty'],

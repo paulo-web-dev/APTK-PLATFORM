@@ -60,10 +60,11 @@ class ProductController extends Controller
         $data['featured'] = $request->boolean('featured');
 
         $this->exigePodeAtivar($request, new Product($data), []);
+        $nova = $this->volumesDasFotos($request, new Product($data), collect())[1];
 
         $product = Product::create($data);
 
-        $this->handleImage($request, $product);
+        $this->handleImage($request, $product, $nova);
 
         return redirect()
             ->route('admin.products.index')
@@ -108,10 +109,17 @@ class ProductController extends Controller
         $data['featured'] = $request->boolean('featured');
 
         $this->exigePodeAtivar($request, $product->replicate()->fill($data), $product->images()->pluck('path')->all());
+        [$volumes, $nova] = $this->volumesDasFotos($request, $product->replicate()->fill($data), $product->images);
 
         $product->update($data);
 
-        $this->handleImage($request, $product);
+        foreach ($product->images as $img) {
+            if ($img->volume !== $volumes[$img->id]) {
+                $img->update(['volume' => $volumes[$img->id]]);
+            }
+        }
+        $this->handleImage($request, $product, $nova);
+        $product->renumerarGaleria();
 
         return redirect()
             ->route('admin.products.index')
@@ -137,7 +145,7 @@ class ProductController extends Controller
         abort_unless($image->product_id === $product->id, 404);
 
         $this->apagaImagem($image);
-        $this->renumera($product);
+        $product->renumerarGaleria();
 
         return redirect()
             ->route('admin.products.edit', $product)
@@ -171,10 +179,14 @@ class ProductController extends Controller
             'short_description' => ['nullable', 'string', 'max:255'],
             'description'       => ['nullable', 'string'],
             'image'             => FotoUpload::regras(), // até 30 MB; gravada reduzida (FotoUpload)
+            'image_volume'      => ['nullable', 'array'],
+            'image_volume.*'    => ['nullable', 'string', 'max:30'],
+            'image_volume_nova' => ['nullable', 'string', 'max:30'],
         ]);
 
-        // O arquivo é tratado à parte (handleImage), não é coluna do produto.
-        unset($data['image']);
+        // Arquivo e garrafa das fotos são tratados à parte (handleImage,
+        // volumesDasFotos), não são colunas do produto.
+        unset($data['image'], $data['image_volume'], $data['image_volume_nova']);
 
         // Volumes: texto separado por vírgula → array (coluna json).
         $data['sizes'] = $this->parseSizes($data['sizes'] ?? null);
@@ -310,11 +322,53 @@ class ProductController extends Controller
     }
 
     /**
-     * Imagem nova ENTRA como principal e as outras sobem uma posição — nada
-     * é apagado (antes apagava arquivo + linha de todas, inclusive as fotos
-     * do pacote, que não se regeram em produção).
+     * Garrafa de cada foto (leva 18): image_volume[id] das que existem e
+     * image_volume_nova da enviada agora; vazio = geral (garrafa grande).
+     * Volume aceito = os à venda menos o padrão (o candidato já com os
+     * volumes deste salvar); o que a foto já tinha passa mesmo fora de venda
+     * (só não aparece no site). Com foto, pelo menos uma tem de ser geral.
+     *
+     * @return array{0: array<int, ?string>, 1: ?string} [id => volume, volume da nova]
      */
-    private function handleImage(Request $request, Product $product): void
+    private function volumesDasFotos(Request $request, Product $candidato, $imagens): array
+    {
+        $permitidos = $candidato->volumesComFotoPropria();
+        $enviados = (array) $request->input('image_volume', []);
+        $invalido = fn (?string $v, ?string $atual = null) => $v !== null && $v !== $atual && ! in_array($v, $permitidos, true);
+
+        $volumes = [];
+        foreach ($imagens as $img) {
+            $v = array_key_exists($img->id, $enviados) ? (filled($enviados[$img->id]) ? (string) $enviados[$img->id] : null) : $img->volume;
+            if ($invalido($v, $img->volume)) {
+                throw ValidationException::withMessages(['image_volume' => "Volume \"{$v}\" não é uma garrafa deste produto."]);
+            }
+            $volumes[$img->id] = $v;
+        }
+
+        $nova = null;
+        $todas = $volumes;
+        if ($request->hasFile('image')) {
+            $nova = filled($request->input('image_volume_nova')) ? (string) $request->input('image_volume_nova') : null;
+            if ($invalido($nova)) {
+                throw ValidationException::withMessages(['image_volume' => "Volume \"{$nova}\" não é uma garrafa deste produto."]);
+            }
+            $todas[] = $nova;
+        }
+
+        if ($todas !== [] && ! in_array(null, $todas, true)) {
+            throw ValidationException::withMessages(['image_volume' => 'Pelo menos uma foto precisa ser geral (garrafa grande).']);
+        }
+
+        return [$volumes, $nova];
+    }
+
+    /**
+     * Imagem nova entra na frente: geral vira a principal; de volume, a
+     * primeira daquele volume (renumerarGaleria põe as gerais antes). Nada é
+     * apagado (antes apagava arquivo + linha de todas, inclusive as fotos do
+     * pacote, que não se regeram em produção).
+     */
+    private function handleImage(Request $request, Product $product, ?string $volume = null): void
     {
         if (! $request->hasFile('image')) {
             return;
@@ -322,18 +376,16 @@ class ProductController extends Controller
 
         $path = FotoUpload::salvar($request->file('image'), 'products');
 
-        ProductImage::where('product_id', $product->id)->update(['is_primary' => false]);
-        ProductImage::where('product_id', $product->id)->increment('sort_order');
-
         ProductImage::create([
             'product_id' => $product->id,
             'path'       => $path,
             'alt'        => $product->name,
-            'is_primary' => true,
-            'sort_order' => 0,
+            'volume'     => $volume,
+            'is_primary' => false,
+            'sort_order' => -1,
         ]);
 
-        $this->renumera($product);
+        $product->renumerarGaleria();
     }
 
     /** Linha sempre; arquivo só se for upload do admin e ninguém mais usar. */
@@ -344,12 +396,5 @@ class ProductController extends Controller
         if ($image->isUploadDoAdmin() && ! ProductImage::where('path', $image->path)->exists()) {
             Storage::disk('public')->delete($image->path);
         }
-    }
-
-    /** Ordem 0..n sem buracos; a primeira é a principal. */
-    private function renumera(Product $product): void
-    {
-        $product->images()->orderBy('id')->get() // images() já ordena por sort_order
-            ->each(fn (ProductImage $img, int $i) => $img->update(['sort_order' => $i, 'is_primary' => $i === 0]));
     }
 }

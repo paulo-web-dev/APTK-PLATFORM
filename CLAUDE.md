@@ -141,8 +141,16 @@ produto: foto de ambiente usa `--color-ink`. O pacote fundo preto
 (`{grupo}-{vol}-{lado}.jpg`) tem rótulo antigo e não é mais usado. Rótulo antigo só
 bloqueia na galeria de produto: foto de ambiente com garrafa antiga fica até chegar a
 nova (não trocar por `<x-photo-slot>`); lista em ESTADO-ATUAL §12.1.
+**Foto por volume** (leva 18): `product_images.volume` null = geral (garrafa
+grande), "375 ml" = só da pequena; volume sem foto própria cai nas gerais.
+Sempre via `Product::fotosDoVolume()/fotoDoVolume()/fotoPadrao()` (card =
+volume padrão; carrinho/pedido = volume da linha), nunca `primaryImage` na
+loja. Marcação = `Product::marcarVolumes` (só volume à venda que não é o
+padrão; sem geral sobrando, tudo geral), usada por `produtos:marcar-volume
+[--dry-run]` e `aplicar-fotos`. Admin: select "Garrafa", exige ≥ 1 geral;
+`is_primary` = primeira geral (`renumerarGaleria`).
 Upload do admin: nome hash de 40 caracteres (`ProductImage::isUploadDoAdmin()`) — só
-esse arquivo o admin apaga do disco. Upload ADICIONA como principal.
+esse arquivo o admin apaga do disco. Upload ADICIONA (geral entra como principal).
 Foto do admin (produto e capa de post) passa por `FotoUpload`: `regras()` (até 30 MB;
 jpg/png/webp; HEIC só com Imagick) e `salvar()` (2000 px, JPG 82, EXIF aplicado; o
 original nunca vai pro disco). Limites do PHP no servidor: ESTADO-ATUAL §16.
@@ -327,4 +335,4 @@ qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 - Não rodar `migrate:fresh` sem avisar — apaga dados locais.
 - Depois de mexer em rota, rodar `php artisan route:clear`.
 - Mudanças do cliente vêm agrupadas em "levas" numeradas, cada uma com escopo fechado
-  antes da execução. As levas 01 a 17 já foram concluídas.
+  antes da execução. As levas 01 a 18 já foram concluídas.

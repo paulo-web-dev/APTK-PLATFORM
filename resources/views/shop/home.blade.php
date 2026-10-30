@@ -198,7 +198,7 @@
           <div class="shw-slide {{ $idx === 0 ? 'is-active' : '' }}" data-slide="{{ $idx }}">
             <div class="featured-grid">
               {{-- O carrossel só recebe produto com foto (HomeController). --}}
-              <x-product.image class="featured-img" :image="$product->primaryImage" :alt="$product->name" />
+              <x-product.image class="featured-img" :image="$product->fotoPadrao()" :alt="$product->name" />
               <div class="featured-body">
                 <span class="badge-aptk">{{ $product->category?->name ?? 'Destaque' }}</span>
                 <p class="product-name">{{ $product->name }}</p>

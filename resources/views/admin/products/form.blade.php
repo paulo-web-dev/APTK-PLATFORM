@@ -25,11 +25,15 @@
     .check { display:flex; align-items:center; gap:8px; cursor:pointer; margin-bottom:10px; }
     .check input { accent-color: var(--color-primary); }
     .field .err { display:block; color:var(--color-danger); font-size:var(--text-xs); margin-top:6px; }
-    .gal { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:12px; margin-bottom:14px; }
+    .gal { display:grid; grid-template-columns:repeat(auto-fill, minmax(132px, 1fr)); gap:12px; margin-bottom:14px; }
     .gal-item { display:flex; flex-direction:column; gap:6px; }
     .gal-item .prod-thumb { width:100%; aspect-ratio:2 / 3; }
     .gal-item.is-primary .prod-thumb { border-color:var(--color-primary); }
     .gal-tag { font-family:var(--font-mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--color-primary); }
+    .gal-item .admin-select { width:100%; font-size:var(--text-xs); padding:4px 6px; }
+    .gal-sub { font-family:var(--font-mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--color-text-muted); }
+    @media (max-width: 520px) { .gal { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+    .gal-foot { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
     .gal-rm { background:none; border:none; padding:0; color:var(--color-danger); font-size:var(--text-xs); cursor:pointer; text-align:left; }
     .gal-rm:hover { text-decoration:underline; }
 </style>
@@ -100,17 +104,34 @@
                     </div>
                 </div>
 
+                @php
+                    // Garrafa da foto (leva 18): geral ou um volume que não é o padrão.
+                    $volumesFoto = $product->volumesComFotoPropria();
+                @endphp
                 <div class="panel">
                     <div class="panel-head">Imagens</div>
                     <div class="panel-body">
                         @if ($editing && $product->images->isNotEmpty())
                             <div class="gal">
                                 @foreach ($product->images as $img)
+                                    @php $vol = old("image_volume.{$img->id}", $img->volume); @endphp
                                     <div class="gal-item {{ $img->is_primary ? 'is-primary' : '' }}">
                                         <x-product.image class="prod-thumb" :image="$img" alt="" />
-                                        @if ($img->is_primary)<span class="gal-tag">Principal</span>@endif
-                                        {{-- Form de remoção fica FORA deste form (form não aninha). --}}
-                                        <button type="submit" class="gal-rm" form="rm-img-{{ $img->id }}">Remover</button>
+                                        <span class="gal-sub">Garrafa</span>
+                                        <select name="image_volume[{{ $img->id }}]" class="admin-select" aria-label="Garrafa da foto {{ $loop->iteration }}">
+                                            <option value="">Geral (grande)</option>
+                                            @foreach ($volumesFoto as $v)
+                                                <option value="{{ $v }}" @selected($vol === $v)>{{ $v }}</option>
+                                            @endforeach
+                                            @if (filled($img->volume) && ! in_array($img->volume, $volumesFoto, true))
+                                                <option value="{{ $img->volume }}" @selected($vol === $img->volume)>{{ $img->volume }} (fora de venda)</option>
+                                            @endif
+                                        </select>
+                                        <div class="gal-foot">
+                                            {{-- Form de remoção fica FORA deste form (form não aninha). --}}
+                                            <button type="submit" class="gal-rm" form="rm-img-{{ $img->id }}">Remover</button>
+                                            @if ($img->is_primary)<span class="gal-tag">Principal</span>@endif
+                                        </div>
                                     </div>
                                 @endforeach
                             </div>
@@ -120,9 +141,24 @@
                             </div>
                             <p class="td-muted" style="font-size:var(--text-xs); margin:0 0 10px;">Sem foto: a loja mostra o placeholder.</p>
                         @endif
+                        @if ($volumesFoto)
+                            <div class="field" style="margin-bottom:10px;">
+                                <label for="image_volume_nova">Garrafa da foto nova</label>
+                                <select name="image_volume_nova" id="image_volume_nova" class="admin-select" style="width:100%;">
+                                    <option value="">Geral (grande)</option>
+                                    @foreach ($volumesFoto as $v)
+                                        <option value="{{ $v }}" @selected(old('image_volume_nova') === $v)>{{ $v }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
                         <input type="file" name="image" accept="image/*" class="admin-input" style="width:100%;">
-                        <p class="td-muted" style="font-size:var(--text-xs); margin:8px 0 0;">JPG, PNG ou WEBP até 30 MB (o site guarda uma cópia reduzida). A imagem enviada entra como principal; as outras continuam na galeria.</p>
+                        <p class="td-muted" style="font-size:var(--text-xs); margin:8px 0 0;">JPG, PNG ou WEBP até 30 MB (o site guarda uma cópia reduzida). Foto geral enviada entra como principal; as outras continuam na galeria.</p>
+                        @if ($volumesFoto)
+                            <p class="td-muted" style="font-size:var(--text-xs); margin:8px 0 0;">Fotos gerais aparecem para todos os volumes. Fotos da garrafa pequena aparecem só quando o cliente escolher {{ implode(' ou ', $volumesFoto) }}.</p>
+                        @endif
                         @error('image') <span class="err" style="color:var(--color-danger); font-size:var(--text-xs);">{{ $message }}</span> @enderror
+                        @error('image_volume') <span class="err" style="color:var(--color-danger); font-size:var(--text-xs);">{{ $message }}</span> @enderror
                     </div>
                 </div>
             </div>

@@ -339,7 +339,7 @@
                                 @if ($row->personalizacao)
                                     <x-custom.previa class="cst-previa--thumb sum-thumb" :p="$row->personalizacao" />
                                 @else
-                                    <x-product.image class="prod-thumb sum-thumb" :image="$row->product->primaryImage" :alt="$row->product->name" compact />
+                                    <x-product.image class="prod-thumb sum-thumb" :image="$row->foto" :alt="$row->product->name" compact />
                                 @endif
                                 <span><span class="q">{{ $row->qty }}×</span> {{ $row->nome }}@if ($row->size) <small style="color:var(--color-text-muted);">({{ $row->size }})</small>@endif
                                     @if ($row->personalizacao) <x-custom.ficha :p="$row->personalizacao" /> @endif</span>

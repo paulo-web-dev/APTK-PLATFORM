@@ -52,21 +52,35 @@
         </div>
 
         <div class="pdp-grid">
+            @php
+                // Pré-seleciona um volume COM estoque quando o padrão esgotou.
+                $selectedSize = $product->defaultAvailableSize();
+                // Galeria por volume (leva 18): as fotos do volume, senão as gerais.
+                $fotos = $product->fotosDoVolume($selectedSize);
+                $paraJs = fn ($lista) => $lista->map(fn ($img) => [
+                    'src' => \Illuminate\Support\Facades\Storage::url($img->path),
+                    'fundo' => $img->corFundo(),
+                ])->values();
+                $fotosPorVolume = collect($product->sizes ?: [])
+                    ->mapWithKeys(fn ($sz) => [$sz => $paraJs($product->fotosDoVolume($sz))]);
+            @endphp
+
             {{-- Galeria --}}
             <div class="pdp-gallery">
-                @if ($product->images->isNotEmpty())
-                    <x-product.image id="pdpMain" class="main-img" :image="$product->images->first()" :alt="$product->name" loading="" />
-                    @if ($product->images->count() > 1)
-                        <div class="pdp-thumbs">
-                            @foreach ($product->images as $img)
-                                <button type="button" class="thumb {{ $loop->first ? 'is-active' : '' }}"
-                                        data-src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}"
-                                        data-fundo="{{ $img->corFundo() }}"
-                                        aria-label="Ver imagem {{ $loop->iteration }}">
-                                    <x-product.image :image="$img" alt="" />
-                                </button>
-                            @endforeach
-                        </div>
+                @if ($fotos->isNotEmpty())
+                    <x-product.image id="pdpMain" class="main-img" :image="$fotos->first()" :alt="$product->name" loading="" />
+                    <div class="pdp-thumbs" id="pdpThumbs" @if ($fotos->count() < 2) hidden @endif>
+                        @foreach ($fotos as $img)
+                            <button type="button" class="thumb {{ $loop->first ? 'is-active' : '' }}"
+                                    data-src="{{ \Illuminate\Support\Facades\Storage::url($img->path) }}"
+                                    data-fundo="{{ $img->corFundo() }}"
+                                    aria-label="Ver imagem {{ $loop->iteration }}">
+                                <x-product.image :image="$img" alt="" />
+                            </button>
+                        @endforeach
+                    </div>
+                    @if ($fotosPorVolume->isNotEmpty())
+                        <script type="application/json" id="pdpFotos">@json($fotosPorVolume)</script>
                     @endif
                 @else
                     <x-product.image class="main-img" :alt="$product->name" />
@@ -85,10 +99,6 @@
                     <p class="pdp-sub">{{ $product->short_description }}</p>
                 @endif
 
-                @php
-                    // Pré-seleciona um volume COM estoque quando o padrão esgotou.
-                    $selectedSize = $product->defaultAvailableSize();
-                @endphp
                 <div class="pdp-price-row">
                     <span class="pdp-price" id="pdpPrice">R$ {{ number_format($product->priceForSize($selectedSize), 2, ',', '.') }}</span>
                     @if ($product->compare_price && $product->compare_price > $product->price)
@@ -163,7 +173,7 @@
                         <div class="col-12 col-md-4">
                             <a href="{{ route('product', $rel->slug) }}" class="card-aptk"
                                style="display:flex; flex-direction:column; padding:0; overflow:hidden; text-decoration:none;">
-                                <x-product.image :image="$rel->primaryImage" :alt="$rel->name"
+                                <x-product.image :image="$rel->fotoPadrao()" :alt="$rel->name"
                                     style="aspect-ratio:1/1; width:calc(100% - 20px); margin:10px 10px 0; object-fit:contain; background:var(--media-bg, var(--color-bg-media)); border:none; border-radius:var(--radius-md); padding:16px;" />
                                 <div style="padding:18px;">
                                     <p style="font-family:var(--font-script); font-size:var(--text-xl); color:var(--color-primary); margin:0 0 8px;">{{ $rel->name }}</p>
@@ -182,21 +192,48 @@
 
 @push('scripts')
 <script>
+  // Galeria: miniatura troca a foto principal; o seletor de volume troca a
+  // galeria inteira (window.pdpGaleria, leva 18). Moldura acompanha a foto
+  // (fundo vazio = fundo padrão).
   (function () {
     var main = document.getElementById('pdpMain');
-    if (!main) return;
-    var thumbs = document.querySelectorAll('.pdp-thumbs .thumb');
-    thumbs.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var src = btn.getAttribute('data-src');
-        if (!src) return;
-        main.src = src;
-        // Moldura acompanha a foto escolhida (vazio = fundo padrão).
-        main.style.setProperty('--media-bg', btn.getAttribute('data-fundo') || 'var(--color-bg-media)');
-        thumbs.forEach(function (b) { b.classList.remove('is-active'); });
-        btn.classList.add('is-active');
-      });
+    var box = document.getElementById('pdpThumbs');
+    if (!main || !box) return;
+    var fundo = function (f) { return f || 'var(--color-bg-media)'; };
+
+    var mostrar = function (btn) {
+      main.src = btn.getAttribute('data-src');
+      main.style.setProperty('--media-bg', fundo(btn.getAttribute('data-fundo')));
+      box.querySelectorAll('.thumb').forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+    };
+    box.addEventListener('click', function (e) {
+      var btn = e.target.closest('.thumb');
+      if (btn) mostrar(btn);
     });
+
+    var dados = document.getElementById('pdpFotos');
+    var porVolume = dados ? JSON.parse(dados.textContent) : {};
+    window.pdpGaleria = function (volume) {
+      var fotos = porVolume[volume];
+      if (!fotos || !fotos.length) return;
+      box.innerHTML = '';
+      fotos.forEach(function (f, i) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'thumb';
+        btn.setAttribute('data-src', f.src);
+        btn.setAttribute('data-fundo', f.fundo || '');
+        btn.setAttribute('aria-label', 'Ver imagem ' + (i + 1));
+        var img = document.createElement('img');
+        img.src = f.src;
+        img.alt = '';
+        if (f.fundo) img.style.setProperty('--media-bg', f.fundo);
+        btn.appendChild(img);
+        box.appendChild(btn);
+      });
+      box.hidden = fotos.length < 2;
+      mostrar(box.firstChild);
+    };
   })();
 
   // Seletor de volume: atualiza preço exibido + input enviado ao carrinho.
@@ -211,6 +248,7 @@
         btn.classList.add('is-active');
         if (priceEl) priceEl.textContent = 'R$ ' + btn.getAttribute('data-price');
         if (sizeInput) sizeInput.value = btn.getAttribute('data-size');
+        if (window.pdpGaleria) window.pdpGaleria(btn.getAttribute('data-size'));
       });
     });
   })();

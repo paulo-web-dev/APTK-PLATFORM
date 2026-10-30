@@ -17,7 +17,7 @@ class HomeController extends Controller
         // principal = ter foto do pacote novo (ou subida pelo admin).
         $showcase = Product::where('active', true)
             ->whereHas('primaryImage')
-            ->with(['category', 'primaryImage'])
+            ->with(['category', 'images']) // foto do volume padrão (fotoPadrao)
             ->orderByDesc('featured')
             ->orderBy('name')
             ->limit(8)

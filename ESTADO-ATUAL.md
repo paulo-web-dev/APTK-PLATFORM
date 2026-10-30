@@ -4,8 +4,8 @@ Diário de estado do projeto. Complementa o CLAUDE.md (que descreve como o
 código É); aqui fica o que está PENDENTE, o que foi DESCOBERTO fora do código
 (ERP, gateway, dados) e as decisões em aberto. Atualizar a cada leva.
 
-Última revisão: **2026-10-28** (§21 — moldura da foto acompanha o fundo).
-Antes: 2026-10-28 (§20 — leva 17: aviso de todo pedido + valor cobrado); 2026-10-27 (§19 — CPF do cliente para cadastro na Linx); 2026-10-27 (§18 — leva 16: aviso de pedido por e-mail); 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
+Última revisão: **2026-10-30** (§22 — leva 18: foto por volume, garrafa grande × pequena).
+Antes: 2026-10-28 (§21 — moldura da foto acompanha o fundo); 2026-10-28 (§20 — leva 17: aviso de todo pedido + valor cobrado); 2026-10-27 (§19 — CPF do cliente para cadastro na Linx); 2026-10-27 (§18 — leva 16: aviso de pedido por e-mail); 2026-10-27 (§17 — leva 15: 100 ml fora da venda); 2026-10-26 (§16 — foto do admin até 30 MB, reduzida no
 servidor; mensagens de validação em pt_BR; §15 — leva 14: fotos e ajustes de Quem Somos,
 Custom, Clube, Eventos e Collabs).
 Antes: 2026-10-25 (§14 — leva 13: fotos da Home, seções largas,
@@ -1081,6 +1081,37 @@ antes. Placeholder "Produto ainda sem foto" ficou escuro.
 `php artisan produtos:detectar-fundo --dry-run` (confere a lista) →
 `php artisan produtos:detectar-fundo` (grava). Sem isso as fotos antigas
 seguem com moldura branca (fallback), inclusive a preta já enviada.
+
+---
+
+## 22. Leva 18 — foto por volume, garrafa grande × pequena (30/10/2026)
+
+`product_images.volume` (migration `2026_10_30_100000`): null = foto geral
+(garrafa grande, vale pra todo volume); "375 ml" = só da pequena. Escolheu um
+volume sem foto própria → gerais. Vale na página do produto (galeria troca no
+seletor, sem recarregar, moldura junto), card da loja, Home, relacionados,
+carrinho, checkout e meus pedidos. E-mail de aviso segue sem miniatura
+(decisão do Paulo).
+
+- **Regra da marcação** (`Product::marcarVolumes`, usada pelo
+  `produtos:marcar-volume` e pelo `produtos:aplicar-fotos`): só volume à venda
+  que não é o padrão (o maior). Produto que só vende 375 (Penicillin, Old
+  Fashioned, Caipirinha) fica com tudo geral. Se nenhuma foto sobrar geral,
+  tudo fica geral — caso do **Squadra Amêndoas** (vende 375 + 750, só tem
+  foto LA375): fica geral até chegar a foto da 750; aí rodar o fluxo normal
+  de foto nova (manifesto + `aplicar-fotos`), que marca a 375.
+- **Admin:** select "Garrafa" em cada foto e na foto nova (opções = volumes
+  menos o padrão). Recusa deixar o produto sem foto geral. A principal é a
+  primeira geral; foto nova de volume entra na frente das fotos daquele
+  volume, sem virar principal.
+- Marcação de 30/10 (local): 15 fotos em 8 produtos (bou, ca, cos, dm, fitz,
+  lim, mm, nc — as 375).
+
+**Deploy:** `migrate --force` e depois
+`php artisan produtos:marcar-volume --dry-run` (confere a tabela; em produção
+pode haver upload do admin que o local não tem — upload fica geral) →
+`php artisan produtos:marcar-volume` (grava). Sem isso tudo fica geral e o
+site se comporta como antes (todas as fotos em todo volume) — não quebra nada.
 
 ---
 

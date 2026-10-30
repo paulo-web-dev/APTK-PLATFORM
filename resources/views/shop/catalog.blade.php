@@ -74,7 +74,7 @@
                 @foreach ($products as $product)
                     <div class="card-aptk prod-card">
                         <a href="{{ route('product', $product->slug) }}" style="text-decoration:none; color:inherit;">
-                            <x-product.image class="prod-img" :image="$product->primaryImage" :alt="$product->name" />
+                            <x-product.image class="prod-img" :image="$product->fotoPadrao()" :alt="$product->name" />
                         </a>
                         <div class="prod-body">
                             <span class="prod-cat">{{ $product->category?->name ?? 'APTK' }}</span>
