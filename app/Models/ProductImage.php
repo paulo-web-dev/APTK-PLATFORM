@@ -12,6 +12,7 @@ class ProductImage extends Model
         'product_id',
         'path',
         'fundo',
+        'volume',
         'alt',
         'sort_order',
         'is_primary',

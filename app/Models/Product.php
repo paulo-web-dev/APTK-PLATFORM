@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Collection;
 
 class Product extends Model
 {
@@ -176,6 +177,78 @@ class Product extends Model
     public function podeAtivar(?array $galeria = null): bool
     {
         return $this->temPreco() && $this->temFotoNoPadrao($galeria);
+    }
+
+    /* -----------------------------------------------------------------
+     | Foto por volume (leva 18)
+     | product_images.volume: null = geral (garrafa grande, vale pra todo
+     | volume); "375 ml" = só daquela garrafa. Volume escolhido sem foto
+     | própria cai nas gerais. is_primary é a principal das gerais.
+     ------------------------------------------------------------------ */
+
+    /** Fotos a mostrar pra um volume: as dele, senão as gerais. */
+    public function fotosDoVolume(?string $volume): Collection
+    {
+        if ($volume !== null) {
+            $doVolume = $this->images->where('volume', $volume)->values();
+            if ($doVolume->isNotEmpty()) {
+                return $doVolume;
+            }
+        }
+
+        $gerais = $this->images->whereNull('volume')->values();
+        if ($gerais->isNotEmpty()) {
+            return $gerais;
+        }
+
+        // Sem geral (o admin não deixa, mas dado antigo pode ter): qualquer
+        // foto de volume à venda antes do placeholder.
+        return $this->images->filter(fn ($i) => $this->hasSizes() && in_array($i->volume, $this->sizes, true))->values();
+    }
+
+    public function fotoDoVolume(?string $volume): ?ProductImage
+    {
+        return $this->fotosDoVolume($volume)->first();
+    }
+
+    /** Foto de card (loja, Home, relacionados): a do volume padrão. */
+    public function fotoPadrao(): ?ProductImage
+    {
+        return $this->fotoDoVolume($this->defaultSize());
+    }
+
+    /** Renumera a galeria com as gerais primeiro; a primeira geral é a principal. */
+    public function renumerarGaleria(): void
+    {
+        $this->images()->get() // images() já ordena por sort_order
+            ->sortBy(fn (ProductImage $img) => [$img->volume !== null, $img->sort_order, $img->id])
+            ->values()
+            ->each(fn (ProductImage $img, int $i) => $img->update(['sort_order' => $i, 'is_primary' => $i === 0]));
+
+        $this->unsetRelation('images');
+    }
+
+    /** Volumes que podem ter foto própria: os à venda, menos o padrão (o padrão usa as gerais). */
+    public function volumesComFotoPropria(): array
+    {
+        return $this->hasSizes() ? array_values(array_diff($this->sizes, [$this->defaultSize()])) : [];
+    }
+
+    /**
+     * Marcação de volume das fotos, a partir do volume da garrafa em cada uma
+     * (null = não se sabe, ex. upload do admin). Só marca volume com foto
+     * própria; se nenhuma sobrar geral (ex.: só foto da 375 de produto que
+     * vende 750), todas ficam gerais até chegar a da grande.
+     *
+     * @param  array<string, ?string>  $garrafa  path => volume da garrafa
+     * @return array<string, ?string> path => volume a gravar (null = geral)
+     */
+    public function marcarVolumes(array $garrafa): array
+    {
+        $proprios = $this->volumesComFotoPropria();
+        $marca = array_map(fn ($v) => in_array($v, $proprios, true) ? $v : null, $garrafa);
+
+        return in_array(null, $marca, true) ? $marca : array_fill_keys(array_keys($marca), null);
     }
 
     /** Volume padrão pré-selecionado (o maior — normalmente o preço "cheio"). */

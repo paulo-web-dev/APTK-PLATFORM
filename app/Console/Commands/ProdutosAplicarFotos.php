@@ -34,6 +34,10 @@ use Illuminate\Support\Facades\Storage;
  * - Produto com frente: galeria = frente e verso do volume padrão primeiro,
  *   depois os outros volumes; upload do admin fica atrás. Foto de volume que
  *   não está à venda não entra (sai no relatório).
+ * - Volume da foto (leva 18, Product::marcarVolumes): foto da garrafa de um
+ *   volume que não é o padrão ganha esse volume (só aparece quando o cliente
+ *   o escolhe); a do padrão fica geral. Sem nenhuma geral, todas ficam gerais.
+ *   Upload do admin mantém a marcação que tem. Gerais vêm primeiro na galeria.
  * - Produto sem frente no manifesto fica com a galeria que tem, menos o
  *   pacote fundo preto. Nada é apagado: imagem que sai da galeria perde só a
  *   linha, o arquivo fica.
@@ -321,12 +325,16 @@ class ProdutosAplicarFotos extends Command
     {
         $atual = $p->images->pluck('path')->all();
         $novas = $this->semGaleria ? [] : $this->fotosNovas($p, $fotos);
+        $volumes = $p->images->pluck('volume', 'path')->all();
 
         // Sem foto no manifesto, a galeria fica como está, menos o pacote fundo
         // preto (rótulo antigo). --sem-galeria não toca na galeria.
         if ($novas !== []) {
-            $doAdmin = $p->images->filter(fn ($i) => $i->isUploadDoAdmin())->pluck('path')->all();
-            $desejada = array_values(array_unique(array_merge(array_column($novas, 'destino'), $doAdmin)));
+            $doAdmin = $p->images->filter(fn ($i) => $i->isUploadDoAdmin())->pluck('volume', 'path')->all();
+            $volumes = $p->marcarVolumes(array_column($novas, 'garrafa', 'destino') + $doAdmin);
+            $desejada = array_keys($volumes);
+            // Gerais primeiro (a primeira é a principal); estável no resto.
+            usort($desejada, fn ($a, $b) => ($volumes[$a] !== null) <=> ($volumes[$b] !== null));
         } elseif ($this->semGaleria) {
             $desejada = $atual;
         } else {
@@ -347,8 +355,9 @@ class ProdutosAplicarFotos extends Command
             'muda_ativo'   => $p->active !== $ativo,
             'novas'        => $novas,
             'desejada'     => $desejada,
+            'volumes'      => $volumes,
             'saem'         => array_values(array_diff($atual, $desejada)),
-            'muda_galeria' => $atual !== $desejada || $this->ordemMudou($p, $desejada),
+            'muda_galeria' => $atual !== $desejada || $this->ordemMudou($p, $desejada, $volumes),
             'principal'    => [$p->primaryImage?->path ?? $p->images->first()?->path, $desejada[0] ?? null],
         ];
     }
@@ -370,7 +379,7 @@ class ProdutosAplicarFotos extends Command
         uksort($fotos, fn ($a, $b) => (int) $b <=> (int) $a);
 
         $novas = [];
-        foreach ($fotos as $f) {
+        foreach ($fotos as $volume => $f) {
             foreach (['frente', 'verso'] as $lado) {
                 if (! $f[$lado]) {
                     continue;
@@ -379,6 +388,7 @@ class ProdutosAplicarFotos extends Command
                 $novas[] = [
                     'destino' => $destino,
                     'origem'  => $this->dirFotos.DIRECTORY_SEPARATOR.$f[$lado],
+                    'garrafa' => (string) $volume,
                     'status'  => Storage::disk('public')->exists($destino) ? 'reaproveita' : 'gera',
                 ];
             }
@@ -387,11 +397,13 @@ class ProdutosAplicarFotos extends Command
         return $novas;
     }
 
-    private function ordemMudou(Product $p, array $desejada): bool
+    /** @param  array<string, ?string>  $volumes  path => volume (null = geral) */
+    private function ordemMudou(Product $p, array $desejada, array $volumes): bool
     {
         foreach ($desejada as $ordem => $path) {
             $img = $p->images->firstWhere('path', $path);
-            if (! $img || $img->sort_order !== $ordem || $img->is_primary !== ($ordem === 0)) {
+            if (! $img || $img->sort_order !== $ordem || $img->is_primary !== ($ordem === 0)
+                || $img->volume !== ($volumes[$path] ?? null)) {
                 return true;
             }
         }
@@ -438,7 +450,13 @@ class ProdutosAplicarFotos extends Command
                 foreach ($plano['desejada'] as $ordem => $path) {
                     ProductImage::updateOrCreate(
                         ['product_id' => $p->id, 'path' => $path],
-                        ['alt' => $p->name, 'sort_order' => $ordem, 'is_primary' => $ordem === 0],
+                        [
+                            'alt'        => $p->name,
+                            'sort_order' => $ordem,
+                            'volume'     => $plano['volumes'][$path] ?? null,
+                            // Gerais vêm primeiro: a 0 é geral (marcarVolumes garante uma).
+                            'is_primary' => $ordem === 0,
+                        ],
                     );
                 }
             }
@@ -476,7 +494,7 @@ class ProdutosAplicarFotos extends Command
             'id'     => $p->id,
             'slug'   => $p->slug,
             'active' => $p->active,
-            'images' => $p->images->map(fn ($i) => $i->only(['path', 'alt', 'sort_order', 'is_primary']))->values()->all(),
+            'images' => $p->images->map(fn ($i) => $i->only(['path', 'alt', 'sort_order', 'is_primary', 'volume']))->values()->all(),
         ])->values()->all();
 
         $arquivo = self::DIR_BACKUP.'/backup-'.now()->format('Ymd-His').'.json';
@@ -533,8 +551,10 @@ class ProdutosAplicarFotos extends Command
             }
 
             $paths = array_column($e['images'], 'path');
+            // Backup de antes da leva 18 não tem volume: tudo geral.
+            $volumes = array_combine($paths, array_map(fn ($i) => $i['volume'] ?? null, $e['images']));
             $mudaAtivo = $p->active !== (bool) $e['active'];
-            $mudaGaleria = $p->images->pluck('path')->all() !== $paths || $this->ordemMudou($p, $paths);
+            $mudaGaleria = $p->images->pluck('path')->all() !== $paths || $this->ordemMudou($p, $paths, $volumes);
 
             if ($mudaAtivo || $mudaGaleria) {
                 $mudam[] = [$p, $e];
@@ -564,7 +584,7 @@ class ProdutosAplicarFotos extends Command
                 foreach ($e['images'] as $img) {
                     ProductImage::updateOrCreate(
                         ['product_id' => $p->id, 'path' => $img['path']],
-                        ['alt' => $img['alt'], 'sort_order' => $img['sort_order'], 'is_primary' => $img['is_primary']],
+                        ['alt' => $img['alt'], 'sort_order' => $img['sort_order'], 'is_primary' => $img['is_primary'], 'volume' => $img['volume'] ?? null],
                     );
                 }
             }
@@ -598,6 +618,8 @@ class ProdutosAplicarFotos extends Command
                     $gera = count(array_filter($pl['novas'], fn ($n) => $n['status'] === 'gera'));
                     $linha .= ': principal '.($antes ? basename($antes) : '—').' → '.($depois ? basename($depois) : '—')
                         .' · galeria '.count($pl['desejada'])." (gera {$gera})"
+                        .(($porVolume = array_count_values(array_filter($pl['volumes'], fn ($v) => $v !== null)))
+                            ? ' · '.implode(', ', array_map(fn ($v, $n) => "{$v}: {$n}", array_keys($porVolume), $porVolume)) : '')
                         .($pl['saem'] ? ' · saem: '.implode(', ', array_map('basename', $pl['saem'])) : '');
                 } elseif ($titulo === 'DESATIVA') {
                     $linha .= " ({$pl['motivo']})";
