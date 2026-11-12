@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Espelho de um SKU do Microvix ERP (cada volume é um codigoproduto próprio).
- * O vínculo com o nosso catálogo (product_id + size) é feito MANUALMENTE.
+ * Vínculo com o nosso catálogo (product_id + size) é assistido: sugestão
+ * automática, gravação só com revisão (prévia + --aplicar do microvix:vincular,
+ * ou a tela do admin).
  */
 class MicrovixProduct extends Model
 {

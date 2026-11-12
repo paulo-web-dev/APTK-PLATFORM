@@ -7,7 +7,8 @@ use App\Models\MicrovixProduct;
 /**
  * Espelha o catálogo do ERP em microvix_products. NÃO toca na tabela
  * products — nesta fase o site continua com estoque/preço próprios; o
- * vínculo codigoproduto → product_id + size é manual.
+ * vínculo codigoproduto → product_id + size é assistido: sugestão automática,
+ * gravação só com revisão (prévia + --aplicar).
  *
  * Três métodos de saída compõem o espelho:
  *   B2CConsultaProdutos             → cadastro (nome, referência, ativo)

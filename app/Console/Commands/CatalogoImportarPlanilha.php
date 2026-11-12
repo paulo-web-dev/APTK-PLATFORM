@@ -37,7 +37,7 @@ class CatalogoImportarPlanilha extends Command
 
     protected $description = 'Importa nome, volumes, preços, SKU e categoria da planilha da gestão';
 
-    private const CSV_PADRAO = 'database/data/catalogo-planilha-2026-10.csv';
+    public const CSV_PADRAO = 'database/data/catalogo-planilha-2026-10.csv';
 
     private const COLUNAS = ['grupo', 'nome', 'marca', 'volume', 'sku', 'preco'];
 

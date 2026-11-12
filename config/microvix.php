@@ -48,7 +48,7 @@ return [
     'id_tipo_encomenda'  => env('MICROVIX_ID_TIPO_ENCOMENDA'),
     'plano_pagamento'    => env('MICROVIX_PLANO_PAGAMENTO'),
 
-    'timeout' => 60,
+    'timeout' => (int) env('MICROVIX_TIMEOUT', 60),
 
     /*
     | Quem manda em preço e estoque do catálogo:

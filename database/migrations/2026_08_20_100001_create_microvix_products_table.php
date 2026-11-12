@@ -10,7 +10,8 @@ return new class extends Migration
     {
         // Espelho do catálogo do ERP + mapeamento para o nosso catálogo.
         // Um codigoproduto do Microvix aponta para um product_id + size
-        // (cada volume é um SKU próprio no ERP). Vínculo MANUAL, nunca automático.
+        // (cada volume é um SKU próprio no ERP). Vínculo assistido: sugestão
+        // automática, gravação só com revisão (prévia + --aplicar).
         Schema::create('microvix_products', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('codigoproduto')->unique();
