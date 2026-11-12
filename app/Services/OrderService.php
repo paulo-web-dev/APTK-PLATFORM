@@ -3,17 +3,16 @@
 namespace App\Services;
 
 use App\Exceptions\OutOfStockException;
-use App\Jobs\EnviarPedidoMicrovix;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\Microvix\MicrovixEnvio;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
-use Throwable;
 
 class OrderService
 {
@@ -227,19 +226,8 @@ class OrderService
             return $order;
         });
 
-        // Fase 2 Microvix: reserva de estoque no ERP (somente_reserva=1).
-        // FORA do closure da transação (a fila database grava o job na MESMA
-        // conexão — dentro, ele participaria da transação) E com afterCommit
-        // (se alguém reembrulhar isto numa transação maior, o job só sai no
-        // commit real). Falha ao enfileirar jamais derruba o pedido.
-        // Integração desligada: nem enfileira (leva 08).
-        try {
-            if (EnviarPedidoMicrovix::integracaoLigada()) {
-                EnviarPedidoMicrovix::dispatch($order->id, 'reservar')->afterCommit();
-            }
-        } catch (Throwable $e) {
-            report($e);
-        }
+        // Microvix: sem reserva no checkout — o pedido só vai para a Linx
+        // depois de pago (MicrovixEnvio::agendar).
 
         return $order;
     }
@@ -279,18 +267,9 @@ class OrderService
             ]);
         });
 
-        // Fase 2 Microvix: libera a reserva no ERP (B2CCancelaPedido). Ponto
-        // ÚNICO de cancelamento — cobre webhook (expirado/recusado), a
-        // compensação do checkout e o comando cancelar-cartao-preso. FORA da
-        // transação (fila database grava na mesma conexão) + afterCommit; e
-        // falha ao enfileirar nunca desfaz o cancelamento local.
-        try {
-            if (EnviarPedidoMicrovix::integracaoLigada()) {
-                EnviarPedidoMicrovix::dispatch($order->id, 'cancelar')->afterCommit();
-            }
-        } catch (Throwable $e) {
-            report($e);
-        }
+        // Microvix: pedido cancelado antes do pagamento nunca foi para a
+        // Linx (o envio só acontece depois de pago), então não há o que
+        // cancelar lá.
     }
 
     /**
@@ -311,13 +290,7 @@ class OrderService
             'paid_at'        => $order->paid_at ?? now(),
         ]);
 
-        try {
-            if (EnviarPedidoMicrovix::integracaoLigada()) {
-                EnviarPedidoMicrovix::dispatch($order->id, 'confirmar');
-            }
-        } catch (Throwable $e) {
-            report($e);
-        }
+        MicrovixEnvio::agendar($order);
 
         AvisoPedido::agendarPagamento($order);
     }

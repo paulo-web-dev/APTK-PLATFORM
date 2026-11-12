@@ -33,6 +33,15 @@
         </table>
     </td></tr>
 
+    {{-- Linx: pedido pago que não vai sozinho (item sem vínculo, custom, plano...) --}}
+    @if ($linx_manual)
+    <tr><td style="padding:16px 24px 0;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F8E7E6;border-left:4px solid #BE3B33;border-radius:4px;">
+            <tr><td style="padding:12px 16px;font-size:14px;line-height:1.5;color:#020203;"><strong style="color:#BE3B33;">{{ $linx_manual }}</strong></td></tr>
+        </table>
+    </td></tr>
+    @endif
+
     <tr><td align="center" style="padding:28px 24px 30px;">
         <table role="presentation" cellpadding="0" cellspacing="0">
             <tr><td bgcolor="#BF6300" style="border-radius:6px;">

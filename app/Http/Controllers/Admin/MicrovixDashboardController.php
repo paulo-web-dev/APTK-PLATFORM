@@ -9,6 +9,7 @@ use App\Models\MicrovixProduct;
 use App\Models\MicrovixReconcileLog;
 use App\Models\MicrovixSyncState;
 use App\Models\Order;
+use App\Services\Microvix\MicrovixEnvio;
 use App\Services\Microvix\MicrovixReconciler;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,12 +41,13 @@ class MicrovixDashboardController extends Controller
             'pedidos'      => [
                 'pendentes'       => Order::whereIn('microvix_envio_estado', ['pendente', 'enviando'])->count(),
                 'erro'            => Order::where('microvix_envio_estado', 'erro')->count(),
-                'confirmadosHoje' => Order::where('microvix_envio_estado', 'confirmado')
+                'manual'          => Order::where('microvix_envio_estado', 'manual')->count(),
+                'enviadosHoje'    => Order::where('microvix_envio_estado', 'enviado')
                     ->whereDate('microvix_synced_at', today())
                     ->count(),
             ],
             'pedidosComErro' => Order::with('user')
-                ->where('microvix_envio_estado', 'erro')
+                ->whereIn('microvix_envio_estado', MicrovixEnvio::REENVIAVEIS)
                 ->orderByDesc('microvix_envio_em')
                 ->limit(20)
                 ->get(),
@@ -72,26 +74,25 @@ class MicrovixDashboardController extends Controller
     }
 
     /**
-     * Reenvio manual: zera tentativas e re-enfileira com a ação certa pro
-     * estado atual do pagamento. A trava MICROVIX_ENVIA_PEDIDO continua
-     * valendo — ela vive no MicrovixPedidoSender, não aqui.
+     * Reenvio manual ("Reenviar para a Linx"): só pedido em erro ou manual,
+     * pago, do período da integração e nunca enviado (microvix_pedido_id
+     * vazio). A trava MICROVIX_ENVIA_PEDIDO continua valendo — ela vive no
+     * MicrovixPedidoSender, não aqui.
      */
     public function reenviarPedido(Order $order): RedirectResponse
     {
-        $acao = match (true) {
-            $order->status === 'cancelled' => 'cancelar',
-            $order->isPaid()               => 'confirmar',
-            default                        => 'reservar',
-        };
+        if (! MicrovixEnvio::podeReenviar($order)) {
+            return back()->withErrors(['reenviar' => $this->motivoSemReenvio($order)]);
+        }
 
-        $order->fill([
+        $order->forceFill([
             'microvix_envio_estado'     => 'pendente',
             'microvix_envio_tentativas' => 0,
             'microvix_envio_erro'       => null,
         ])->save();
 
         try {
-            EnviarPedidoMicrovix::dispatch($order->id, $acao);
+            EnviarPedidoMicrovix::dispatch($order->id);
         } catch (Throwable $e) {
             return back()->withErrors(['reenviar' => "Falha ao re-enfileirar o pedido #{$order->id}: {$e->getMessage()}"]);
         }
@@ -100,7 +101,35 @@ class MicrovixDashboardController extends Controller
             ? ''
             : ' Trava MICROVIX_ENVIA_PEDIDO desligada: o envio será SIMULADO (XML na trilha, nada sai pro ERP).';
 
-        return back()->with('status', "Pedido #{$order->id} re-enfileirado (ação: {$acao}).{$aviso}");
+        return back()->with('status', "Pedido #{$order->id} reenfileirado para a Linx.{$aviso}");
+    }
+
+    /**
+     * Pedido manual (ou em erro) que a equipe lançou à mão na Linx: para de
+     * descontar estoque na conciliação e nunca mais é enviado.
+     */
+    public function marcarLancado(Order $order): RedirectResponse
+    {
+        if ($order->microvix_pedido_id !== null || ! in_array($order->microvix_envio_estado, MicrovixEnvio::REENVIAVEIS, true)) {
+            return back()->withErrors(['reenviar' => "Pedido #{$order->id}: só pedido manual ou em erro pode ser marcado como lançado na Linx."]);
+        }
+
+        $order->forceFill([
+            'microvix_envio_estado' => 'lancado_manual',
+            'microvix_envio_em'     => now(),
+        ])->save();
+
+        return back()->with('status', "Pedido #{$order->id} marcado como lançado manualmente na Linx.");
+    }
+
+    protected function motivoSemReenvio(Order $order): string
+    {
+        return match (true) {
+            $order->microvix_pedido_id !== null => "Pedido #{$order->id} já está na Linx (pedido {$order->microvix_pedido_id}): não é reenviado.",
+            ! MicrovixEnvio::noPeriodo($order)  => "Pedido #{$order->id} é anterior à integração (MICROVIX_ENVIO_A_PARTIR_DE): não vai para a Linx.",
+            ! $order->isPaid() || $order->status === 'cancelled' => "Pedido #{$order->id} não está pago: só pedido pago vai para a Linx.",
+            default => "Pedido #{$order->id}: só pedido em erro ou manual pode ser reenviado.",
+        };
     }
 
     /** Dispara o sync do espelho (síncrono — o projeto não usa queue). */

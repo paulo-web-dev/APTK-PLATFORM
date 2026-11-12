@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Rules\Cpf;
 use App\Services\AppmaxService;
 use App\Services\AvisoPedido;
+use App\Services\Microvix\MicrovixEnvio;
 use App\Services\CartService;
 use App\Services\FreteService;
 use App\Services\OrderService;
@@ -190,6 +191,12 @@ class CheckoutController extends Controller
             // recusado). Pix/boleto pagos depois ganham o segundo aviso
             // (AvisoPedido::agendarPagamento). Nunca derruba o checkout.
             AvisoPedido::agendar($order->refresh());
+
+            // Cartão aprovado na hora: o webhook que chega depois encontra o
+            // pedido já pago e não agenda nada — então agenda aqui.
+            if ($order->isPaid()) {
+                MicrovixEnvio::agendar($order);
+            }
         }
     }
 

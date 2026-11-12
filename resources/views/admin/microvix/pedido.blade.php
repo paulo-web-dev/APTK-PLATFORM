@@ -40,7 +40,7 @@
         <div class="metric-card">
             <div class="m-top"><span class="m-label">Estado do envio</span></div>
             <div class="m-value" style="font-size:1.1em; color:{{ $order->microvix_envio_estado === 'erro' ? 'var(--color-danger)' : 'inherit' }};">
-                {{ $order->microvix_envio_estado ?? 'fora da integração' }}
+                {{ \App\Services\Microvix\MicrovixEnvio::situacao($order)['rotulo'] }}
             </div>
         </div>
         <div class="metric-card"><div class="m-top"><span class="m-label">Tentativas</span></div><div class="m-value">{{ $order->microvix_envio_tentativas }}</div></div>
@@ -52,16 +52,18 @@
 
     @if ($order->microvix_envio_erro)
         <div class="alert-ok" style="color:var(--color-danger); border-left-color:var(--color-danger);">
-            <strong>Último erro:</strong> {{ $order->microvix_envio_erro }}
+            <strong>{{ $order->microvix_envio_estado === 'manual' ? 'Motivo:' : 'Último erro:' }}</strong> {{ $order->microvix_envio_erro }}
         </div>
     @endif
 
     <div class="filter-row" style="gap:10px;">
         <a href="{{ route('admin.microvix.index') }}" class="admin-btn admin-btn--ghost">← Painel Microvix</a>
-        <form action="{{ route('admin.microvix.pedido.reenviar', $order) }}" method="POST" style="display:inline;">
-            @csrf
-            <button type="submit" class="admin-btn">Reenviar ao ERP</button>
-        </form>
+        @if (\App\Services\Microvix\MicrovixEnvio::podeReenviar($order))
+            <form action="{{ route('admin.microvix.pedido.reenviar', $order) }}" method="POST" style="display:inline;">
+                @csrf
+                <button type="submit" class="admin-btn">Reenviar para a Linx</button>
+            </form>
+        @endif
     </div>
 
     <div class="data-card">

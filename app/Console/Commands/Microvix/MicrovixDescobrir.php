@@ -55,7 +55,7 @@ class MicrovixDescobrir extends MicrovixCommand
                 'id_tipo_encomenda'],
             ['B2CConsultaPlanos',
                 ['plano', 'nome_plano', 'qtde_parcelas', 'desativado', 'tipo_plano', 'usa_tef'],
-                'MICROVIX_PLANO_PAGAMENTO',
+                'MICROVIX_PLANO_PIX / MICROVIX_PLANO_CARTAO_{N}X',
                 fn (array $r) => strcasecmp((string) ($r['desativado'] ?? ''), 'N') === 0
                     && strcasecmp((string) ($r['tipo_plano'] ?? 'V'), 'V') === 0,
                 'plano'],

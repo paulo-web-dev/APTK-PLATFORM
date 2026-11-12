@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Order;
+use App\Services\Microvix\MicrovixEnvio;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
@@ -54,6 +55,7 @@ class PagamentoConfirmado extends Mailable
 
         return [
             'numero'     => $this->numero(),
+            'linx_manual' => app(MicrovixEnvio::class)->avisoManual($o),
             'cliente'    => $o->user->name ?? $o->ship_name ?? '—',
             'total'      => moeda_br($o->total),
             'forma'      => (PedidoNovo::FORMAS[$o->payment_method] ?? ($o->payment_method ?: '—'))

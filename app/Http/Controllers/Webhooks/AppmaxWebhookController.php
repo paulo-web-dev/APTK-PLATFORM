@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Webhooks;
 
 use App\Exceptions\AppmaxException;
 use App\Http\Controllers\Controller;
-use App\Jobs\EnviarPedidoMicrovix;
+use App\Services\Microvix\MicrovixEnvio;
 use App\Models\Order;
 use App\Services\AppmaxService;
 use App\Services\AvisoPedido;
@@ -12,7 +12,6 @@ use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Throwable;
 
 /**
  * Webhook da Appmax.
@@ -209,7 +208,7 @@ class AppmaxWebhookController extends Controller
                 'faltas'          => $faltas,
             ]);
 
-            $this->enfileiraEnvioErp($order, 'confirmar');
+            MicrovixEnvio::agendar($order);
             AvisoPedido::agendarPagamento($order);
 
             return true;
@@ -249,20 +248,6 @@ class AppmaxWebhookController extends Controller
         }
 
         return true;
-    }
-
-    /** Enfileirar o espelho no ERP jamais pode quebrar a resposta do webhook. */
-    protected function enfileiraEnvioErp(Order $order, string $acao): void
-    {
-        if (! EnviarPedidoMicrovix::integracaoLigada()) {
-            return; // integração desligada (leva 08): nem enfileira
-        }
-
-        try {
-            EnviarPedidoMicrovix::dispatch($order->id, $acao);
-        } catch (Throwable $e) {
-            report($e);
-        }
     }
 
     protected function markRefunded(Order $order, bool $isChargeback): bool

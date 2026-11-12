@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Conciliação ERP → catálogo do site, só para vínculos confirmados:
- *   saldo      → products.size_stock[volume]
+ *   saldo      → products.size_stock[volume] = max(0, saldo − vendido no
+ *                site e ainda não refletido na Linx; MicrovixEnvio)
  *   precovenda → products.size_prices[volume]
  *
  * NUNCA toca em nome, slug, descrição, imagem, destaque ou active — o ERP
@@ -27,7 +28,8 @@ class MicrovixReconciler
      *
      * @return array{
      *     mudancas: array<int, array{codigoproduto: int, product: Product, size: ?string,
-     *         campo: string, de: ?float, para: float, exibido_hoje: ?float, sem_size_prices: bool}>,
+     *         campo: string, de: ?float, para: float, exibido_hoje: ?float, sem_size_prices: bool,
+     *         saldo_erp: ?float, nao_refletido: int}>,
      *     avisos: string[],
      * }
      */
@@ -35,6 +37,10 @@ class MicrovixReconciler
     {
         $mudancas = [];
         $avisos = [];
+
+        // Regra 7: o que o site vendeu e a Linx ainda não viu sai do saldo
+        // (sem isso o sync "devolveria" ao site estoque já vendido).
+        $naoRefletidos = MicrovixEnvio::quantidadesNaoRefletidas();
 
         $vinculados = MicrovixProduct::whereNotNull('product_id')
             ->with('product')
@@ -57,7 +63,10 @@ class MicrovixReconciler
             if ($mp->saldo !== null) {
                 $de = isset($product->size_stock[$mp->size]) ? (float) $product->size_stock[$mp->size] : null;
                 // Estoque vendável é inteiro: fração do ERP arredonda para baixo.
-                $para = (float) floor((float) $mp->saldo);
+                // Saldo negativo na Linx (diagnóstico, fica no espelho) vira 0.
+                $saldoErp = (float) floor((float) $mp->saldo);
+                $noSite = $naoRefletidos[$mp->product_id.'|'.$mp->size] ?? 0;
+                $para = (float) max(0, $saldoErp - $noSite);
 
                 if ($de === null || $de !== $para) {
                     $mudancas[] = [
@@ -67,6 +76,8 @@ class MicrovixReconciler
                         'campo'           => 'saldo',
                         'de'              => $de,
                         'para'            => $para,
+                        'saldo_erp'       => $saldoErp,
+                        'nao_refletido'   => $noSite,
                         'exibido_hoje'    => null,
                         'sem_size_prices' => false,
                     ];
@@ -84,6 +95,8 @@ class MicrovixReconciler
                         'product'         => $product,
                         'size'            => $mp->size,
                         'campo'           => 'preco',
+                        'saldo_erp'       => null,
+                        'nao_refletido'   => 0,
                         'de'              => $de,
                         // O que o cliente vê HOJE nesse volume (cai no price
                         // base quando não há size_prices) — é esse valor que

@@ -66,7 +66,8 @@
         <div class="metric-grid" style="padding:16px;">
             <div class="metric-card"><div class="m-top"><span class="m-label">Parados em erro</span></div><div class="m-value" style="color:{{ $pedidos['erro'] > 0 ? 'var(--color-danger)' : 'inherit' }};">{{ $pedidos['erro'] }}</div></div>
             <div class="metric-card"><div class="m-top"><span class="m-label">Na fila / enviando</span></div><div class="m-value">{{ $pedidos['pendentes'] }}</div></div>
-            <div class="metric-card"><div class="m-top"><span class="m-label">Confirmados hoje</span></div><div class="m-value">{{ $pedidos['confirmadosHoje'] }}</div></div>
+            <div class="metric-card"><div class="m-top"><span class="m-label">Manuais (lançar na Linx)</span></div><div class="m-value" style="color:{{ $pedidos['manual'] > 0 ? 'var(--color-warning)' : 'inherit' }};">{{ $pedidos['manual'] }}</div></div>
+            <div class="metric-card"><div class="m-top"><span class="m-label">Enviados hoje</span></div><div class="m-value">{{ $pedidos['enviadosHoje'] }}</div></div>
         </div>
         <table class="data-table">
             <thead><tr><th>Pedido</th><th>Cliente</th><th>Pgto</th><th>Tent.</th><th>Última tentativa</th><th>Erro</th><th></th></tr></thead>
@@ -78,19 +79,19 @@
                         <td class="td-muted" data-label="Pgto">{{ $p->payment_method }}</td>
                         <td class="td-num" data-label="Tent.">{{ $p->microvix_envio_tentativas }}</td>
                         <td class="td-muted" data-label="Última">{{ data_br($p->microvix_envio_em) }}</td>
-                        <td data-label="Erro"><span class="status status--cancelado" title="{{ $p->microvix_envio_erro }}">{{ \Illuminate\Support\Str::limit($p->microvix_envio_erro, 70) }}</span></td>
+                        <td data-label="Erro">@if ($p->microvix_envio_estado === 'manual')<strong>Manual:</strong> @endif<span class="status status--cancelado" title="{{ $p->microvix_envio_erro }}">{{ \Illuminate\Support\Str::limit($p->microvix_envio_erro, 70) }}</span></td>
                         <td data-label="">
                             <span style="display:inline-flex; gap:8px;">
                                 <a href="{{ route('admin.microvix.pedido', $p) }}" class="admin-btn admin-btn--ghost" style="padding:5px 10px;">XML</a>
                                 <form action="{{ route('admin.microvix.pedido.reenviar', $p) }}" method="POST" style="display:inline;">
                                     @csrf
-                                    <button type="submit" class="admin-btn" style="padding:5px 10px;">Reenviar</button>
+                                    <button type="submit" class="admin-btn" style="padding:5px 10px;">Reenviar para a Linx</button>
                                 </form>
                             </span>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="td-muted" style="text-align:center; padding:24px;">Nenhum pedido parado em erro.</td></tr>
+                    <tr><td colspan="7" class="td-muted" style="text-align:center; padding:24px;">Nenhum pedido parado em erro ou manual.</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Order;
 use App\Services\CustomService;
+use App\Services\Microvix\MicrovixEnvio;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
@@ -116,6 +117,7 @@ class PedidoNovo extends Mailable
         return [
             'numero'   => $this->numero(),
             'destaque' => self::destaque($o),
+            'linx_manual' => app(MicrovixEnvio::class)->avisoManual($o),
             'data'     => data_br($o->created_at),
             'pago_em'  => $o->paid_at ? data_br($o->paid_at) : null,
             'cliente'  => [

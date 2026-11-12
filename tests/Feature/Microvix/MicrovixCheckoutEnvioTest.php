@@ -3,172 +3,155 @@
 namespace Tests\Feature\Microvix;
 
 use App\Jobs\EnviarPedidoMicrovix;
+use App\Mail\PagamentoConfirmado;
+use App\Mail\PedidoNovo;
 use App\Models\MicrovixProduct;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
-use App\Services\AppmaxService;
 use App\Services\CartService;
-use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 /**
- * Enfileiramento da reserva no placeFromCart (fluxo real do checkout) e a
- * corrida reserva × confirmação: Pix pago em segundos pode processar a
- * confirmação ANTES de a reserva rodar — o resultado tem que ser UM pedido
- * no ERP, confirmado.
+ * Checkout × Linx: nada vai no fechamento do pedido; cartão aprovado na
+ * hora agenda o envio (o webhook que chega depois acha o pedido já pago e
+ * não agendaria). Pedido pago que não pode ir sozinho avisa no e-mail.
  */
 class MicrovixCheckoutEnvioTest extends TestCase
 {
     use MontaPedidoParaEnvio;
     use RefreshDatabase;
 
-    /** Situação que a consulta à Appmax devolve (o webhook confirma antes de agir). */
-    protected string $situacaoAppmax = 'pago';
+    protected array $rotas = [];
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->partialMock(AppmaxService::class, fn ($m) => $m
-            ->shouldReceive('consultarSituacao')
-            ->andReturnUsing(fn () => $this->situacaoAppmax));
+        Mail::fake();
         $this->configuraMicrovixParaEnvio();
-        config(['appmax.webhook_token' => 'tok-teste']);
-    }
-
-    /** Produto vendável + vínculo no espelho, carrinho montado. */
-    protected function montaCarrinho(): Product
-    {
-        $product = Product::create([
-            'name'        => 'Negroni Clássico',
-            'slug'        => 'negroni-classico',
-            'sku'         => 'NEG-750',
-            'price'       => 189.90,
-            'sizes'       => ['750 ml'],
-            'size_prices' => ['750 ml' => 189.90],
-            'stock_qty'   => 30,
-            'active'      => true,
+        config([
+            'pedidos.notificar'             => ['equipe@aptk.test'],
+            'appmax.environment'            => 'sandbox',
+            'appmax.merchant_client_id'     => 'cid',
+            'appmax.merchant_client_secret' => 'csecret',
+            'appmax.webhook_token'          => 'tok-teste',
+            'appmax.max_installments'       => 3,
+            'appmax.min_installment_value'  => 30.00,
+            'appmax.http_retry_sleep_ms'    => 0,
         ]);
 
-        MicrovixProduct::create([
-            'codigoproduto' => 900123,
-            'product_id'    => $product->id,
-            'size'          => '750 ml',
-            'nome_produto'  => 'NEGRONI 750',
-            'ativo'         => true,
-        ]);
-
-        app(CartService::class)->add($product->id, 2, '750 ml');
-
-        return $product;
-    }
-
-    protected function cliente(): User
-    {
-        return User::create([
-            'name'     => 'Cliente',
-            'email'    => 'cliente@aptk.test',
-            'password' => bcrypt('secret123'),
-            'role'     => 'customer',
-        ]);
-    }
-
-    protected function dadosCheckout(string $metodo = 'cartao'): array
-    {
-        return [
-            'name'           => 'Cliente Teste',
-            'phone'          => '11 99999-0000',
-            'cpf'            => '111.444.777-35',
-            'zipcode'        => '01310-100',
-            'street'         => 'Avenida Paulista',
-            'number'         => '1000',
-            'neighborhood'   => 'Bela Vista',
-            'city'           => 'São Paulo',
-            'state'          => 'SP',
-            'payment_method' => $metodo,
+        $this->rotas = [
+            'POST auth'                     => fn () => Http::response(['access_token' => 'bearer-x', 'expires_in' => 3600]),
+            'POST /v1/customers'            => fn () => Http::response(['data' => ['customer' => ['id' => 10]]], 201),
+            'POST /v1/orders'               => fn () => Http::response(['data' => ['order' => ['id' => 20]]], 201),
+            'POST /v1/payments/credit-card' => fn () => Http::response(['data' => ['payment' => ['pay_reference' => 'ref-cc']]], 201),
+            'POST /v1/payments/pix'         => fn () => Http::response(['data' => ['payment' => [
+                'pay_reference' => 'ref-pix', 'pix_qrcode' => 'iVBORw0KGgo', 'pix_emv' => '000201010212',
+                'pix_expiration_date' => now()->addHour()->format('Y-m-d H:i:s'),
+            ]]]),
         ];
-    }
 
-    public function test_place_from_cart_enfileira_a_reserva_com_after_commit(): void
-    {
-        Queue::fake();
-        $this->montaCarrinho();
+        Http::fake(function (Request $req) {
+            $host = (string) parse_url($req->url(), PHP_URL_HOST);
+            if (str_contains($host, 'microvix')) {
+                return Http::response('linx não deveria ser chamada neste teste', 599);
+            }
+            $chave = $req->method().' '.(str_starts_with($host, 'auth.') ? 'auth' : parse_url($req->url(), PHP_URL_PATH));
+            $rota = $this->rotas[$chave] ?? null;
 
-        $order = app(OrderService::class)->placeFromCart($this->cliente(), $this->dadosCheckout());
-
-        Queue::assertPushed(EnviarPedidoMicrovix::class, function ($job) use ($order) {
-            return $job->orderId === $order->id
-                && $job->acao === 'reservar'
-                && $job->afterCommit === true       // cinto: sobrevive a transação externa
-                && $job->queue === 'microvix';
+            return $rota ? $rota($req) : Http::response(['error' => ['message' => "rota não mockada: {$chave}"]], 599);
         });
     }
 
-    public function test_falha_no_envio_ao_erp_nao_derruba_o_fechamento_do_pedido(): void
+    protected function carrinho(bool $vinculado = true): Product
     {
-        // Fila sync: o job roda DENTRO do placeFromCart. ERP fora do ar não
-        // pode impedir a venda — o try/catch do dispatch segura tudo.
-        Http::fake([
-            '*api/integracao*' => fn () => throw new ConnectionException('erp fora do ar'),
+        $p = Product::create([
+            'name' => 'Negroni Clássico', 'slug' => 'negroni-classico', 'sku' => 'NC750', 'price' => 210.00,
+            'sizes' => ['750 ml'], 'size_prices' => ['750 ml' => 210.00],
+            'size_stock' => ['750 ml' => 5], 'stock_qty' => 30, 'active' => true,
         ]);
+        if ($vinculado) {
+            MicrovixProduct::create(['codigoproduto' => 900123, 'product_id' => $p->id, 'size' => '750 ml']);
+        }
 
-        $product = $this->montaCarrinho();
-        $order   = app(OrderService::class)->placeFromCart($this->cliente(), $this->dadosCheckout());
+        $this->actingAs(User::create([
+            'name' => 'Cliente', 'email' => 'cliente@aptk.test', 'password' => bcrypt('secret123'),
+            'role' => 'customer', 'maior_idade_em' => now(),
+        ]));
+        app(CartService::class)->add($p->id, 1, '750 ml');
 
-        // Venda intacta: pedido criado, estoque debitado, carrinho limpo.
-        $this->assertSame('pending', $order->status);
-        $this->assertSame(28, (int) $product->fresh()->stock_qty);
-        $this->assertSame(0, app(CartService::class)->count());
-        // E a integração parou em erro, visível pro painel, sem tocar a venda.
-        $this->assertSame('erro', $order->fresh()->microvix_envio_estado);
+        return $p;
     }
 
-    public function test_confirmacao_processada_antes_da_reserva_resulta_em_um_pedido_soh_confirmado(): void
+    protected function dados(array $extra = []): array
+    {
+        return $extra + [
+            'name' => 'Cliente Teste', 'phone' => '11 99999-0000', 'cpf' => '191.000.000-00',
+            'zipcode' => '80000-000', 'street' => 'Rua XV', 'number' => '100', 'neighborhood' => 'Centro',
+            'city' => 'Curitiba', 'state' => 'PR', 'payment_method' => 'cartao', 'shipping_method' => 'sedex',
+            'appmax_token' => 'tok-cartao-123', 'card_name' => 'Cliente Teste', 'installments' => 2,
+        ];
+    }
+
+    public function test_cartao_aprovado_na_hora_agenda_o_envio(): void
     {
         Queue::fake();
-        $this->montaCarrinho();
+        $this->carrinho();
 
-        // 1) Pedido criado (reserva entra na fila) e pago quase junto
-        //    (confirmação entra na fila via webhook).
-        $order = app(OrderService::class)->placeFromCart($this->cliente(), $this->dadosCheckout());
-        $order->update(['appmax_order_id' => 555]);
+        $this->post('/checkout', $this->dados())->assertRedirect();
 
-        $this->postJson('/webhooks/appmax/tok-teste', ['event' => 'order_paid', 'data' => ['id' => 555]])
-            ->assertOk();
+        $order = Order::sole();
+        $this->assertTrue($order->isPaid());
+        Queue::assertPushed(EnviarPedidoMicrovix::class, fn ($j) => $j->orderId === $order->id);
+        Queue::assertPushed(EnviarPedidoMicrovix::class, 1);
+    }
 
-        $jobs = collect(Queue::pushedJobs()[EnviarPedidoMicrovix::class] ?? [])
-            ->pluck('job')
-            ->keyBy('acao');
-        $this->assertNotNull($reserva = $jobs->get('reservar'));
-        $this->assertNotNull($confirmacao = $jobs->get('confirmar'));
+    public function test_pix_aguardando_pagamento_nao_agenda_nada(): void
+    {
+        Queue::fake();
+        $this->carrinho();
 
-        Http::fake([
-            '*api/integracao*' => Http::response($this->fixtureMicrovix('pedidos-vazio')),
-            '*Importador.svc*' => Http::response($this->fixtureMicrovix('importa-sucesso')),
-        ]);
+        $this->post('/checkout', $this->dados(['payment_method' => 'pix']))->assertRedirect();
 
-        // 2) A CONFIRMAÇÃO roda primeiro: reserva nunca chegou ao ERP, então
-        //    ela cadastra o fluxo completo já efetivado (somente_reserva=0).
-        app()->call([$confirmacao, 'handle']);
+        $this->assertFalse(Order::sole()->isPaid());
+        Queue::assertNotPushed(EnviarPedidoMicrovix::class);
+    }
 
-        $corpos = $this->corposEnviados();
-        $this->assertCount(5, $corpos);
-        $this->assertStringContainsString('somente_reserva</linx1:Name><linx1:Value>0', $corpos[3]);
-        $this->assertSame('confirmado', $order->fresh()->microvix_envio_estado);
+    public function test_pedido_pago_sem_vinculo_avisa_no_email_para_lancar_manualmente(): void
+    {
+        // Fila sync: o job roda inline, cai em manual sem chamar a Linx.
+        $this->carrinho(vinculado: false);
 
-        // 3) A RESERVA atrasada roda depois: não regride nem duplica — zero
-        //    requisições novas. UM pedido no ERP, confirmado.
-        app()->call([$reserva, 'handle']);
+        $this->post('/checkout', $this->dados())->assertRedirect();
 
-        $this->assertCount(5, $this->corposEnviados());
-        $order->refresh();
-        $this->assertSame('confirmado', $order->microvix_envio_estado);
-        $this->assertFalse($order->microvix_reserved);
-        $this->assertSame(1, (int) $order->microvix_envio_tentativas);
+        $order = Order::sole();
+        $this->assertSame('manual', $order->microvix_envio_estado);
+        Mail::assertSent(PedidoNovo::class, fn (PedidoNovo $m) => str_contains($m->render(), 'Lançar manualmente na Linx: item sem vínculo com a Linx (Negroni Clássico 750 ml)'));
+    }
+
+    public function test_pagamento_confirmado_tambem_avisa_quando_e_manual(): void
+    {
+        $order = $this->pedidoParaEnvio('cartao', ['payment_details' => ['type' => 'cartao', 'installments' => 6]]);
+
+        $html = (new PagamentoConfirmado($order))->render();
+        $this->assertStringContainsString('Lançar manualmente na Linx: sem plano de pagamento na Linx para cartão 6x', $html);
+    }
+
+    public function test_pedido_que_vai_sozinho_nao_traz_aviso_de_lancamento(): void
+    {
+        $order = $this->pedidoParaEnvio('pix');
+
+        $this->assertStringNotContainsString('Lançar manualmente', (new PedidoNovo($order))->render());
+        $this->assertStringNotContainsString('Lançar manualmente', (new PagamentoConfirmado($order))->render());
+
+        // Anterior à integração também não: não é com a Linx.
+        $antigo = $this->pedidoParaEnvio('cartao', ['created_at' => now()->subDays(5), 'payment_details' => ['installments' => 6]]);
+        $this->assertStringNotContainsString('Lançar manualmente', (new PedidoNovo($antigo))->render());
     }
 }

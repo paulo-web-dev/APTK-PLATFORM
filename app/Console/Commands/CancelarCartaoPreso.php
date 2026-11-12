@@ -6,6 +6,7 @@ use App\Exceptions\AppmaxException;
 use App\Models\Order;
 use App\Services\AppmaxService;
 use App\Services\AvisoPedido;
+use App\Services\Microvix\MicrovixEnvio;
 use App\Services\OrderService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -99,6 +100,7 @@ class CancelarCartaoPreso extends Command
             ]);
 
             AvisoPedido::agendarPagamento($order);
+            MicrovixEnvio::agendar($order);
         }
 
         foreach ($cancelar as [$order, $plano]) {

@@ -24,8 +24,19 @@
         @endif
     </div>
 
+    @if ($microvixLigado)
+        <div class="filter-row">
+            <span class="td-muted" style="font-size:var(--text-xs); align-self:center;">Linx:</span>
+            <a href="{{ route('admin.orders.index', array_filter(['status' => $active, 'q' => $search])) }}" class="filter-pill {{ ! $microvix ? 'is-active' : '' }}">Todos</a>
+            @foreach (\App\Services\Microvix\MicrovixEnvio::SITUACOES as $chave => $rotulo)
+                <a href="{{ route('admin.orders.index', array_filter(['status' => $active, 'q' => $search, 'microvix' => $chave])) }}" class="filter-pill {{ $microvix === $chave ? 'is-active' : '' }}">{{ $rotulo }}</a>
+            @endforeach
+        </div>
+    @endif
+
     <form method="GET" action="{{ route('admin.orders.index') }}" style="margin-bottom:22px; display:flex; gap:10px; max-width:520px;">
         @if ($active)<input type="hidden" name="status" value="{{ $active }}">@endif
+        @if ($microvix)<input type="hidden" name="microvix" value="{{ $microvix }}">@endif
         <input type="text" name="q" value="{{ $search }}" placeholder="Buscar por CPF, número, nome ou e-mail…" class="admin-input" style="flex:1;">
         <button type="submit" class="admin-btn">Buscar</button>
         @if ($search !== '')

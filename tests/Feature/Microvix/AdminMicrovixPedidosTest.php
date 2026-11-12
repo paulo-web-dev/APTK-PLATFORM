@@ -55,7 +55,7 @@ class AdminMicrovixPedidosTest extends TestCase
     public function test_painel_mostra_contadores_e_lista_de_pedidos_em_erro(): void
     {
         $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'pendente']);
-        $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'confirmado', 'microvix_synced_at' => now()]);
+        $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'enviado', 'microvix_pedido_id' => 1, 'microvix_synced_at' => now()]);
         $comErro = $this->pedidoParaEnvio(atributos: [
             'microvix_envio_estado'     => 'erro',
             'microvix_envio_erro'       => 'não existe plano de pagamento APPMAX para pix',
@@ -68,12 +68,13 @@ class AdminMicrovixPedidosTest extends TestCase
             ->assertOk()
             ->assertSee('Pedidos → ERP')
             ->assertSee('Parados em erro')
-            ->assertSee('Confirmados hoje')
+            ->assertSee('Enviados hoje')
+            ->assertSee('Manuais (lançar na Linx)')
             // trava desligada fica estampada, não escondida
             ->assertSee('trava desligada — tudo simulado')
             ->assertSee("#{$comErro->id}")
             ->assertSee('não existe plano de pagamento APPMAX para pix')
-            ->assertSee('Reenviar');
+            ->assertSee('Reenviar para a Linx');
     }
 
     public function test_aviso_global_de_erro_aparece_fora_da_tela_do_microvix(): void
@@ -103,7 +104,7 @@ class AdminMicrovixPedidosTest extends TestCase
             ->assertSee('<span class="nav-badge">2</span>', false); // badge na sidebar
 
         // Sem erro, nada de alarme falso.
-        \App\Models\Order::query()->update(['microvix_envio_estado' => 'confirmado']);
+        \App\Models\Order::query()->update(['microvix_envio_estado' => 'enviado']);
         $this->actingAs($this->admin)
             ->get('/admin')
             ->assertOk()
@@ -111,28 +112,102 @@ class AdminMicrovixPedidosTest extends TestCase
             ->assertDontSee('<span class="nav-badge">', false);
     }
 
-    public function test_reenviar_zera_tentativas_e_despacha_a_acao_certa_pro_estado_do_pagamento(): void
+    public function test_reenviar_so_para_erro_ou_manual_pago_do_periodo_e_nunca_enviado(): void
     {
         Queue::fake();
 
-        $aguardando = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'microvix_envio_tentativas' => 4, 'microvix_envio_erro' => 'x']);
-        $pago       = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'payment_status' => 'paid', 'paid_at' => now()]);
-        $cancelado  = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'status' => 'cancelled']);
+        $erro   = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'microvix_envio_tentativas' => 4, 'microvix_envio_erro' => 'x']);
+        $manual = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'manual', 'microvix_envio_erro' => 'Lançar manualmente na Linx: y']);
+        $recusados = [
+            'já na Linx'         => $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'microvix_pedido_id' => 999]),
+            'anterior ao corte'  => $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'created_at' => now()->subDays(5)]),
+            'não pago'           => $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'payment_status' => 'pending', 'status' => 'pending', 'paid_at' => null]),
+            'já enviado (estado)' => $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'enviado', 'microvix_pedido_id' => 998]),
+        ];
 
-        foreach ([$aguardando, $pago, $cancelado] as $order) {
-            $this->actingAs($this->admin)
-                ->post("/admin/microvix/pedidos/{$order->id}/reenviar")
-                ->assertRedirect();
+        foreach ([$erro, $manual] as $order) {
+            $this->actingAs($this->admin)->post("/admin/microvix/pedidos/{$order->id}/reenviar")->assertSessionHas('status');
+        }
+        foreach ($recusados as $caso => $order) {
+            $this->actingAs($this->admin)->post("/admin/microvix/pedidos/{$order->id}/reenviar")->assertSessionHasErrors('reenviar');
         }
 
-        $aguardando->refresh();
-        $this->assertSame('pendente', $aguardando->microvix_envio_estado);
-        $this->assertSame(0, (int) $aguardando->microvix_envio_tentativas);
-        $this->assertNull($aguardando->microvix_envio_erro);
+        $erro->refresh();
+        $this->assertSame('pendente', $erro->microvix_envio_estado);
+        $this->assertSame(0, (int) $erro->microvix_envio_tentativas);
+        $this->assertNull($erro->microvix_envio_erro);
 
-        Queue::assertPushed(EnviarPedidoMicrovix::class, fn ($j) => $j->orderId === $aguardando->id && $j->acao === 'reservar');
-        Queue::assertPushed(EnviarPedidoMicrovix::class, fn ($j) => $j->orderId === $pago->id && $j->acao === 'confirmar');
-        Queue::assertPushed(EnviarPedidoMicrovix::class, fn ($j) => $j->orderId === $cancelado->id && $j->acao === 'cancelar');
+        Queue::assertPushed(EnviarPedidoMicrovix::class, 2);
+        Queue::assertPushed(EnviarPedidoMicrovix::class, fn ($j) => $j->orderId === $erro->id);
+        Queue::assertPushed(EnviarPedidoMicrovix::class, fn ($j) => $j->orderId === $manual->id);
+        $this->assertSame(999, (int) $recusados['já na Linx']->fresh()->microvix_pedido_id);
+    }
+
+    public function test_marcar_como_lancado_na_linx(): void
+    {
+        $manual = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'manual', 'microvix_envio_erro' => 'Lançar manualmente na Linx: custom']);
+        $enviado = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'enviado', 'microvix_pedido_id' => 5]);
+
+        $this->actingAs($this->admin)->post("/admin/microvix/pedidos/{$manual->id}/lancado")->assertSessionHas('status');
+        $this->actingAs($this->admin)->post("/admin/microvix/pedidos/{$enviado->id}/lancado")->assertSessionHasErrors('reenviar');
+
+        $this->assertSame('lancado_manual', $manual->fresh()->microvix_envio_estado);
+        $this->assertSame('enviado', $enviado->fresh()->microvix_envio_estado);
+
+        // Lançado à mão não volta pra fila.
+        $this->actingAs($this->admin)->post("/admin/microvix/pedidos/{$manual->id}/reenviar")->assertSessionHasErrors('reenviar');
+    }
+
+    public function test_detalhe_do_pedido_mostra_status_na_linx_numero_motivo_e_botoes(): void
+    {
+        config(['microvix.envia_pedido' => true]);
+
+        $manual = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'manual', 'microvix_envio_erro' => 'Lançar manualmente na Linx: garrafa personalizada (Negroni 375 ml)']);
+        $this->actingAs($this->admin)->get("/admin/pedidos/{$manual->id}")
+            ->assertOk()
+            ->assertSee('Linx Microvix')
+            ->assertSee('Manual')
+            ->assertSee('garrafa personalizada (Negroni 375 ml)')
+            ->assertSee('Reenviar para a Linx')
+            ->assertSee('Marcar como lançado na Linx');
+
+        $enviado = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'enviado', 'microvix_pedido_id' => 4321]);
+        $this->actingAs($this->admin)->get("/admin/pedidos/{$enviado->id}")
+            ->assertOk()
+            ->assertSee('Enviado')
+            ->assertSee('4321')
+            ->assertDontSee('Reenviar para a Linx');
+
+        $antigo = $this->pedidoParaEnvio(atributos: ['created_at' => now()->subDays(5)]);
+        $this->actingAs($this->admin)->get("/admin/pedidos/{$antigo->id}")
+            ->assertOk()
+            ->assertSee('Não aplicável (anterior à integração)')
+            ->assertDontSee('Reenviar para a Linx');
+
+        // Integração desligada: o card some.
+        config(['microvix.envia_pedido' => false]);
+        $this->actingAs($this->admin)->get("/admin/pedidos/{$manual->id}")->assertOk()->assertDontSee('Linx Microvix');
+    }
+
+    public function test_lista_de_pedidos_filtra_pela_situacao_na_linx(): void
+    {
+        config(['microvix.envia_pedido' => true]);
+
+        $enviado = $this->pedidoParaEnvio(atributos: ['ship_name' => 'Cliente Enviado', 'microvix_envio_estado' => 'enviado', 'microvix_pedido_id' => 11]);
+        $manual  = $this->pedidoParaEnvio(atributos: ['ship_name' => 'Cliente Manual', 'microvix_envio_estado' => 'manual']);
+        $erro    = $this->pedidoParaEnvio(atributos: ['ship_name' => 'Cliente Erro', 'microvix_envio_estado' => 'erro']);
+        $antigo  = $this->pedidoParaEnvio(atributos: ['ship_name' => 'Cliente Antigo', 'created_at' => now()->subDays(5)]);
+
+        $num = fn ($o) => 'APTK-'.str_pad((string) $o->id, 5, '0', STR_PAD_LEFT);
+
+        $this->actingAs($this->admin)->get('/admin/pedidos?microvix=manual')
+            ->assertOk()->assertSee($num($manual))->assertDontSee($num($enviado))->assertDontSee($num($erro));
+        $this->actingAs($this->admin)->get('/admin/pedidos?microvix=enviado')
+            ->assertOk()->assertSee($num($enviado))->assertDontSee($num($manual));
+        $this->actingAs($this->admin)->get('/admin/pedidos?microvix=erro')
+            ->assertOk()->assertSee($num($erro))->assertDontSee($num($manual));
+        $this->actingAs($this->admin)->get('/admin/pedidos?microvix=nao_aplicavel')
+            ->assertOk()->assertSee($num($antigo))->assertDontSee($num($erro));
     }
 
     public function test_reenvio_manual_respeita_a_trava_e_avisa_que_foi_simulado(): void
@@ -154,7 +229,7 @@ class AdminMicrovixPedidosTest extends TestCase
 
     public function test_trilha_do_pedido_mostra_xml_com_selo_simulado_e_real(): void
     {
-        $order = $this->pedidoParaEnvio();
+        $order = $this->pedidoParaEnvio(atributos: ['microvix_envio_estado' => 'erro', 'microvix_envio_erro' => 'x']);
 
         MicrovixLog::create([
             'order_id'  => $order->id,
@@ -182,6 +257,6 @@ class AdminMicrovixPedidosTest extends TestCase
             ->assertSee('XML que TERIA sido enviado')
             ->assertSee('envelope-simulado', false)
             ->assertSee('resposta-do-erp', false)
-            ->assertSee('Reenviar ao ERP');
+            ->assertSee('Reenviar para a Linx');
     }
 }

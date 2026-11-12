@@ -5,7 +5,9 @@ namespace Tests\Feature\Microvix;
 use App\Exceptions\MicrovixException;
 use App\Models\MicrovixProduct;
 use App\Models\MicrovixReconcileLog;
+use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use App\Services\Microvix\MicrovixReconciler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -190,5 +192,99 @@ class MicrovixReconcilerTest extends TestCase
         $reconciler->executar(); // segunda rodada: nada mudou, nada a logar
 
         $this->assertSame($antes, MicrovixReconcileLog::count());
+    }
+
+    /* -----------------------------------------------------------------
+     | Regra 7: saldo gravado = max(0, Linx − vendido e não refletido)
+     ------------------------------------------------------------------ */
+
+    /** Pedido com 1 item do Negroni no volume dado (created_at agora, dentro do corte). */
+    protected function pedidoDoSite(array $attrs, int $qtd, string $size = '375 ml'): Order
+    {
+        $user = User::firstOrCreate(['email' => 'estoque@aptk.test'], ['name' => 'Cliente', 'password' => bcrypt('secret123'), 'role' => 'customer']);
+        $order = new Order;
+        $order->forceFill($attrs + [
+            'user_id' => $user->id, 'status' => 'pending', 'payment_status' => 'pending',
+            'subtotal' => 0, 'discount' => 0, 'shipping_cost' => 0, 'total' => 0, 'payment_method' => 'pix',
+        ])->save();
+        $order->items()->create([
+            'product_id' => $this->negroni->id, 'product_name' => 'Negroni Clássico', 'size' => $size,
+            'qty' => $qtd, 'unit_price' => 1, 'total_price' => $qtd,
+        ]);
+
+        return $order;
+    }
+
+    protected function saldoGravado(): ?int
+    {
+        config(['microvix.fonte_da_verdade' => 'erp']);
+        (new MicrovixReconciler())->executar();
+        $v = $this->negroni->fresh()->size_stock['375 ml'] ?? null;
+
+        return $v === null ? null : (int) $v;
+    }
+
+    /** @dataProvider saldosDaLinx */
+    public function test_saldo_negativo_da_linx_grava_zero_e_o_espelho_guarda_o_real(float $saldo, int $esperado): void
+    {
+        config(['microvix.envio_a_partir_de' => now()->subDay()->format('d/m/Y')]);
+        MicrovixProduct::where('codigoproduto', 900001)->update(['saldo' => $saldo]);
+        $this->negroni->update(['size_stock' => ['375 ml' => 99]]);
+
+        $this->assertSame($esperado, $this->saldoGravado());
+        $this->assertSame($saldo, (float) MicrovixProduct::where('codigoproduto', 900001)->value('saldo'));
+    }
+
+    public static function saldosDaLinx(): array
+    {
+        return ['negativo' => [-167, 0], 'positivo' => [12, 12], 'zero' => [0, 0]];
+    }
+
+    public function test_desconta_pedidos_do_site_ainda_nao_refletidos_na_linx(): void
+    {
+        config(['microvix.envio_a_partir_de' => now()->subDay()->format('d/m/Y')]);
+        MicrovixProduct::where('codigoproduto', 900001)->update(['saldo' => 20]);
+
+        // Descontam:
+        $this->pedidoDoSite([], 2);                                                                  // pendente de pagamento
+        $this->pedidoDoSite(['status' => 'processing', 'payment_status' => 'paid'], 3);              // pago, na fila
+        $this->pedidoDoSite(['status' => 'processing', 'payment_status' => 'paid', 'microvix_envio_estado' => 'manual'], 1); // manual ainda não lançado
+        $this->pedidoDoSite(['status' => 'processing', 'payment_status' => 'paid', 'microvix_envio_estado' => 'erro'], 1);
+        // NÃO descontam:
+        $this->pedidoDoSite(['status' => 'processing', 'payment_status' => 'paid', 'microvix_pedido_id' => 50, 'microvix_envio_estado' => 'enviado'], 4); // já na Linx
+        $this->pedidoDoSite(['status' => 'processing', 'payment_status' => 'paid', 'microvix_envio_estado' => 'lancado_manual'], 4);
+        $this->pedidoDoSite(['status' => 'cancelled', 'payment_status' => 'expired'], 4);            // expirado
+        $this->pedidoDoSite(['status' => 'cancelled', 'payment_status' => 'failed'], 4);             // cancelado
+        $antigo = $this->pedidoDoSite(['status' => 'processing', 'payment_status' => 'paid'], 4);   // anterior à integração
+        $antigo->forceFill(['created_at' => now()->subDays(5)])->save();
+        $this->pedidoDoSite([], 4, '750 ml');                                                        // outro volume
+
+        $plano = (new MicrovixReconciler())->plano();
+        $m = collect($plano['mudancas'])->first(fn ($m) => $m['campo'] === 'saldo' && $m['size'] === '375 ml');
+        $this->assertSame(7, $m['nao_refletido']);
+        $this->assertSame(13.0, $m['para']);
+        $this->assertSame('13 (Linx: 20 − 7 no site)', \App\Console\Commands\Microvix\MicrovixConciliar::valorGravado($m));
+
+        $this->assertSame(13, $this->saldoGravado());
+    }
+
+    public function test_previa_do_conciliar_mostra_o_saldo_da_linx_quando_ajusta(): void
+    {
+        config(['microvix.envio_a_partir_de' => now()->subDay()->format('d/m/Y')]);
+        MicrovixProduct::where('codigoproduto', 900001)->update(['saldo' => -167]);
+        $this->negroni->update(['size_stock' => ['375 ml' => 5]]);
+
+        $this->artisan('microvix:conciliar', ['--dry-run' => true])
+            ->expectsOutputToContain('0 (Linx: -167)')
+            ->assertSuccessful();
+    }
+
+    public function test_sem_data_de_corte_nada_e_descontado(): void
+    {
+        config(['microvix.envio_a_partir_de' => null]);
+        MicrovixProduct::where('codigoproduto', 900001)->update(['saldo' => 20]);
+        $this->pedidoDoSite([], 5);
+
+        $this->assertSame(20, $this->saldoGravado());
     }
 }

@@ -161,6 +161,44 @@
                 </div>
             </div>
 
+            {{-- Linx Microvix: situação do envio do pedido (só com a integração ligada). --}}
+            @if (\App\Services\Microvix\MicrovixEnvio::ligado())
+                @php($linx = \App\Services\Microvix\MicrovixEnvio::situacao($order))
+                <div class="panel">
+                    <div class="panel-head">Linx Microvix</div>
+                    <div class="panel-body">
+                        <div class="kv"><span class="k">Status</span><span class="v" style="{{ in_array($linx['chave'], ['erro', 'manual'], true) ? 'color:var(--color-danger);' : '' }}">{{ $linx['rotulo'] }}</span></div>
+                        @if ($order->microvix_pedido_id)
+                            <div class="kv"><span class="k">Pedido na Linx</span><span class="v">{{ $order->microvix_pedido_id }}</span></div>
+                        @endif
+                        @if ($order->microvix_envio_em)
+                            <div class="kv"><span class="k">Última tentativa</span><span class="v">{{ data_br($order->microvix_envio_em) }}</span></div>
+                        @endif
+                        @if (in_array($linx['chave'], ['erro', 'manual'], true) && $order->microvix_envio_erro)
+                            <div class="alert-ok" style="color:var(--color-danger); border-left-color:var(--color-danger); margin:12px 0; overflow-wrap:anywhere;">
+                                <strong>Motivo:</strong> {{ $order->microvix_envio_erro }}
+                            </div>
+                        @endif
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+                            @if (\App\Services\Microvix\MicrovixEnvio::podeReenviar($order))
+                                <form action="{{ route('admin.microvix.pedido.reenviar', $order) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="admin-btn" style="width:100%;">Reenviar para a Linx</button>
+                                </form>
+                            @endif
+                            @if (in_array($linx['chave'], ['erro', 'manual'], true))
+                                <form action="{{ route('admin.microvix.pedido.lancado', $order) }}" method="POST"
+                                      onsubmit="return confirm('Confirma que este pedido já foi lançado à mão na Linx?');">
+                                    @csrf
+                                    <button type="submit" class="admin-btn admin-btn--ghost" style="width:100%;">Marcar como lançado na Linx</button>
+                                </form>
+                            @endif
+                            <a href="{{ route('admin.microvix.pedido', $order) }}" class="admin-btn admin-btn--ghost" style="width:100%; text-align:center;">Trilha de XML</a>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- Aviso de pedido por e-mail para a equipe (leva 16). --}}
             <div class="panel">
                 <div class="panel-head">Aviso por e-mail</div>

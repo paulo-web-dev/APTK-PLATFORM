@@ -47,12 +47,12 @@ class MicrovixConciliar extends Command
         $this->info('== Estoque ('.count($saldos).' alteração(ões))');
         if ($saldos !== []) {
             $this->table(
-                ['Produto', 'Volume', 'Hoje', 'ERP'],
+                ['Produto', 'Volume', 'Hoje', 'Grava'],
                 array_map(fn ($m) => [
                     $m['product']->name,
                     $m['size'] ?? '—',
                     $m['de'] === null ? '(sem valor)' : (int) $m['de'],
-                    (int) $m['para'],
+                    self::valorGravado($m),
                 ], $saldos),
             );
         }
@@ -77,5 +77,22 @@ class MicrovixConciliar extends Command
         $this->info(count($plano['mudancas']).' alteração(ões) gravada(s) e registrada(s) em microvix_reconcile_log.');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * "10 (Linx: 12 − 2 no site)" quando há venda não refletida;
+     * "0 (Linx: -167)" quando o saldo negativo da Linx foi zerado.
+     */
+    public static function valorGravado(array $m): string
+    {
+        $para = (int) $m['para'];
+        $erp = (int) ($m['saldo_erp'] ?? $para);
+        $noSite = (int) ($m['nao_refletido'] ?? 0);
+
+        if ($noSite > 0) {
+            return "{$para} (Linx: {$erp} − {$noSite} no site)";
+        }
+
+        return $erp !== $para ? "{$para} (Linx: {$erp})" : (string) $para;
     }
 }

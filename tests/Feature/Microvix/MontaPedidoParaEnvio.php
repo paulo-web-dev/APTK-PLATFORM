@@ -26,10 +26,16 @@ trait MontaPedidoParaEnvio
             'microvix.empresa'           => '4',
             'microvix.cod_vendedor'      => '15',
             'microvix.id_deposito'       => '1',
-            'microvix.id_tabela_preco'   => '1',
-            'microvix.id_status_inicial' => '3',
+            'microvix.id_tabela_preco'   => '7',
+            'microvix.id_status_inicial' => '5',
             'microvix.id_tipo_encomenda' => '99',
-            'microvix.planos_pagamento'  => ['cartao' => 279, 'pix' => null, 'boleto' => null],
+            'microvix.planos_pagamento'  => [
+                'pix'    => 286,
+                'boleto' => null,
+                'cartao' => [1 => 279, 2 => 280, 3 => 281],
+            ],
+            // Corte ontem: pedido criado no teste está no período.
+            'microvix.envio_a_partir_de' => now()->subDay()->format('d/m/Y'),
             'microvix.envia_pedido'      => $enviaLigado,
         ]);
     }
@@ -48,6 +54,7 @@ trait MontaPedidoParaEnvio
         );
     }
 
+    /** Pedido PAGO por padrão (só pago vai para a Linx); cartão em 1x. */
     protected function pedidoParaEnvio(string $metodo = 'cartao', array $atributos = []): Order
     {
         $user = User::create([
@@ -73,15 +80,19 @@ trait MontaPedidoParaEnvio
             'ativo'        => true,
         ]);
 
-        $order = Order::create(array_merge([
+        // forceFill: created_at e microvix_* não são fillable e os testes precisam deles.
+        $order = new Order;
+        $order->forceFill(array_merge([
             'user_id'           => $user->id,
-            'status'            => 'pending',
+            'status'            => 'processing',
             'subtotal'          => 379.80,
             'discount'          => 0,
             'shipping_cost'     => 10.00,
             'total'             => 389.80,
             'payment_method'    => $metodo,
-            'payment_status'    => 'pending',
+            'payment_status'    => 'paid',
+            'paid_at'           => now(),
+            'payment_details'   => $metodo === 'cartao' ? ['type' => 'cartao', 'installments' => 1] : ['type' => $metodo],
             'ship_name'         => 'Cliente ERP',
             'ship_cpf'          => '111.444.777-35',
             'ship_phone'        => '11 99999-0000',
@@ -91,7 +102,7 @@ trait MontaPedidoParaEnvio
             'ship_neighborhood' => 'Bela Vista',
             'ship_city'         => 'São Paulo',
             'ship_state'        => 'SP',
-        ], $atributos));
+        ], $atributos))->save();
 
         $order->items()->create([
             'product_id'   => $product->id,

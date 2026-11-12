@@ -65,7 +65,7 @@ valor identificado, só não estão preenchidos no `.env`:
 | `MICROVIX_EMPRESA` | `4` (APTK SPIRITS) | B2CConsultaEmpresas |
 | `MICROVIX_COD_VENDEDOR` | `15` — vendedor "SITE", tipo V, ativo | B2CConsultaVendedores (103 registros) |
 | `MICROVIX_ID_DEPOSITO` | `1` — "Estoque", disponível S; o `2` é "Devolvidos (com defeito)" | B2CConsultaProdutosDepositos |
-| `MICROVIX_ID_STATUS_INICIAL` | `3` AGUARDANDO PAGAMENTO (ou `1` EM ABERTO); existem `0` SEM STATUS e `2` ENCERRADO | B2CConsultaStatus |
+| `MICROVIX_ID_STATUS_INICIAL` | `5` Aprovado (o pedido só vai depois de pago). A lista de 4 status anotada aqui em 21/08 (0, 1, 2, 3) estava incompleta: a consulta de produção de 12/11/2026 devolveu 11 (0 a 10, com `4` Pendente e `5` Aprovado) | B2CConsultaStatus |
 | `MICROVIX_ID_TIPO_ENCOMENDA` | `99` Transportadora, `41106` PAC, `40010` Sedex, `2500` Retirada na Loja (10 tipos) | B2CConsultaTipoEncomenda |
 | `MICROVIX_PLANO_PAGAMENTO` | ver 1.6 — incompleto | B2CConsultaPlanos |
 | `MICROVIX_ID_TABELA_PRECO` | **não existe** (1.2) | B2CConsultaProdutosTabelas |
@@ -1127,6 +1127,58 @@ no número da equipe de criação (5511941766319, const removida do
 **Deploy:** `config:cache` (já faz parte).
 
 ---
+
+## 24. Envio de pedidos à Linx — só pedido pago (12/11/2026)
+
+Pipeline da fase 2 revisto para ligar em produção (`MICROVIX_ENVIA_PEDIDO=true`).
+Regras no CLAUDE.md (seção Microvix, "Fase 2").
+
+### 24.1 O que mudou
+
+- Sem reserva no checkout e sem `B2CCancelaPedido`: só pedido pago vai,
+  direto com `somente_reserva=0`. Ações `reservar`/`cancelar` saíram do job.
+- Cartão aprovado na hora no checkout agora agenda o envio (antes o webhook
+  achava o pedido já pago e não enfileirava nada: cartão nunca ia).
+  `pedidos:cancelar-cartao-preso` também agenda quando aprova.
+- Manual × erro: problema do pedido (vínculo, custom, plano, CPF, endereço) =
+  manual, sem chamada; problema de configuração do `.env` ou recusa da Linx =
+  erro.
+- Planos por meio e parcela no `.env`; `MICROVIX_PLANO_PAGAMENTO` (plano único)
+  saiu.
+- CPF só do snapshot `ship_cpf` (não cai mais pro `users.cpf`).
+- Conciliar desconta o que o site vendeu e a Linx não viu, e zera saldo
+  negativo (o espelho guarda o valor real).
+
+### 24.2 Checklist da virada (produção)
+
+```
+MICROVIX_ID_TABELA_PRECO=7
+MICROVIX_ID_STATUS_INICIAL=5
+MICROVIX_ID_TIPO_ENCOMENDA=99
+MICROVIX_EMPRESA=4
+MICROVIX_COD_VENDEDOR=15
+MICROVIX_ID_DEPOSITO=1
+MICROVIX_PLANO_PIX=286
+MICROVIX_PLANO_BOLETO=
+MICROVIX_PLANO_CARTAO_1X=279
+MICROVIX_PLANO_CARTAO_2X=280
+MICROVIX_PLANO_CARTAO_3X=281
+MICROVIX_ENVIO_A_PARTIR_DE=dd/mm/aaaa   # dia da virada
+MICROVIX_ENVIA_PEDIDO=true
+```
+
+Depois: `php artisan config:cache`. Primeiro pedido real: abrir a trilha em
+`/admin/microvix/pedidos/{id}` e conferir a resposta do Importador (o parse é
+palpite; ajustar `avaliaRespostaImporta`/`pareceTemporario` se o formato
+for outro).
+
+### 24.3 Pendências
+
+- Estorno/chargeback de pedido já enviado não cancela na Linx (leva própria).
+- `tipo_frete` segue fixo em `MICROVIX_ID_TIPO_ENCOMENDA` (99), sem mapear
+  PAC/SEDEX (§8.4).
+- `microvix:sync` e `microvix:conciliar` não estão no scheduler: a regra de
+  estoque só vale quando a conciliação roda.
 
 ## 7. Histórico — varredura de 2026-08-20 (mantida como referência)
 

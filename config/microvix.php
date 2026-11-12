@@ -46,7 +46,6 @@ return [
     'id_tabela_preco'    => env('MICROVIX_ID_TABELA_PRECO'),
     'id_status_inicial'  => env('MICROVIX_ID_STATUS_INICIAL'),
     'id_tipo_encomenda'  => env('MICROVIX_ID_TIPO_ENCOMENDA'),
-    'plano_pagamento'    => env('MICROVIX_PLANO_PAGAMENTO'),
 
     'timeout' => (int) env('MICROVIX_TIMEOUT', 60),
 
@@ -64,21 +63,33 @@ return [
     | Fase 2 — envio de pedido ao ERP (B2CCadastraPedido e afins).
     | Com a trava desligada (padrão), o MicrovixPedidoSender monta o payload
     | e grava o envelope em microvix_logs (simulated=true), mas NÃO chama o
-    | webservice. A trava vive no service, não no job — vale também pro
+    | webservice. Ligada, o pedido só vai depois de PAGO (somente_reserva=0,
+    | sem reserva no checkout) e só se criado a partir de envio_a_partir_de. A trava vive no service, não no job — vale também pro
     | reenvio manual do painel. Não existe portal de teste (ESTADO-ATUAL
     | §1.7): ligar isso escreve no ERP de verdade.
     */
     'envia_pedido' => (bool) env('MICROVIX_ENVIA_PEDIDO', false),
 
     /*
-    | Método de pagamento do site → plano_pagamento do ERP (B2CConsultaPlanos).
-    | null = plano ainda não cadastrado no ERP (pedido à gestão): pedido com
-    | esse método falha com mensagem clara e fica reenviável — nunca é
-    | enviado com plano vazio. Existem só 279/280/281 (APPMAX CRÉDITO 1X/2X/3X).
+    | Data de corte do envio (dd/mm/aaaa, OBRIGATÓRIA para enviar): pedido
+    | criado antes dela nunca vai para a Linx (nem job, nem reenvio), não
+    | desconta estoque na conciliação e aparece no admin como "não aplicável
+    | (anterior à integração)". Vazia ou inválida = nada é enviado.
+    */
+    'envio_a_partir_de' => env('MICROVIX_ENVIO_A_PARTIR_DE'),
+
+    /*
+    | Meio de pagamento (e parcelas, no cartão) → plano_pagamento da Linx
+    | (B2CConsultaPlanos). Vazio = sem plano: o pedido não é enviado e fica
+    | "manual" ("lançar manualmente na Linx"). Nunca há plano único padrão.
     */
     'planos_pagamento' => [
-        'cartao' => 279,
-        'pix'    => null,
-        'boleto' => null,
+        'pix'    => env('MICROVIX_PLANO_PIX', 286),
+        'boleto' => env('MICROVIX_PLANO_BOLETO'),
+        'cartao' => [
+            1 => env('MICROVIX_PLANO_CARTAO_1X', 279),
+            2 => env('MICROVIX_PLANO_CARTAO_2X', 280),
+            3 => env('MICROVIX_PLANO_CARTAO_3X', 281),
+        ],
     ],
 ];

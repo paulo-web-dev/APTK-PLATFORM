@@ -7,6 +7,7 @@ use App\Exceptions\AppmaxException;
 use App\Models\Order;
 use App\Services\AppmaxService;
 use App\Services\AvisoPedido;
+use App\Services\Microvix\MicrovixEnvio;
 use App\Services\ReconciliacaoPagamento;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,15 @@ class OrderController extends Controller
             $query->whereIn('id', ReconciliacaoPagamento::aConferir()->select('id'));
         }
 
+        // Filtro por situação na Linx (só com a integração ligada).
+        $microvix = MicrovixEnvio::ligado() ? $request->query('microvix') : null;
+        if (! array_key_exists((string) $microvix, MicrovixEnvio::SITUACOES)) {
+            $microvix = null;
+        }
+        if ($microvix !== null) {
+            MicrovixEnvio::filtrar($query, $microvix);
+        }
+
         // Busca: CPF (com ou sem pontuação), número (APTK-00012 ou 12), nome ou e-mail.
         $search = trim((string) $request->query('q'));
         if ($search !== '') {
@@ -63,6 +73,8 @@ class OrderController extends Controller
             'active'    => $active,
             'search'    => $search,
             'aConferir' => ReconciliacaoPagamento::aConferir()->count(),
+            'microvix'  => $microvix,
+            'microvixLigado' => MicrovixEnvio::ligado(),
         ]);
     }
 

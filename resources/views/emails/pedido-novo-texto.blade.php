@@ -1,6 +1,10 @@
 Novo pedido {!! $numero !!}
 PAGAMENTO: {!! mb_strtoupper($destaque['rotulo']) !!}
 {!! $data !!} (horário de Brasília)
+@if ($linx_manual)
+
+>>> {!! $linx_manual !!}
+@endif
 
 CLIENTE
 {!! $cliente['nome'] !!}

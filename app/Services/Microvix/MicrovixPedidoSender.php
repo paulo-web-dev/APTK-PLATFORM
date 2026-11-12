@@ -2,30 +2,31 @@
 
 namespace App\Services\Microvix;
 
+use App\Exceptions\MicrovixException;
 use App\Exceptions\MicrovixNegocioException;
-use App\Models\MicrovixProduct;
 use App\Models\Order;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * Fase 2 — envio de pedido ao ERP, sequência da doc 5.1:
+ * Fase 2 — envio de pedido PAGO à Linx, sequência da doc 5.1, direto com
+ * somente_reserva=0 (sem reserva no checkout):
  *
  *   B2CConsultaPedidos (já integrado?)
  *     → B2CCadastraClientes (atualizar_por_cpf=1)
  *     → B2CCadastraClientesEnderecosEntrega
- *     → B2CCadastraPedido (somente_reserva=1 na reserva, 0 na efetivação)
+ *     → B2CCadastraPedido (somente_reserva=0)
  *     → B2CCadastraPedidoItens
  *
- * A TRAVA (config microvix.envia_pedido, default false) vive AQUI, não no
- * job: com ela desligada os envelopes são montados e gravados em
- * microvix_logs (simulated=true), mas nenhuma chamada sai — vale também
- * pro reenvio manual do painel. Não existe portal de teste: ligado, isso
- * escreve no ERP de produção.
+ * As regras de elegibilidade (pago, data de corte, manual) vivem no
+ * MicrovixEnvio; aqui é a execução. A TRAVA (config microvix.envia_pedido)
+ * também vive aqui: desligada, os envelopes vão para microvix_logs
+ * (simulated=true) e nada sai — vale também pro reenvio do painel.
  *
- * Idempotência: id_pedido = orders.id (PK no ERP, doc 6.2 obs. 7) e toda
- * ação começa pelo B2CConsultaPedidos — retry pós-timeout do cadastro não
- * duplica reserva (o client segue NUNCA retentando importa por conta
- * própria; quem decide repetir é o job, e sempre re-passando por aqui).
+ * Idempotência: pedido com microvix_pedido_id nunca é reenviado. id_pedido
+ * = orders.id e id_pedido_item = order_items.id são chave primária na Linx;
+ * se o pedido já existe lá sem marca local (timeout depois de chegar), o
+ * cadastro do pedido e dos itens é reenviado (atualiza, não duplica) e só
+ * então o pedido é marcado.
  *
  * Falha aqui NUNCA toca pedido, estoque ou pagamento do site — só as
  * colunas microvix_* de orders.
@@ -35,91 +36,63 @@ class MicrovixPedidoSender
     public function __construct(
         protected MicrovixClient $client,
         protected MicrovixRelogio $relogio,
+        protected MicrovixEnvio $regras,
     ) {
     }
 
-    /* -----------------------------------------------------------------
-     | Ações (retornam o estado final do envio: reservado | confirmado |
-     | cancelado | pendente quando a trava está desligada)
-     ------------------------------------------------------------------ */
-
-    /** Pedido criado no site → reserva de estoque no ERP. */
-    public function reservar(Order $order): string
+    /**
+     * Envia o pedido. Retorna: enviado | manual | pendente (trava desligada,
+     * só simulou) | nao_aplicavel (fora do período, não pago, cancelado ou
+     * lançado à mão — nada é tocado).
+     */
+    public function enviar(Order $order): string
     {
-        return $this->cadastraPedidoCompleto($order, somenteReserva: 1);
-    }
+        $order->loadMissing(['items', 'user']);
 
-    /** Pagamento confirmado (webhook Appmax) → efetiva a reserva. */
-    public function confirmar(Order $order): string
-    {
-        $this->validaPreRequisitos($order);
-
-        if (! $this->enviaLigado()) {
-            $this->client->simulaImporta('B2CCadastraPedido', [$this->payloadPedido($order, 0)], $order->id);
-
-            return 'pendente';
+        if ($order->microvix_pedido_id !== null) {
+            return 'enviado';
+        }
+        if (! MicrovixEnvio::noPeriodo($order) || ! $order->isPaid() || $order->status === 'cancelled'
+            || $order->microvix_envio_estado === 'lancado_manual') {
+            return 'nao_aplicavel';
         }
 
-        if ($this->consultaPedidoNoErp($order) === null) {
-            // A reserva nunca chegou ao ERP (falhou e o pagamento veio antes
-            // do retry): cadastra o pedido inteiro já efetivado.
-            return $this->cadastraPedidoCompleto($order, somenteReserva: 0, jaConsultado: true);
+        $this->validaConfiguracao($order);
+
+        if (($motivo = $this->regras->motivoManual($order)) !== null) {
+            $order->forceFill([
+                'microvix_envio_estado' => 'manual',
+                'microvix_envio_erro'   => mb_substr("Lançar manualmente na Linx: {$motivo}", 0, 2000),
+                'microvix_envio_em'     => now(),
+            ])->save();
+
+            return 'manual';
         }
-
-        $this->importa($order, 'B2CCadastraPedido', [$this->payloadPedido($order, 0)]);
-
-        return $this->marcaEnvio($order, 'confirmado');
-    }
-
-    /** Pix/boleto expirado ou cartão recusado → cancela no ERP (libera a reserva). */
-    public function cancelar(Order $order): string
-    {
-        if (! $this->enviaLigado()) {
-            $this->client->simulaImporta('B2CCancelaPedido', [$this->payloadCancela($order)], $order->id);
-
-            return 'pendente';
-        }
-
-        if ($this->consultaPedidoNoErp($order) === null) {
-            // Nada chegou ao ERP — não há o que cancelar lá.
-            return $this->marcaEnvio($order, 'cancelado');
-        }
-
-        $this->importa($order, 'B2CCancelaPedido', [$this->payloadCancela($order)]);
-
-        return $this->marcaEnvio($order, 'cancelado');
-    }
-
-    /* -----------------------------------------------------------------
-     | Fluxo completo (doc 5.1)
-     ------------------------------------------------------------------ */
-
-    protected function cadastraPedidoCompleto(Order $order, int $somenteReserva, bool $jaConsultado = false): string
-    {
-        $this->validaPreRequisitos($order);
 
         if (! $this->enviaLigado()) {
             $this->client->simulaConsulta('B2CConsultaPedidos', ['id_pedido' => $order->id, 'timestamp' => 0], $order->id);
             $this->client->simulaImporta('B2CCadastraClientes', [$this->payloadCliente($order)], $order->id);
             $this->client->simulaImporta('B2CCadastraClientesEnderecosEntrega', [$this->payloadEndereco($order)], $order->id);
-            $this->client->simulaImporta('B2CCadastraPedido', [$this->payloadPedido($order, $somenteReserva)], $order->id);
+            $this->client->simulaImporta('B2CCadastraPedido', [$this->payloadPedido($order)], $order->id);
             $this->client->simulaImporta('B2CCadastraPedidoItens', $this->payloadItens($order), $order->id);
 
             return 'pendente';
         }
 
-        if (! $jaConsultado && ($existente = $this->consultaPedidoNoErp($order)) !== null) {
-            // Passo 2 do fluxograma: já integrado — não reenvia, só espelha.
-            return $this->marcaEnvio($order, 'reservado', $existente);
-        }
+        $existente = $this->consultaPedidoNoErp($order);
 
-        $this->importa($order, 'B2CCadastraClientes', [$this->payloadCliente($order)]);
-        $this->importa($order, 'B2CCadastraClientesEnderecosEntrega', [$this->payloadEndereco($order)]);
-        $this->importa($order, 'B2CCadastraPedido', [$this->payloadPedido($order, $somenteReserva)]);
+        if ($existente === null) {
+            $this->importa($order, 'B2CCadastraClientes', [$this->payloadCliente($order)]);
+            $this->importa($order, 'B2CCadastraClientesEnderecosEntrega', [$this->payloadEndereco($order)]);
+        }
+        // Já existe (tentativa anterior chegou e a resposta se perdeu): os
+        // itens podem ter ficado de fora — reenvia pedido + itens, que são
+        // chave primária na Linx (atualiza, não duplica).
+        $this->importa($order, 'B2CCadastraPedido', [$this->payloadPedido($order)]);
         // Todos os itens em UMA requisição (um <Registros> por item).
         $this->importa($order, 'B2CCadastraPedidoItens', $this->payloadItens($order));
 
-        return $this->marcaEnvio($order, $somenteReserva === 1 ? 'reservado' : 'confirmado');
+        return $this->marcaEnviado($order, $existente);
     }
 
     /** @return array<string, string>|null registro do pedido no ERP, ou null se não integrado */
@@ -134,60 +107,19 @@ class MicrovixPedidoSender
         return ($rows === null || $rows === []) ? null : $rows[0];
     }
 
-    /* -----------------------------------------------------------------
-     | Pré-requisitos (erro de negócio: falha na hora, sem retry)
-     ------------------------------------------------------------------ */
-
-    protected function validaPreRequisitos(Order $order): void
+    /**
+     * Configuração do portal faltando é erro (não manual): vale pra todo
+     * pedido e se resolve no .env, não no pedido.
+     */
+    protected function validaConfiguracao(Order $order): void
     {
-        $planos = config('microvix.planos_pagamento', []);
-
-        if (! array_key_exists($order->payment_method, $planos)) {
-            throw new MicrovixNegocioException(
-                "Pedido #{$order->id}: método de pagamento '{$order->payment_method}' sem entrada em config/microvix.php (planos_pagamento)."
-            );
-        }
-
-        if ($planos[$order->payment_method] === null) {
-            throw new MicrovixNegocioException(
-                "Pedido #{$order->id}: não existe plano de pagamento APPMAX para '{$order->payment_method}' no ERP "
-                    .'(B2CConsultaPlanos só tem 279/280/281, cartão até 3x). Pedir o cadastro do plano à gestão '
-                    .'e preencher config/microvix.php antes de reenviar.'
-            );
-        }
-
-        if (blank(config('microvix.id_tabela_preco'))) {
-            throw new MicrovixNegocioException(
-                "Pedido #{$order->id}: MICROVIX_ID_TABELA_PRECO vazio. Sem tabela de preço cadastrada no portal o "
-                    .'pedido não fatura (não é campo do payload — é pré-requisito de configuração do ERP). '
-                    .'Pedir à gestão a criação da tabela (B2CConsultaProdutosTabelas hoje volta vazio).'
-            );
-        }
-
-        if (blank(config('microvix.id_status_inicial'))) {
-            throw new MicrovixNegocioException(
-                "Pedido #{$order->id}: MICROVIX_ID_STATUS_INICIAL vazio — decisão da gestão pendente (3 AGUARDANDO PAGAMENTO ou 1 EM ABERTO)."
-            );
-        }
-
-        if (blank(config('microvix.id_tipo_encomenda'))) {
-            throw new MicrovixNegocioException(
-                "Pedido #{$order->id}: MICROVIX_ID_TIPO_ENCOMENDA vazio — decisão da gestão pendente (99 Transportadora, 41106 PAC, 40010 Sedex...)."
-            );
-        }
-
-        if ($this->cpf($order) === '') {
-            throw new MicrovixNegocioException(
-                "Pedido #{$order->id}: sem CPF (ship_cpf do pedido e cpf do usuário vazios) — doc_cliente é obrigatório em B2CCadastraClientes."
-            );
-        }
-
-        foreach ($order->items as $item) {
-            if ($this->codigoProdutoErp($item->product_id, $item->size) === null) {
-                throw new MicrovixNegocioException(
-                    "Pedido #{$order->id}: item #{$item->id} ({$item->product_name} {$item->size}) sem vínculo com o espelho "
-                        .'Microvix — vincular produto+volume em /admin/microvix/produtos antes de reenviar.'
-                );
+        foreach ([
+            'id_tabela_preco'   => 'MICROVIX_ID_TABELA_PRECO',
+            'id_status_inicial' => 'MICROVIX_ID_STATUS_INICIAL',
+            'id_tipo_encomenda' => 'MICROVIX_ID_TIPO_ENCOMENDA',
+        ] as $chave => $env) {
+            if (blank(config("microvix.{$chave}"))) {
+                throw new MicrovixNegocioException("Pedido #{$order->id}: {$env} vazio no .env — preencher antes de reenviar.");
             }
         }
     }
@@ -241,7 +173,7 @@ class MicrovixPedidoSender
         ];
     }
 
-    protected function payloadPedido(Order $order, int $somenteReserva): array
+    protected function payloadPedido(Order $order): array
     {
         $payload = [
             'id_pedido'        => $order->id, // PK no ERP → idempotência (reenvio = update, não duplica)
@@ -251,8 +183,8 @@ class MicrovixPedidoSender
             'id_status'        => (int) config('microvix.id_status_inicial'),
             'valor_frete'      => $this->dinheiro($order->shipping_cost),
             'ativo'            => 1,
-            'plano_pagamento'  => (int) config('microvix.planos_pagamento')[$order->payment_method],
-            'somente_reserva'  => $somenteReserva,
+            'plano_pagamento'  => $this->regras->planoPagamento($order),
+            'somente_reserva'  => 0, // só pedido pago vai, já efetivado
             'desconto'         => $this->dinheiro($order->discount),
             'id_endereco_entrega' => $order->id,
             'ecommerce_origem' => mb_substr((string) config('app.url'), 0, 200),
@@ -279,15 +211,10 @@ class MicrovixPedidoSender
         return $order->items->map(fn ($item) => [
             'id_pedido_item' => $item->id,
             'id_pedido'      => $order->id,
-            'codigoproduto'  => $this->codigoProdutoErp($item->product_id, $item->size),
+            'codigoproduto'  => $this->regras->codigoProduto($item->product_id, $item->size),
             'quantidade'     => (int) $item->qty,
             'vl_unitario'    => $this->dinheiro($item->unit_price),
         ])->all();
-    }
-
-    protected function payloadCancela(Order $order): array
-    {
-        return ['id_pedido' => $order->id, 'ativo' => 0];
     }
 
     /* -----------------------------------------------------------------
@@ -343,6 +270,12 @@ class MicrovixPedidoSender
         $detalhe = $this->procuraTexto($resposta, ['descricao', 'mensagem', 'message', 'motivo', 'faultstring'])
             ?? 'sem descrição na resposta';
 
+        if ($sucesso === false && $this->pareceTemporario($detalhe)) {
+            // Pool/timeout do lado da Linx: retry com backoff (o job recomeça
+            // pelo B2CConsultaPedidos, sem duplicar).
+            throw new MicrovixException("Pedido #{$order->id}: {$comando} — erro temporário da Linx: {$detalhe}.");
+        }
+
         if ($sucesso === false) {
             throw new MicrovixNegocioException(
                 "Pedido #{$order->id}: {$comando} recusado pelo ERP — {$detalhe}. Resposta completa em microvix_logs."
@@ -389,50 +322,41 @@ class MicrovixPedidoSender
         return $texto;
     }
 
-    /* -----------------------------------------------------------------
-     | Estado local
-     ------------------------------------------------------------------ */
-
-    protected function marcaEnvio(Order $order, string $estado, ?array $registroErp = null): string
+    /**
+     * Texto de erro com cara de indisponibilidade momentânea. PALPITE: o
+     * formato do Importador nunca foi confirmado em envio real.
+     */
+    protected function pareceTemporario(string $detalhe): bool
     {
-        $order->fill([
-            'microvix_pedido_id'    => $registroErp !== null ? (int) $registroErp['id_pedido'] : $order->id,
+        return (bool) preg_match('/\bpool\b|time-?out|tempo (limite|esgotado)|tente novamente|indispon[ií]vel|too many|sobrecarg/iu', $detalhe);
+    }
+
+    protected function marcaEnviado(Order $order, ?array $registroErp = null): string
+    {
+        $order->forceFill([
+            'microvix_pedido_id'    => $registroErp !== null && filled($registroErp['id_pedido'] ?? null) ? (int) $registroErp['id_pedido'] : $order->id,
             'microvix_cod_cliente'  => $order->user_id,
             'microvix_status'       => $registroErp !== null && ($registroErp['id_status'] ?? '') !== ''
                 ? (int) $registroErp['id_status']
                 : (int) config('microvix.id_status_inicial'),
             'microvix_synced_at'    => now(),
-            'microvix_reserved'     => $estado === 'reservado',
-            'microvix_envio_estado' => $estado,
+            'microvix_reserved'     => false,
+            'microvix_envio_estado' => 'enviado',
             'microvix_envio_erro'   => null,
         ])->save();
 
-        return $estado;
+        return 'enviado';
     }
-
-    /* -----------------------------------------------------------------
-     | Auxiliares
-     ------------------------------------------------------------------ */
 
     protected function enviaLigado(): bool
     {
         return (bool) config('microvix.envia_pedido');
     }
 
+    /** Só o snapshot do pedido (regra 4): sem CPF no pedido o envio é manual. */
     protected function cpf(Order $order): string
     {
-        return preg_replace('/\D+/', '', (string) ($order->ship_cpf ?: $order->user?->cpf)) ?? '';
-    }
-
-    protected function codigoProdutoErp(?int $productId, ?string $size): ?int
-    {
-        if ($productId === null) {
-            return null;
-        }
-
-        return MicrovixProduct::where('product_id', $productId)
-            ->where('size', $size)
-            ->value('codigoproduto');
+        return preg_replace('/\D+/', '', (string) $order->ship_cpf) ?? '';
     }
 
     /** MONEY da doc: decimal com ponto, duas casas. */

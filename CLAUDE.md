@@ -278,25 +278,35 @@ preço/estoque no admin — o guard real é no controller, não só no form. Loj
 checkout revalida com `lockForUpdate` dentro da transação. Painel de saúde em
 `/admin/microvix` (sync e conciliação manuais, síncronos — sem queue).
 
-**Fase 2 (pedido → ERP) implementada, mas TRAVADA:** `MICROVIX_ENVIA_PEDIDO`
-no `.env` (`false` = monta o XML, grava em `microvix_logs` com `simulated=true`
-e não envia; trava vive no `MicrovixPedidoSender`, não no job). Fluxo da doc
-5.1: `B2CConsultaPedidos` (idempotência; `id_pedido` = `orders.id`) →
-CadastraClientes (`atualizar_por_cpf=1`) → EnderecosEntrega (id = `orders.id`,
-`descricao` "Pedido #N") → CadastraPedido (`somente_reserva=1` na criação, `0`
-no webhook de pagamento) → PedidoItens; expirado/recusado/cancelado →
-`B2CCancelaPedido` (dispatch centralizado no `cancelAndRestoreStock`). Fila
-database (`EnviarPedidoMicrovix`, fila `microvix`), worker via scheduler
-(`queue:work --stop-when-empty` a cada minuto) — **e só enfileira com a trava
-aberta** (`EnviarPedidoMicrovix::integracaoLigada()`; com ela fechada nem o XML
-simulado sai, só por reenvio manual no painel), concorrência 1
-(WithoutOverlapping) + guarda de segundo por método (obs. 5 da doc). Erro de
-negócio (plano pix/boleto inexistente etc.) para em `erro` sem retry; rede
-retenta 3x com backoff. Estado em `orders.microvix_envio_*`; painel de pedidos,
-trilha de XML (selo simulado/real) e reenvio em `/admin/microvix`; pedido em
-erro gera banner global no admin. Com `MICROVIX_ENVIA_PEDIDO=false` o banner, o
-badge e o item do menu somem (rotas seguem por URL direta). Parse da resposta do Importador é PALPITE —
-confirmar no primeiro envio real (`avaliaRespostaImporta`).
+**Fase 2 (pedido → Linx):** só pedido **pago**, direto com `somente_reserva=0`
+(sem reserva no checkout, nada vai em pendente/expirado/cancelado). Regras em
+`MicrovixEnvio` (um lugar só); disparo `MicrovixEnvio::agendar()` em todo
+pagamento aprovado: `aprovarPagamento` (webhook/reconciliação/polling),
+reativação de cancelado, `finally` do checkout (cartão aprovado na hora) e
+`pedidos:cancelar-cartao-preso`. Chaves no `.env`: `MICROVIX_ENVIA_PEDIDO`
+(desliga tudo; `false` = nem enfileira, reenvio do painel só simula) e
+`MICROVIX_ENVIO_A_PARTIR_DE` (dd/mm/aaaa, obrigatória: pedido anterior nunca
+vai, não desconta estoque e aparece "não aplicável (anterior à integração)").
+Plano por meio/parcelas: `MICROVIX_PLANO_PIX|BOLETO|CARTAO_{1,2,3}X` (sem plano
+→ manual). **Manual** (`microvix_envio_estado=manual`, motivo em
+`microvix_envio_erro`, nada é enviado): item sem vínculo, garrafa custom,
+meio/parcela sem plano, sem `ship_cpf` (só o snapshot), endereço incompleto; os
+dois e-mails de aviso dizem "Lançar manualmente na Linx: <motivo>" (mesmo
+cálculo, `MicrovixEnvio::avisoManual`). Estados: pendente | enviando | enviado |
+manual | erro | lancado_manual. Idempotência: `microvix_pedido_id` preenchido
+nunca reenvia; pedido já na Linx sem marca local → reenvia pedido + itens (PK
+`id_pedido`/`id_pedido_item`). Erro de negócio → `erro` sem retry; rede/HTTP e
+texto de pool/timeout da Linx → retry 3x (1/5/15 min). Fila `microvix`
+(`EnviarPedidoMicrovix($orderId)`), concorrência 1 + guarda de segundo por
+método (obs. 5). Admin: card "Linx Microvix" no detalhe do pedido (status,
+número, motivo, "Reenviar para a Linx" só em erro/manual, "Marcar como lançado
+na Linx"), filtro `?microvix=` na lista, painel `/admin/microvix`; tudo some com
+a trava desligada. **Estoque (regra 7):** conciliar grava
+`max(0, saldo Linx − qtd em pedidos do período não refletidos)` — pendentes de
+pagamento não cancelados + pagos sem `microvix_pedido_id` (fora
+`lancado_manual`); prévia "10 (Linx: 12 − 2 no site)" / "0 (Linx: -167)"; o
+espelho guarda o saldo real. Parse da resposta do Importador é PALPITE —
+confirmar no primeiro envio real (`avaliaRespostaImporta`/`pareceTemporario`).
 
 ## Clube de assinatura
 
@@ -308,7 +318,8 @@ APTK Connoisseur (R$349/mês), Le Cercle (por convite — `price = null`, o que 
 
 1. Frete é estimativa por tabela (+20%) — cotação real depende de conta na SuperFrete.
 2. Portal B2B é só fachada: middleware + role + um `/ping`. Sem controllers nem views.
-3. Microvix fora de operação (`MICROVIX_ENVIA_PEDIDO=false`); ver ESTADO-ATUAL §8.4.
+3. Microvix: virada do envio de pedidos em produção (checklist em ESTADO-ATUAL §24);
+   estorno/chargeback de pedido já enviado ainda não cancela na Linx (leva própria).
 4. Fotos de produto: SLO375 precisa de foto em alta; NGA750 só em fundo cinza;
    rótulo atual do Dry Martini a confirmar (DM750 creme × DM375 azul); fotos de
    ambiente com rótulo antigo (hero da Home, cards) a trocar quando houver nova. Foto nova: renomear na pasta, rodar
