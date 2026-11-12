@@ -7,6 +7,7 @@ use App\Models\MicrovixLog;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 
 /**
  * Transporte puro do WS B2C do Microvix — zero regra de negócio.
@@ -18,6 +19,9 @@ use Illuminate\Support\Facades\Http;
  */
 class MicrovixClient
 {
+    /** Espera (s) antes de cada retry de consulta em falha temporária. */
+    public const ESPERAS_CONSULTA = [5, 15, 30];
+
     /** Pedido dono da chamada corrente (trilha por pedido em microvix_logs). */
     protected ?int $orderId = null;
 
@@ -35,29 +39,49 @@ class MicrovixClient
         $this->orderId = $orderId;
         $envelope = $this->envelopeConsulta($method, $params, $incluiCnpj);
 
-        // Retry 2x SÓ em falha de rede (ConnectionException) e SÓ em consulta.
-        // Erro de negócio (resposta com erro) nunca é retentado.
-        $started  = microtime(true);
-        $attempts = 0;
-        $response = null;
+        // Retry SÓ em consulta e SÓ em falha temporária da Linx: rede, 5xx e
+        // HTTP 400 "Timeout expired"/"max pool size" (Linx de produção
+        // sobrecarregada). 1 chamada + até 3 retries, esperando 5, 15 e 30 s.
+        // Erro de negócio (200 com ResponseSuccess false, 400 de outro tipo)
+        // nunca é retentado. Cada tentativa que falha fica em microvix_logs.
+        $tentativa = 0;
 
-        do {
-            $attempts++;
+        while (true) {
+            $started = microtime(true);
+            $espera = self::ESPERAS_CONSULTA[$tentativa] ?? null;
+            $tentativa++;
+
             try {
                 $response = Http::withHeaders(['Content-Type' => 'text/xml; charset=utf-8'])
                     ->timeout((int) config('microvix.timeout', 60))
                     ->withBody($envelope, 'text/xml')
                     ->post($this->urlSaida());
-                break;
             } catch (ConnectionException $e) {
-                if ($attempts >= 3) { // 1 chamada + 2 retries
-                    $this->log('out', $method, $envelope, null, null, false, $e->getMessage(), $started);
+                $this->log('out', $method, $envelope, null, null, false, "Tentativa {$tentativa}: {$e->getMessage()}", $started);
+                if ($espera === null) {
                     throw new MicrovixException("Falha de rede ao consultar {$method}: {$e->getMessage()}");
                 }
-            }
-        } while (true);
+                Sleep::for($espera)->seconds();
 
-        return $this->finalizaConsulta($method, $envelope, $response, $started);
+                continue;
+            }
+
+            if ($espera !== null && self::falhaTemporaria($response)) {
+                $this->log('out', $method, $envelope, $response->body(), $response->status(), false, "Tentativa {$tentativa}: HTTP {$response->status()} temporário", $started);
+                Sleep::for($espera)->seconds();
+
+                continue;
+            }
+
+            return $this->finalizaConsulta($method, $envelope, $response, $started);
+        }
+    }
+
+    /** 5xx, ou 400 de timeout/pool esgotado do lado da Linx: vale retentar. */
+    public static function falhaTemporaria(Response $response): bool
+    {
+        return $response->serverError()
+            || ($response->status() === 400 && preg_match('/timeout expired|max pool size/i', $response->body()) === 1);
     }
 
     /**

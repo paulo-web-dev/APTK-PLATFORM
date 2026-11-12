@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Sleep;
 use Tests\TestCase;
 
 class MicrovixClientTest extends TestCase
@@ -200,13 +201,13 @@ class MicrovixClientTest extends TestCase
         $this->assertStringContainsString('doc_cliente', $log->request);
     }
 
-    public function test_consulta_retenta_ate_duas_vezes_em_falha_de_rede(): void
+    public function test_consulta_retenta_falha_de_rede_esperando_5_15_e_30_segundos(): void
     {
         $tentativas = 0;
 
         Http::fake(function () use (&$tentativas) {
             $tentativas++;
-            if ($tentativas < 3) {
+            if ($tentativas < 4) {
                 throw new ConnectionException('timeout simulado');
             }
 
@@ -215,8 +216,48 @@ class MicrovixClientTest extends TestCase
 
         $rows = $this->client()->consulta('B2CConsultaEmpresas', ['timestamp' => 0]);
 
-        $this->assertSame(3, $tentativas);
+        $this->assertSame(4, $tentativas);
         $this->assertCount(2, $rows);
+        Sleep::assertSequence([Sleep::for(5)->seconds(), Sleep::for(15)->seconds(), Sleep::for(30)->seconds()]);
+    }
+
+    public function test_consulta_retenta_400_de_timeout_e_pool_da_linx(): void
+    {
+        $respostas = [
+            Http::response('System.InvalidOperationException: Timeout expired. The timeout period elapsed prior to obtaining a connection from the pool.', 400),
+            Http::response('Timeout expired. This may have occurred because all pooled connections were in use and max pool size was reached.', 400),
+            Http::response($this->fixture('empresas')),
+        ];
+        Http::fake(function () use (&$respostas) {
+            return array_shift($respostas);
+        });
+
+        $rows = $this->client()->consulta('B2CConsultaEmpresas', ['timestamp' => 0]);
+
+        $this->assertCount(2, $rows);
+        Sleep::assertSequence([Sleep::for(5)->seconds(), Sleep::for(15)->seconds()]);
+        // As tentativas que falharam ficam na trilha.
+        $this->assertSame(2, MicrovixLog::where('success', false)->count());
+    }
+
+    public function test_5xx_e_retentado_e_esgotado_vira_excecao(): void
+    {
+        $tentativas = 0;
+        Http::fake(function () use (&$tentativas) {
+            $tentativas++;
+
+            return Http::response('erro interno', 503);
+        });
+
+        try {
+            $this->client()->consulta('B2CConsultaEmpresas', ['timestamp' => 0]);
+            $this->fail('Deveria ter lançado MicrovixException.');
+        } catch (MicrovixException $e) {
+            $this->assertSame(503, $e->httpStatus);
+        }
+
+        $this->assertSame(4, $tentativas); // 1 + 3 retries
+        Sleep::assertSleptTimes(3);
     }
 
     public function test_importa_nunca_retenta_nem_em_falha_de_rede(): void
@@ -240,25 +281,62 @@ class MicrovixClientTest extends TestCase
         $this->assertSame(1, $tentativas);
     }
 
-    public function test_erro_http_vira_excecao_e_nao_e_retentado(): void
+    public function test_400_que_nao_e_timeout_nem_pool_nao_e_retentado(): void
     {
         $tentativas = 0;
 
         Http::fake(function () use (&$tentativas) {
             $tentativas++;
 
-            return Http::response('erro interno', 500);
+            return Http::response('Parametro cnpjEmp invalido', 400);
         });
 
         try {
             $this->client()->consulta('B2CConsultaEmpresas', ['timestamp' => 0]);
             $this->fail('Deveria ter lançado MicrovixException.');
         } catch (MicrovixException $e) {
-            $this->assertSame(500, $e->httpStatus);
+            $this->assertSame(400, $e->httpStatus);
         }
 
-        // Erro de negócio/HTTP não é falha de rede: uma tentativa só.
         $this->assertSame(1, $tentativas);
+        Sleep::assertNeverSlept();
         $this->assertFalse(MicrovixLog::firstOrFail()->success);
+    }
+
+    public function test_erro_de_negocio_na_resposta_nao_e_retentado(): void
+    {
+        $tentativas = 0;
+        Http::fake(function () use (&$tentativas) {
+            $tentativas++;
+
+            return Http::response('<?xml version="1.0"?><Microvix><ResponseResult><ResponseSuccess>False</ResponseSuccess><ResponseError><Message>Chave invalida</Message></ResponseError></ResponseResult></Microvix>');
+        });
+
+        try {
+            $this->client()->consulta('B2CConsultaEmpresas', ['timestamp' => 0]);
+            $this->fail('Deveria ter lançado MicrovixException.');
+        } catch (MicrovixException) {
+        }
+
+        $this->assertSame(1, $tentativas);
+        Sleep::assertNeverSlept();
+    }
+
+    public function test_importa_nao_retenta_5xx(): void
+    {
+        $tentativas = 0;
+        Http::fake(function () use (&$tentativas) {
+            $tentativas++;
+
+            return Http::response('erro interno', 503);
+        });
+
+        try {
+            $this->client()->importa('B2CCadastraClientes', [['cod_cliente' => 1]]);
+            $this->fail('Deveria ter lançado MicrovixException.');
+        } catch (MicrovixException) {
+        }
+
+        $this->assertSame(1, $tentativas);
     }
 }

@@ -29,6 +29,14 @@ class EnviarPedidoMicrovix implements ShouldQueue
     /** 1 chamada + 3 retries (só erro temporário/rede); depois para em erro. */
     public int $tries = 4;
 
+    /**
+     * A Linx de produção leva 20–45 s por chamada e um envio faz até 5
+     * (mais os retries da consulta, 5/15/30 s): 10 min por tentativa.
+     * Tem que ficar abaixo do retry_after da conexão database
+     * (config/queue.php), senão outro worker pega o mesmo job no meio.
+     */
+    public int $timeout = 600;
+
     public function __construct(public int $orderId)
     {
         $this->onQueue('microvix');
@@ -51,7 +59,8 @@ class EnviarPedidoMicrovix implements ShouldQueue
         // Concorrência 1 na fila INTEIRA (chave compartilhada, não por
         // pedido): a guarda de segundo do sender (obs. 5 da doc) só é à
         // prova de corrida com um envio por vez.
-        return [(new WithoutOverlapping('microvix-pedido'))->releaseAfter(15)->expireAfter(300)];
+        // expireAfter acima do $timeout: o lock não pode vencer com o envio rodando.
+        return [(new WithoutOverlapping('microvix-pedido'))->releaseAfter(15)->expireAfter(900)];
     }
 
     public function handle(MicrovixPedidoSender $sender): void

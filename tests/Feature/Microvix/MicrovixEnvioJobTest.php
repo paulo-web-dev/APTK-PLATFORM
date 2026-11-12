@@ -246,4 +246,27 @@ class MicrovixEnvioJobTest extends TestCase
 
         Queue::assertNotPushed(EnviarPedidoMicrovix::class);
     }
+
+    /* -----------------------------------------------------------------
+     | Linx lenta (20–45 s por chamada): tempo do job e do worker
+     ------------------------------------------------------------------ */
+
+    public function test_job_tem_timeout_de_10_minutos_abaixo_do_retry_after_da_fila(): void
+    {
+        $job = new EnviarPedidoMicrovix(1);
+
+        $this->assertSame(600, $job->timeout);
+        $this->assertSame(4, $job->tries);
+        $this->assertSame([60, 300, 900], $job->backoff());
+        $this->assertGreaterThan($job->timeout, (int) config('queue.connections.database.retry_after'));
+    }
+
+    public function test_worker_agendado_nao_sobrepoe_por_10_minutos(): void
+    {
+        $evento = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events())
+            ->first(fn ($e) => str_contains((string) $e->command, 'queue:work'));
+
+        $this->assertTrue($evento->withoutOverlapping);
+        $this->assertSame(10, $evento->expiresAt);
+    }
 }

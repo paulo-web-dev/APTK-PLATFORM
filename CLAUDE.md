@@ -251,8 +251,9 @@ do front nunca entra. **Cupom não é aplicado no checkout** (`discount` sempre
 Doc em `docs/linx-microvix-ws-b2c.md`; **em divergência de nome de campo, vale o
 PDF original** (`docs/linx-microvix-ws-b2c-original.pdf`) — o .md é conversão e
 pode ter corrompido nomes. `app/Services/Microvix/`: `MicrovixClient` (transporte:
-consulta XML puro + importa SOAP; retry 2x só em falha de rede e SÓ em consulta —
-importa NUNCA retenta, obs. 5 da doc 6.2), `MicrovixSync` (timestamp incremental
+consulta XML puro + importa SOAP; retry SÓ em consulta e SÓ em falha
+temporária — rede, 5xx, 400 "Timeout expired"/"max pool size" — com espera de
+5/15/30 s; importa NUNCA retenta, obs. 5 da doc 6.2), `MicrovixSync` (timestamp incremental
 por método, só avança com lote inteiro OK), `MicrovixProductMirror` (→
 `microvix_products`; vínculo com `products` é assistido). Toda chamada logada em
 `microvix_logs` com password/chave mascaradas. Comandos: `microvix:ping`,
@@ -297,8 +298,10 @@ manual | erro | lancado_manual. Idempotência: `microvix_pedido_id` preenchido
 nunca reenvia; pedido já na Linx sem marca local → reenvia pedido + itens (PK
 `id_pedido`/`id_pedido_item`). Erro de negócio → `erro` sem retry; rede/HTTP e
 texto de pool/timeout da Linx → retry 3x (1/5/15 min). Fila `microvix`
-(`EnviarPedidoMicrovix($orderId)`), concorrência 1 + guarda de segundo por
-método (obs. 5). Admin: card "Linx Microvix" no detalhe do pedido (status,
+(`EnviarPedidoMicrovix($orderId)`, `$timeout` 600 s: a Linx de produção leva
+20–45 s por chamada; `retry_after` da conexão database = 660), concorrência 1
++ guarda de segundo por método (obs. 5); worker agendado com
+`withoutOverlapping(10)`. Admin: card "Linx Microvix" no detalhe do pedido (status,
 número, motivo, "Reenviar para a Linx" só em erro/manual, "Marcar como lançado
 na Linx"), filtro `?microvix=` na lista, painel `/admin/microvix`; tudo some com
 a trava desligada. **Estoque (regra 7):** conciliar grava

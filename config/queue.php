@@ -38,7 +38,9 @@ return [
             'driver' => 'database',
             'table' => 'jobs',
             'queue' => 'default',
-            'retry_after' => 90,
+            // Acima do maior $timeout de job (EnviarPedidoMicrovix: 600 s),
+            // senão um job longo é entregue de novo a outro worker no meio.
+            'retry_after' => 660,
             'after_commit' => false,
         ],
 
