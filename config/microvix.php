@@ -23,11 +23,11 @@ return [
 
     'urls' => [
         'saida' => [
-            'producao'  => 'http://webapi.microvix.com.br/api/integracao',
+            'producao'  => 'https://webapi.microvix.com.br/api/integracao',
             'aceitacao' => 'https://webapi-aceitacao.microvix.com.br/api/integracao',
         ],
         'entrada' => [
-            'producao'  => 'http://webapi.microvix.com.br/1.0/importador.svc',
+            'producao'  => 'https://webapi.microvix.com.br/1.0/importador.svc',  
             'aceitacao' => 'https://webapi-aceitacao.microvix.com.br/Importador.svc',
         ],
     ],
