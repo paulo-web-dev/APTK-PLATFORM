@@ -60,6 +60,12 @@ return [
     'fonte_da_verdade' => env('MICROVIX_FONTE_VERDADE', 'site'),
 
     /*
+    | microvix:sincronizar no scheduler (a cada 15 min): espelho da Linx e,
+    | se os três métodos deram certo, conciliação. Desligado por padrão.
+    */
+    'sync_agendado' => (bool) env('MICROVIX_SYNC_AGENDADO', false),
+
+    /*
     | Fase 2 — envio de pedido ao ERP (B2CCadastraPedido e afins).
     | Com a trava desligada (padrão), o MicrovixPedidoSender monta o payload
     | e grava o envelope em microvix_logs (simulated=true), mas NÃO chama o

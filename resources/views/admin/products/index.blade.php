@@ -35,6 +35,7 @@
                         <td data-label="Produto">
                             {{ $p->name }}
                             @if ($p->featured)<span class="status status--pendente" style="margin-left:6px;">Destaque</span>@endif
+                            @if ($p->volumesDaLinx())<span class="status status--enviado" style="margin-left:6px;" title="Preço e estoque de {{ implode(', ', array_keys($p->volumesDaLinx())) }} vêm da Linx">Linx</span>@endif
                         </td>
                         <td class="td-muted" data-label="Categoria">{{ $p->category?->name ?? '—' }}</td>
                         <td class="td-muted" data-label="SKU" style="font-family:var(--font-mono);">{{ $p->sku ?: '—' }}</td>
@@ -45,7 +46,16 @@
                                 <span class="td-muted">sem preço</span>
                             @endif
                         </td>
-                        <td class="td-num" data-label="Estoque">{{ $p->stock_qty }}</td>
+                        <td class="td-num" data-label="Estoque">
+                            {{-- Soma do size_stock; "sem controle" = volume do site sem estoque (vende sem limite). --}}
+                            @php($total = $p->estoqueTotal())
+                            {{ $total ?? '—' }}
+                            @if ($p->hasSizes())
+                                <div class="td-muted" style="font-size:var(--text-xs); white-space:nowrap;">
+                                    {{ implode(' · ', array_map(fn ($s) => ((int) $s).': '.($p->stockForSize($s) ?? 'sem controle'), $p->sizes)) }}
+                                </div>
+                            @endif
+                        </td>
                         <td data-label="Status">
                             @if ($p->active)
                                 <span class="status status--pago">Ativo</span>

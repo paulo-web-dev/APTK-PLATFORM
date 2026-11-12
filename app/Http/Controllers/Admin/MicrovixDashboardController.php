@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Console\Commands\Microvix\MicrovixSincronizar;
 use App\Http\Controllers\Controller;
 use App\Jobs\EnviarPedidoMicrovix;
 use App\Models\MicrovixLog;
@@ -29,6 +30,11 @@ class MicrovixDashboardController extends Controller
 
         return view('admin.microvix.index', [
             'fonte'      => config('microvix.fonte_da_verdade'),
+            'sincronizacao' => [
+                'ultima'   => MicrovixSincronizar::ultima(),
+                'agendado' => (bool) config('microvix.sync_agendado'),
+                'proxima'  => MicrovixSincronizar::proxima(),
+            ],
             'syncStates' => MicrovixSyncState::orderBy('method')->get(),
             'stats'      => [
                 'total'      => MicrovixProduct::count(),

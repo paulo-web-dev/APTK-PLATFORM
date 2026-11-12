@@ -42,7 +42,7 @@ class CatalogoImportarPlanilha extends Command
     private const COLUNAS = ['grupo', 'nome', 'marca', 'volume', 'sku', 'preco'];
 
     /** Placeholder de estoque de produto novo (stock_qty 0 = esgotado na vitrine). */
-    private const ESTOQUE_PLACEHOLDER = 30;
+    public const ESTOQUE_PLACEHOLDER = 30;
 
     /** Slug atual no site => grupo da planilha. */
     public const SLUG_ANTIGO = [

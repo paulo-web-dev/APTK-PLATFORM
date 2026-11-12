@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Console\Commands\CatalogoImportarPlanilha;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -22,7 +23,7 @@ class ProductController extends Controller
     {
         $filtro = $request->query('status');
 
-        $query = Product::with(['category', 'primaryImage'])->orderBy('name');
+        $query = Product::with(['category', 'primaryImage', 'microvixProducts'])->orderBy('name');
 
         if (array_key_exists($filtro, self::FILTROS)) {
             $query->where('active', self::FILTROS[$filtro]);
@@ -58,6 +59,12 @@ class ProductController extends Controller
         $data['slug']     = $this->uniqueSlug($data['name']);
         $data['active']   = $request->boolean('active');
         $data['featured'] = $request->boolean('featured');
+        // stock_qty saiu do admin (estoque é por volume, size_stock); o
+        // agregado interno nasce como no importador, senão a vitrine mostraria
+        // o produto novo como esgotado.
+        $data['stock_qty'] = CatalogoImportarPlanilha::ESTOQUE_PLACEHOLDER;
+        $data['size_stock'] = $this->estoqueDoSite($request, $data['sizes'] ?? null, null) ?: null;
+        unset($data['size_stock_form']);
 
         $this->exigePodeAtivar($request, new Product($data), []);
         $nova = $this->volumesDasFotos($request, new Product($data), collect())[1];
@@ -73,7 +80,7 @@ class ProductController extends Controller
 
     public function edit(Product $product): View
     {
-        $product->load('images');
+        $product->load(['images', 'microvixProducts']);
 
         return view('admin.products.form', [
             'product'    => $product,
@@ -83,18 +90,32 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product): RedirectResponse
     {
-        $erpManaged = $product->managedByErp();
-        $data = $this->validateData($request, $erpManaged);
-
-        // Produto gerenciado pelo ERP (fonte_da_verdade=erp + vínculo): preço
-        // e estoque não passam — o form mostra os campos travados, mas o
-        // guard de verdade é este, senão um POST forjado (ou um form defasado)
-        // sobrescreveria o que a conciliação gravou.
-        if ($erpManaged) {
-            unset($data['price'], $data['size_prices'], $data['stock_qty']);
-        }
+        // Volumes da Linx (fonte erp + vínculo): preço e estoque são da
+        // Linx. O form só manda os volumes do SITE nos campos de texto; aqui
+        // os volumes da Linx são remontados do que está gravado. É o guard
+        // de verdade: um POST forjado (ou um form defasado) nunca altera
+        // preço/estoque de volume da Linx nem remove o volume.
+        $linx = $product->volumesDaLinx();
+        $data = $this->validateData($request, $linx !== []);
 
         $this->recusaVolumeDesativado($data['sizes'] ?? null, $product->sizes ?? []);
+
+        if ($linx !== []) {
+            if ($repetidos = array_values(array_intersect($data['sizes'] ?? [], array_keys($linx)))) {
+                throw ValidationException::withMessages([
+                    'sizes' => implode(', ', $repetidos).' vem da Linx: fica fora dos volumes do site.',
+                ]);
+            }
+            $data = $this->comVolumesDaLinx($data, $product, array_keys($linx));
+            unset($data['price']); // preço base é só reserva quando há volume da Linx
+        }
+
+        $data['size_stock'] = $this->estoqueDoSite($request, $data['sizes'] ?? null, $product, array_keys($linx));
+        $data['size_stock'] = $data['size_stock'] === [] ? null : $data['size_stock'];
+        if ($this->mesmoMapa($data['size_stock'], $product->size_stock)) {
+            unset($data['size_stock']);
+        }
+        unset($data['size_stock_form']);
 
         // Salvar sem mexer não pode regravar o JSON (80 virava 80.0): volume
         // e preço por volume só entram quando mudaram de fato.
@@ -170,7 +191,11 @@ class ProductController extends Controller
             'price'             => [$erpManaged ? 'nullable' : 'required', 'numeric', 'min:0'],
             'compare_price'     => ['nullable', 'numeric', 'min:0'],
             'sku'               => ['nullable', 'string', 'max:255'],
-            'stock_qty'         => [$erpManaged ? 'nullable' : 'required', 'integer', 'min:0'],
+            // Estoque por volume do SITE (volume da Linx não passa; vazio =
+            // sem controle). stock_qty saiu do admin.
+            'size_stock'        => ['nullable', 'array'],
+            'size_stock.*'      => ['nullable', 'integer', 'min:0'],
+            'size_stock_form'   => ['nullable'],
             'weight'            => ['nullable', 'numeric', 'min:0'],
             'base'              => ['nullable', 'string', 'max:255'],
             'abv'               => ['nullable', 'integer', 'min:0', 'max:100'],
@@ -191,12 +216,69 @@ class ProductController extends Controller
         // Volumes: texto separado por vírgula → array (coluna json).
         $data['sizes'] = $this->parseSizes($data['sizes'] ?? null);
 
-        // Preços por volume: casam por posição com os volumes acima.
-        if (! $erpManaged) {
-            $data['size_prices'] = $this->parseSizePrices($data['sizes'], $data['size_prices'] ?? null);
-        }
+        // Preços por volume: casam por posição com os volumes acima (com
+        // volumes da Linx, só os do site estão nos dois campos).
+        $data['size_prices'] = $this->parseSizePrices($data['sizes'], $data['size_prices'] ?? null);
+        unset($data['size_stock']); // tratado à parte (estoqueDoSite)
 
         return $data;
+    }
+
+    /**
+     * Junta os volumes da Linx (gravados) aos do site (do form): volumes em
+     * ordem de ml; preço da Linx mantido como está gravado.
+     */
+    private function comVolumesDaLinx(array $data, Product $product, array $volumesLinx): array
+    {
+        $sizes = array_values(array_unique([...$volumesLinx, ...($data['sizes'] ?? [])]));
+        usort($sizes, fn ($a, $b) => (int) $a <=> (int) $b);
+
+        $precos = [];
+        foreach ($sizes as $size) {
+            if (in_array($size, $volumesLinx, true)) {
+                if (isset($product->size_prices[$size])) {
+                    $precos[$size] = $product->size_prices[$size];
+                }
+            } elseif (isset($data['size_prices'][$size])) {
+                $precos[$size] = $data['size_prices'][$size];
+            }
+        }
+
+        $data['sizes'] = $sizes;
+        $data['size_prices'] = $precos ?: null;
+
+        return $data;
+    }
+
+    /**
+     * size_stock final: volumes da Linx ficam com o que está gravado (a
+     * conciliação é a dona); volumes do site levam o valor do form (vazio =
+     * sem controle, sai do mapa). Form que não traz a grade de estoque
+     * (size_stock_form ausente) mantém o estoque gravado dos volumes do site.
+     */
+    private function estoqueDoSite(Request $request, ?array $sizes, ?Product $product, array $volumesLinx = []): array
+    {
+        $atual = $product?->size_stock ?? [];
+        $doForm = $request->input('size_stock', []);
+        $temGrade = $request->has('size_stock_form');
+        $estoque = [];
+
+        foreach ($sizes ?? [] as $size) {
+            if (in_array($size, $volumesLinx, true)) {
+                if (array_key_exists($size, $atual)) {
+                    $estoque[$size] = $atual[$size];
+                }
+
+                continue;
+            }
+
+            $valor = $temGrade ? ($doForm[$size] ?? null) : ($atual[$size] ?? null);
+            if ($valor !== null && $valor !== '') {
+                $estoque[$size] = (int) $valor;
+            }
+        }
+
+        return $estoque;
     }
 
     /**

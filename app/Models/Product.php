@@ -84,6 +84,41 @@ class Product extends Model
             : $this->microvixProducts()->exists();
     }
 
+    /**
+     * Volumes cujo preço e estoque são da Linx: só com
+     * MICROVIX_FONTE_VERDADE=erp, volume => linha do espelho. Com fonte
+     * "site" é sempre vazio (tudo editável, nada travado).
+     *
+     * @return array<string, MicrovixProduct>
+     */
+    public function volumesDaLinx(): array
+    {
+        if (config('microvix.fonte_da_verdade') !== 'erp' || ! $this->exists) {
+            return [];
+        }
+
+        return $this->microvixProducts
+            ->filter(fn (MicrovixProduct $mp) => filled($mp->size))
+            ->keyBy('size')
+            ->all();
+    }
+
+    public function volumeDaLinx(?string $size): bool
+    {
+        return $size !== null && isset($this->volumesDaLinx()[$size]);
+    }
+
+    /** Estoque total rastreado (soma do size_stock), null se nenhum volume é rastreado. */
+    public function estoqueTotal(): ?int
+    {
+        $saldos = array_filter(
+            array_map(fn ($s) => $this->stockForSize($s), $this->hasSizes() ? $this->sizes : []),
+            fn ($v) => $v !== null,
+        );
+
+        return $saldos === [] ? null : array_sum($saldos);
+    }
+
     /* -----------------------------------------------------------------
      | Preço por volume
      | `sizes` define quais volumes existem; `size_prices` define o
@@ -273,16 +308,29 @@ class Product extends Model
     /** Este produto tem estoque rastreado por volume? */
     public function tracksSizeStock(): bool
     {
-        return is_array($this->size_stock) && $this->size_stock !== [];
+        return (is_array($this->size_stock) && $this->size_stock !== []) || $this->volumesDaLinx() !== [];
     }
 
     /**
      * Saldo vendável de um volume. null = volume não rastreado: sem limite
-     * novo (comportamento de sempre). Nunca confundir null com 0.
+     * (volume do site sem estoque cadastrado — "sem controle" no admin).
+     * Nunca confundir null com 0.
+     *
+     * Volume da Linx (fonte erp) NUNCA é ilimitado: sem saldo vindo da Linx
+     * (espelho sem saldo ou conciliação que ainda não gravou) vale 0.
      */
     public function stockForSize(?string $size): ?int
     {
-        if (! $this->tracksSizeStock() || ! isset($this->size_stock[$size])) {
+        if ($this->volumeDaLinx($size)) {
+            $espelho = $this->volumesDaLinx()[$size];
+            if ($espelho->saldo === null || ! isset($this->size_stock[$size])) {
+                return 0;
+            }
+
+            return (int) $this->size_stock[$size];
+        }
+
+        if (! is_array($this->size_stock) || ! isset($this->size_stock[$size])) {
             return null;
         }
 

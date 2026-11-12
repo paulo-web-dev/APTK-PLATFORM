@@ -17,7 +17,7 @@ class ProductController extends Controller
             ->get();
 
         $query = Product::where('active', true)
-            ->with(['images', 'category']); // card: foto do volume padrão (fotoPadrao)
+            ->with(['images', 'category', 'microvixProducts']); // card: foto do volume padrão (fotoPadrao); vínculos p/ esgotado
 
         // Filtro por categoria via ?categoria=slug
         $activeCategory = null;
@@ -40,7 +40,7 @@ class ProductController extends Controller
     {
         $product = Product::where('slug', $slug)
             ->where('active', true)
-            ->with(['category', 'images'])
+            ->with(['category', 'images', 'microvixProducts'])
             ->firstOrFail();
 
         $related = Product::where('active', true)

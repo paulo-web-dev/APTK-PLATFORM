@@ -33,6 +33,29 @@
         <div class="alert-ok" style="color:var(--color-danger); border-left-color:var(--color-danger);">{{ $errors->first() }}</div>
     @endif
 
+    {{-- Sincronização agendada (microvix:sincronizar: sync + conciliação). --}}
+    @php($ultima = $sincronizacao['ultima'])
+    <div class="data-card" style="margin-bottom:22px; padding:14px 16px; {{ $ultima && ! $ultima['ok'] ? 'border:1.5px solid var(--color-danger);' : '' }}">
+        <div style="font-family:var(--font-mono); font-size:.8em; letter-spacing:.06em; text-transform:uppercase; color:var(--color-text-muted); margin-bottom:8px;">Sincronização Linx → site</div>
+        @if ($ultima)
+            <div>
+                Última: <strong>{{ \Illuminate\Support\Carbon::parse($ultima['fim'])->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</strong>
+                · @if ($ultima['ok'])<span class="status status--pago">deu certo</span>@else<span class="status status--cancelado">falhou</span>@endif
+            </div>
+            <div class="td-muted" style="font-size:.9em; margin-top:4px;">{{ $ultima['mensagem'] }}</div>
+        @else
+            <div class="td-muted">Nenhuma sincronização registrada ainda.</div>
+        @endif
+        <div style="margin-top:6px; font-size:.9em;">
+            Próxima:
+            @if ($sincronizacao['proxima'])
+                <strong>{{ $sincronizacao['proxima']->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</strong> (a cada 15 min)
+            @else
+                <span class="td-muted">agendamento desligado (MICROVIX_SYNC_AGENDADO=false)</span>
+            @endif
+        </div>
+    </div>
+
     <div class="metric-grid" style="margin-bottom:22px;">
         <div class="metric-card"><div class="m-top"><span class="m-label">Sem vínculo</span></div><div class="m-value" style="color:{{ $stats['semVinculo'] > 0 ? 'var(--color-danger)' : 'inherit' }};">{{ $stats['semVinculo'] }}</div></div>
         <div class="metric-card"><div class="m-top"><span class="m-label">Vinculados</span></div><div class="m-value">{{ $stats['vinculados'] }}</div></div>

@@ -2,16 +2,20 @@
 
 @php
     $editing = $product->exists;
-    // Preço/estoque travados quando o ERP manda (fonte=erp + vínculo).
-    $erpLock = $editing && $product->managedByErp();
+    // Volumes da Linx (fonte=erp + vínculo): preço e estoque só leitura,
+    // fora dos campos de texto. Volumes do site seguem editáveis.
+    $linx = $editing ? $product->volumesDaLinx() : [];
+    $erpLock = $linx !== [];
+    $volumesSite = array_values(array_diff(is_array($product->sizes) ? $product->sizes : [], array_keys($linx)));
 
-    // Preços por volume na ORDEM dos volumes (é assim que o save casa um com
-    // o outro); mapa incompleto cai na ordem gravada, como antes.
+    // Preços por volume do site na ORDEM dos volumes (é assim que o save casa
+    // um com o outro); mapa incompleto cai na ordem gravada, como antes.
     $precosPorVolume = '';
     if (is_array($product->size_prices)) {
-        $ordem = is_array($product->sizes) && array_diff($product->sizes, array_keys($product->size_prices)) === []
-            ? array_map(fn ($s) => $product->size_prices[$s], $product->sizes)
-            : array_values($product->size_prices);
+        $precosSite = array_diff_key($product->size_prices, $linx);
+        $ordem = array_diff($volumesSite, array_keys($precosSite)) === []
+            ? array_map(fn ($s) => $precosSite[$s], $volumesSite)
+            : array_values($precosSite);
         $precosPorVolume = implode('; ', array_map(fn ($v) => number_format((float) $v, 2, ',', '.'), $ordem));
     }
 @endphp
@@ -87,15 +91,32 @@
                             <label>Teor alcoólico (% vol.)</label>
                             <input type="number" min="0" max="100" name="abv" class="admin-input" style="width:100%;" value="{{ old('abv', $product->abv) }}">
                         </div>
+                        @if ($linx)
+                            <div class="field">
+                                <label>Volumes da Linx</label>
+                                @foreach ($linx as $vol => $mp)
+                                    <div class="linx-vol" style="border:1px solid var(--color-border); border-left:3px solid var(--color-primary); border-radius:var(--radius-sm); padding:10px 12px; margin-bottom:8px;">
+                                        <strong>{{ $vol }}</strong>
+                                        · R$ {{ isset($product->size_prices[$vol]) ? number_format((float) $product->size_prices[$vol], 2, ',', '.') : '—' }}
+                                        · estoque {{ $product->stockForSize($vol) }}
+                                        <div style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:4px;">
+                                            vem da Linx · código {{ $mp->codigoproduto }}
+                                            · sincronizado em {{ $mp->synced_at ? $mp->synced_at->timezone(config('app.timezone'))->format('d/m/Y H:i') : '—' }}
+                                            · <a href="{{ route('admin.microvix.index') }}">Painel Microvix</a>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                         <div class="field">
-                            <label>Volumes</label>
-                            <input type="text" name="sizes" class="admin-input" style="width:100%;" value="{{ old('sizes', is_array($product->sizes) ? implode(', ', $product->sizes) : '') }}" placeholder="375 ml, 750 ml">
+                            <label>{{ $linx ? 'Volumes do site' : 'Volumes' }}</label>
+                            <input type="text" name="sizes" class="admin-input" style="width:100%;" value="{{ old('sizes', implode(', ', $volumesSite)) }}" placeholder="375 ml, 750 ml">
                             <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:6px;">Separe por vírgula. Viram o seletor de volume na loja.</p>
                             @error('sizes') <span class="err">{{ $message }}</span> @enderror
                         </div>
                         <div class="field" style="margin-bottom:0;">
-                            <label>Preços por volume (R$)</label>
-                            <input type="text" name="size_prices" class="admin-input" style="width:100%;" @disabled($erpLock)
+                            <label>{{ $linx ? 'Preços dos volumes do site (R$)' : 'Preços por volume (R$)' }}</label>
+                            <input type="text" name="size_prices" class="admin-input" style="width:100%;"
                                    value="{{ old('size_prices', $precosPorVolume) }}"
                                    placeholder="109,90; 189,90">
                             @error('size_prices') <span class="err">{{ $message }}</span> @enderror
@@ -206,9 +227,9 @@
                     <div class="panel-body">
                         @if ($erpLock)
                             <div class="field" style="font-size:.85em; color:var(--color-text-muted); border:1px solid var(--color-border); border-left:3px solid var(--color-primary); border-radius:var(--radius-sm); padding:10px 12px;">
-                                Preço e estoque deste produto são <strong>gerenciados pelo ERP</strong> (Microvix)
-                                e sobrescritos a cada conciliação — edite lá.
-                                <a href="{{ route('admin.microvix.products.index') }}">Ver vínculos</a>
+                                Preço e estoque de {{ implode(', ', array_keys($linx)) }} <strong>vêm da Linx</strong>
+                                e são atualizados a cada sincronização — edite lá.
+                                <a href="{{ route('admin.microvix.index') }}">Painel Microvix</a>
                             </div>
                         @endif
                         <div class="field">
@@ -223,10 +244,22 @@
                             <label>SKU</label>
                             <input type="text" name="sku" class="admin-input" style="width:100%;" value="{{ old('sku', $product->sku) }}">
                         </div>
-                        <div class="field">
-                            <label>Estoque</label>
-                            <input type="number" min="0" name="stock_qty" class="admin-input" style="width:100%;" value="{{ old('stock_qty', $product->stock_qty ?? 0) }}" @disabled($erpLock)>
-                        </div>
+                        @if ($volumesSite)
+                            {{-- Estoque por volume do site (size_stock). Vazio = sem controle. --}}
+                            <input type="hidden" name="size_stock_form" value="1">
+                            <div class="field">
+                                <label>{{ $linx ? 'Estoque dos volumes do site' : 'Estoque por volume' }}</label>
+                                @foreach ($volumesSite as $vol)
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                                        <span style="min-width:70px;">{{ $vol }}</span>
+                                        <input type="number" min="0" name="size_stock[{{ $vol }}]" class="admin-input" style="flex:1;"
+                                               value="{{ old('size_stock.'.$vol, $product->size_stock[$vol] ?? '') }}" placeholder="sem controle">
+                                    </div>
+                                @endforeach
+                                @error('size_stock.*') <span class="err">{{ $message }}</span> @enderror
+                                <p style="font-size:var(--text-xs); color:var(--color-text-muted); margin-top:6px;">Vazio = sem controle (vende sem limite).</p>
+                            </div>
+                        @endif
                         <div class="field" style="margin-bottom:0;">
                             <label>Peso (kg, opcional)</label>
                             <input type="number" step="0.001" min="0" name="weight" class="admin-input" style="width:100%;" value="{{ old('weight', $product->weight) }}">

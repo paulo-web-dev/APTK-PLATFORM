@@ -33,6 +33,16 @@ class Kernel extends ConsoleKernel
         // chamada): withoutOverlapping(10) não sobe worker novo enquanto o
         // anterior processa (trava expira em 10 min = $timeout do job). O lock
         // WithoutOverlapping do próprio job segue garantindo concorrência 1.
+        // Linx → site a cada 15 min: espelho + conciliação (só concilia se o
+        // sync inteiro deu certo). Desligado sem MICROVIX_SYNC_AGENDADO=true.
+        // Com a Linx levando 20–45 s por chamada, uma rodada pode passar de
+        // 15 min: withoutOverlapping(30) e em background pra não segurar o cron.
+        $schedule->command('microvix:sincronizar')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping(30)
+            ->runInBackground()
+            ->when(fn () => (bool) config('microvix.sync_agendado'));
+
         $schedule->command('queue:work --queue=notificacoes,microvix --stop-when-empty --max-time=50')
             ->everyMinute()
             ->withoutOverlapping(10);

@@ -276,10 +276,23 @@ ser o `codigoproduto` da Linx. `MICROVIX_TIMEOUT` (padrão 60 s).
 ou `/admin/microvix/produtos` (`MicrovixMatcher` só sugere). `MicrovixReconciler` grava `saldo` → `size_stock`
 e `precovenda` → `size_prices` só de vínculo confirmado, nunca editorial/`active`;
 com fonte `site` recusa gravar (dry-run forçado). Trilha de/para em
-`microvix_reconcile_log`. `Product::managedByErp()` (fonte `erp` E vínculo) trava
-preço/estoque no admin — o guard real é no controller, não só no form. Loja:
-`size_stock` null se comporta como antes (`stock_qty` placeholder, nada esgota);
-checkout revalida com `lockForUpdate` dentro da transação. Painel de saúde em
+`microvix_reconcile_log`. **Trava por volume:** `Product::volumesDaLinx()` (fonte
+`erp` + vínculo; vazio com fonte `site`) — preço e estoque desses volumes só
+leitura no admin (linha fixa "vem da Linx · código N · sincronizado em ..."),
+fora dos campos de texto "Volumes do site"/"Preços"; o `update` remonta os
+volumes da Linx do que está gravado (POST forjado não muda nada, digitar volume
+da Linx nos do site é recusado) e trava o preço base. Volume do site: estoque
+por volume no form e em `/admin/estoque` (`size_stock`; vazio = **sem controle**,
+vende sem limite). `stock_qty` saiu do admin (interno: baixado nas vendas, só
+decide o selo esgotado de produto sem nenhum `size_stock`; produto novo do
+admin nasce com 30). **Venda:** `stockForSize()` — volume da Linx sem saldo
+(espelho sem saldo ou sem `size_stock`) = 0, indisponível, nunca ilimitado;
+volume do site sem estoque = null, ilimitado; checkout revalida com
+`lockForUpdate`. `microvix:sincronizar` = `microvix:sync` e, só se os três
+métodos deram certo, conciliação (dry-run com fonte `site`); resultado em
+`settings` (`microvix.ultima_sincronizacao`) e no painel. Agendado a cada
+15 min (`withoutOverlapping(30)`, `runInBackground`) só com
+`MICROVIX_SYNC_AGENDADO=true`. Painel de saúde em
 `/admin/microvix` (sync e conciliação manuais, síncronos — sem queue).
 
 **Fase 2 (pedido → Linx):** só pedido **pago**, direto com `somente_reserva=0`
