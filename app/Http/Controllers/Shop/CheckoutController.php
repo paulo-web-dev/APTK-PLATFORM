@@ -6,6 +6,7 @@ use App\Exceptions\AppmaxException;
 use App\Exceptions\OutOfStockException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Rules\Cidade;
 use App\Rules\Cpf;
 use App\Services\AppmaxService;
 use App\Services\AvisoPedido;
@@ -378,7 +379,8 @@ class CheckoutController extends Controller
             'number'          => ['required', 'string', 'max:20'],
             'complement'      => ['nullable', 'string', 'max:255'],
             'neighborhood'    => ['required', 'string', 'max:255'],
-            'city'            => ['required', 'string', 'max:255'],
+            // Por extenso (a Linx cadastra como veio; sigla tipo "VP" quebra).
+            'city'            => ['required', 'string', 'max:255', new Cidade()],
             'state'           => ['required', 'string', 'size:2'],
             // Só o código da opção vem do front; valor e prazo o OrderService
             // recalcula do CEP (FreteService).

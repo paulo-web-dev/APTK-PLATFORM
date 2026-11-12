@@ -154,4 +154,39 @@ class MicrovixCheckoutEnvioTest extends TestCase
         $antigo = $this->pedidoParaEnvio('cartao', ['created_at' => now()->subDays(5), 'payment_details' => ['installments' => 6]]);
         $this->assertStringNotContainsString('Lançar manualmente', (new PedidoNovo($antigo))->render());
     }
+
+    public function test_checkout_recusa_cidade_em_sigla_ou_curta(): void
+    {
+        Queue::fake();
+        $this->carrinho();
+
+        foreach (['VP', 'SBC', 'SP', 'R.J'] as $cidade) {
+            $this->post('/checkout', $this->dados(['city' => $cidade]))
+                ->assertSessionHasErrors(['city' => \App\Rules\Cidade::MENSAGEM]);
+        }
+        $this->assertSame(0, Order::count());
+
+        $this->post('/checkout', $this->dados(['city' => 'Ubá']))->assertSessionHasNoErrors();
+        $this->assertSame('Ubá', Order::sole()->ship_city);
+    }
+
+    /** @dataProvider cidades */
+    public function test_regra_de_cidade(string $cidade, bool $valida): void
+    {
+        $this->assertSame($valida, \App\Rules\Cidade::valida($cidade));
+    }
+
+    public static function cidades(): array
+    {
+        return [
+            'sigla de 2'        => ['VP', false],
+            'sigla de 3'        => ['SBC', false],
+            'curta'             => ['Rí', false],
+            'vazia'             => ['  ', false],
+            'nome curto ok'     => ['Ubá', true],
+            'caixa alta longa'  => ['SAO PAULO', true],
+            'composto'          => ["Santa Bárbara d'Oeste", true],
+            'normal'            => ['Curitiba', true],
+        ];
+    }
 }

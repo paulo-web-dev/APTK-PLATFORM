@@ -256,7 +256,10 @@ temporária — rede, 5xx, 400 "Timeout expired"/"max pool size" — com espera 
 5/15/30 s; importa NUNCA retenta, obs. 5 da doc 6.2), `MicrovixSync` (timestamp incremental
 por método, só avança com lote inteiro OK), `MicrovixProductMirror` (→
 `microvix_products`; vínculo com `products` é assistido). Toda chamada logada em
-`microvix_logs` com password/chave mascaradas. Comandos: `microvix:ping`,
+`microvix_logs` via `MicrovixClient::limparSegredos` (password/chave
+mascaradas; o `<XML>` que o Importador ecoa, com chave e senha em texto puro,
+vira "[omitido]"; `microvix:limpar-segredos-log [--dry-run]` limpa registros
+antigos). Comandos: `microvix:ping`,
 `microvix:descobrir` (acha os parâmetros de faturamento que faltam no `.env`),
 `microvix:sync[-produtos]`, `microvix:status`, `microvix:conciliar[ --dry-run]`,
 `microvix:vincular [--aplicar] [--minimo=medio] [--forcar]` (`MicrovixVinculador`:
@@ -291,7 +294,9 @@ vai, não desconta estoque e aparece "não aplicável (anterior à integração)
 Plano por meio/parcelas: `MICROVIX_PLANO_PIX|BOLETO|CARTAO_{1,2,3}X` (sem plano
 → manual). **Manual** (`microvix_envio_estado=manual`, motivo em
 `microvix_envio_erro`, nada é enviado): item sem vínculo, garrafa custom,
-meio/parcela sem plano, sem `ship_cpf` (só o snapshot), endereço incompleto; os
+meio/parcela sem plano, sem `ship_cpf` (só o snapshot), endereço incompleto,
+cidade inválida (`App\Rules\Cidade`: ≥ 3 letras, sem sigla tipo "VP"; o
+checkout também recusa); os
 dois e-mails de aviso dizem "Lançar manualmente na Linx: <motivo>" (mesmo
 cálculo, `MicrovixEnvio::avisoManual`). Estados: pendente | enviando | enviado |
 manual | erro | lancado_manual. Idempotência: `microvix_pedido_id` preenchido
@@ -308,8 +313,10 @@ a trava desligada. **Estoque (regra 7):** conciliar grava
 `max(0, saldo Linx − qtd em pedidos do período não refletidos)` — pendentes de
 pagamento não cancelados + pagos sem `microvix_pedido_id` (fora
 `lancado_manual`); prévia "10 (Linx: 12 − 2 no site)" / "0 (Linx: -167)"; o
-espelho guarda o saldo real. Parse da resposta do Importador é PALPITE —
-confirmar no primeiro envio real (`avaliaRespostaImporta`/`pareceTemporario`).
+espelho guarda o saldo real. Resposta do Importador no formato real
+(confirmado no pedido #58, fixture `importa-sucesso.xml`), lida por local-name:
+sucesso = `Succeeded` true + todo `ResultadoChamada` true + `MensagemErro` e
+`Mensagem` vazias; formato desconhecido nunca vira sucesso.
 
 ## Clube de assinatura
 

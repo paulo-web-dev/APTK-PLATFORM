@@ -1172,7 +1172,23 @@ Depois: `php artisan config:cache`. Primeiro pedido real: abrir a trilha em
 palpite; ajustar `avaliaRespostaImporta`/`pareceTemporario` se o formato
 for outro).
 
-### 24.3 Pendências
+### 24.3 Primeiro envio real (pedido #58)
+
+O `B2CCadastraClientes` funcionou, mas a resposta do Importador veio num
+formato diferente do palpite (`Succeeded`, `importacaoLOG/ResultadoChamada`,
+`MensagemErro`, `Mensagem`) e o pedido parou em erro. Parse refeito sobre a
+resposta real. A resposta ecoava o envelope enviado em `<b:XML>`, com chave e
+senha em texto puro, e isso foi gravado em `microvix_logs`: agora é omitido
+antes de gravar. **Depois do deploy:** `php artisan microvix:limpar-segredos-log`.
+A cidade do pedido veio como sigla ("VP"): o checkout passou a exigir o nome
+por extenso e o envio cai em manual com cidade inválida.
+
+Reenvio do #58 pelo botão do admin: recomeça pelo `B2CConsultaPedidos`; sem
+pedido na Linx, refaz o cadastro do cliente (`atualizar_por_cpf=1`, mesmo
+`cod_cliente`: atualiza, não duplica) e do endereço (`id_endereco_entrega` =
+id do pedido, chave primária) antes do pedido e dos itens.
+
+### 24.4 Pendências
 
 - Estorno/chargeback de pedido já enviado não cancela na Linx (leva própria).
 - `tipo_frete` segue fixo em `MICROVIX_ID_TIPO_ENCOMENDA` (99), sem mapear

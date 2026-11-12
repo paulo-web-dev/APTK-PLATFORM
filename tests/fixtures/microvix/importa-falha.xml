@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- PALPITE (ver importa-sucesso.xml): recusa de negócio do Importador. -->
-<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-  <s:Body>
-    <ImportarResponse xmlns="http://tempuri.org/">
-      <ImportarResult xmlns:a="http://schemas.datacontract.org/2004/07/Linx.Microvix.WebApi.Importacao" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
-        <a:Codigo>400</a:Codigo>
-        <a:Descricao>Plano de pagamento informado nao existe no portal</a:Descricao>
-        <a:Sucesso>false</a:Sucesso>
-      </ImportarResult>
-    </ImportarResponse>
-  </s:Body>
-</s:Envelope>
+<!-- Erro de negócio no formato REAL do Importador (ver importa-sucesso.xml):
+     ResultadoChamada false + MensagemErro preenchida. Montada a partir da
+     resposta de sucesso; o texto do erro é exemplo. -->
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><ImportarResponse xmlns="http://tempuri.org/"><ImportarResult xmlns:a="http://schemas.datacontract.org/2004/07/Linx.Microvix.WebApi.Importacao.Api" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"><a:Mensagem xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays"><b:string>Registro 1 nao importado</b:string></a:Mensagem><a:Succeeded>true</a:Succeeded><a:importacaoLOG xmlns:b="http://schemas.datacontract.org/2004/07/Linx.Microvix.WebApi.Importacao.Entities"><b:Chave>CHAVE-PLACEHOLDER-0000-0000</b:Chave><b:DataHoraExecucao>2026-11-12T16:41:07.833</b:DataHoraExecucao><b:IdComando>455</b:IdComando><b:IdPortal>18443</b:IdPortal><b:MensagemErro>Plano de pagamento informado nao existe no portal</b:MensagemErro><b:NomeComando>B2CCadastraPedido</b:NomeComando><b:ResultadoChamada>false</b:ResultadoChamada><b:TempoExecucao>1904</b:TempoExecucao><b:XML>&lt;soapenv:Envelope&gt;&lt;linx2:Pass&gt;SENHA-PLACEHOLDER&lt;/linx2:Pass&gt;&lt;/soapenv:Envelope&gt;</b:XML></a:importacaoLOG></ImportarResult></ImportarResponse></s:Body></s:Envelope>

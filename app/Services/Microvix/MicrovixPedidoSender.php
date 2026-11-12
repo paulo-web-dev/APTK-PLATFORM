@@ -249,77 +249,90 @@ class MicrovixPedidoSender
     }
 
     /**
-     * ⚠️ FORMATO DA RESPOSTA DO IMPORTADOR NÃO CONFIRMADO. A doc (seção 8)
-     * só mostra o request e nunca fizemos um importa real — as fixtures dos
-     * testes são PALPITE no padrão dos WS Linx. Por isso o parse é
-     * tolerante e pessimista: procura um indicador de sucesso/falha em
-     * qualquer nível da resposta; se não reconhecer o formato, trata como
-     * ERRO para revisão humana (resposta crua fica em microvix_logs).
-     * Falso positivo é pior que falso negativo: um "sucesso" inventado
-     * marca o pedido como integrado sem ele existir no ERP.
-     * CONFIRMAR este parse no primeiro envio real e ajustar.
+     * Formato REAL do Importador.svc (confirmado no 1º envio, pedido #58 —
+     * fixture tests/Fixtures/microvix/importa-sucesso.xml). Lido por
+     * local-name (o client já tira os prefixos de namespace):
+     *
+     *   ImportarResult
+     *     Mensagem         (lista de string; vazia no sucesso)
+     *     Succeeded        true|false
+     *     importacaoLOG    (um por registro?) ResultadoChamada, MensagemErro, ...
+     *
+     * Sucesso = Succeeded true E todo ResultadoChamada true E nenhuma
+     * MensagemErro/Mensagem. Qualquer falha explícita = erro de negócio (ou
+     * temporário, se o texto for de pool/timeout). Formato sem Succeeded e
+     * sem ResultadoChamada continua NÃO presumindo sucesso.
      */
     protected function avaliaRespostaImporta(array $resposta, string $comando, Order $order): void
     {
-        $sucesso = $this->procuraIndicadorDeSucesso($resposta);
+        $succeeded = $this->valores($resposta, 'Succeeded');
+        $resultados = $this->valores($resposta, 'ResultadoChamada');
 
-        if ($sucesso === true) {
+        if ($succeeded === [] || $resultados === []) {
+            throw new MicrovixNegocioException(
+                "Pedido #{$order->id}: resposta do Importador em formato não reconhecido para {$comando} — "
+                    .'NÃO presumindo sucesso. Revisar a resposta crua em microvix_logs e ajustar '
+                    .'MicrovixPedidoSender::avaliaRespostaImporta().'
+            );
+        }
+
+        $mensagens = array_values(array_unique(array_merge(
+            $this->valores($resposta, 'MensagemErro'),
+            $this->valores($resposta, 'Mensagem'),
+        )));
+        $verdadeiro = fn (string $v) => mb_strtolower($v) === 'true';
+
+        $sucesso = array_filter($succeeded, $verdadeiro) === $succeeded
+            && array_filter($resultados, $verdadeiro) === $resultados
+            && $mensagens === [];
+
+        if ($sucesso) {
             return;
         }
 
-        $detalhe = $this->procuraTexto($resposta, ['descricao', 'mensagem', 'message', 'motivo', 'faultstring'])
-            ?? 'sem descrição na resposta';
+        $detalhe = $mensagens === []
+            ? 'Succeeded='.implode(',', $succeeded).', ResultadoChamada='.implode(',', $resultados).' sem mensagem'
+            : implode('; ', $mensagens);
 
-        if ($sucesso === false && $this->pareceTemporario($detalhe)) {
+        if ($this->pareceTemporario($detalhe)) {
             // Pool/timeout do lado da Linx: retry com backoff (o job recomeça
             // pelo B2CConsultaPedidos, sem duplicar).
             throw new MicrovixException("Pedido #{$order->id}: {$comando} — erro temporário da Linx: {$detalhe}.");
         }
 
-        if ($sucesso === false) {
-            throw new MicrovixNegocioException(
-                "Pedido #{$order->id}: {$comando} recusado pelo ERP — {$detalhe}. Resposta completa em microvix_logs."
-            );
-        }
-
         throw new MicrovixNegocioException(
-            "Pedido #{$order->id}: resposta do Importador em formato não reconhecido para {$comando} — "
-                .'NÃO presumindo sucesso. Revisar a resposta crua em microvix_logs e ajustar '
-                .'MicrovixPedidoSender::avaliaRespostaImporta() (formato nunca foi confirmado em envio real).'
+            "Pedido #{$order->id}: {$comando} recusado pela Linx — {$detalhe}. Resposta completa em microvix_logs."
         );
     }
 
-    /** true/false se achar um indicador booleano de sucesso; null se o formato for desconhecido. */
-    protected function procuraIndicadorDeSucesso(array $dados): ?bool
+    /**
+     * Todos os textos não vazios sob as chaves de nome $chave (qualquer
+     * profundidade; elemento vazio vem do SimpleXML como []). Lista de
+     * <string> (Mensagem) é achatada.
+     *
+     * @return list<string>
+     */
+    protected function valores(array $dados, string $chave): array
     {
-        $achou = null;
+        $achados = [];
 
-        array_walk_recursive($dados, function ($valor, $chave) use (&$achou) {
-            if (! in_array(mb_strtolower((string) $chave), ['sucesso', 'success', 'responsesuccess'], true)) {
-                return;
+        foreach ($dados as $k => $v) {
+            if ((string) $k === $chave) {
+                if (is_array($v)) {
+                    array_walk_recursive($v, function ($folha) use (&$achados) {
+                        if (is_scalar($folha) && trim((string) $folha) !== '') {
+                            $achados[] = trim((string) $folha);
+                        }
+                    });
+                } elseif (is_scalar($v) && trim((string) $v) !== '') {
+                    $achados[] = trim((string) $v);
+                }
+            } elseif (is_array($v)) {
+                array_push($achados, ...$this->valores($v, $chave));
             }
-            $v = mb_strtolower(trim((string) $valor));
-            if (in_array($v, ['false', '0'], true)) {
-                $achou = false;               // qualquer falha explícita vence
-            } elseif (in_array($v, ['true', '1'], true) && $achou !== false) {
-                $achou = true;
-            }
-        });
+        }
 
-        return $achou;
-    }
-
-    protected function procuraTexto(array $dados, array $chaves): ?string
-    {
-        $texto = null;
-
-        array_walk_recursive($dados, function ($valor, $chave) use (&$texto, $chaves) {
-            if ($texto === null && in_array(mb_strtolower((string) $chave), $chaves, true) && trim((string) $valor) !== '') {
-                $texto = trim((string) $valor);
-            }
-        });
-
-        return $texto;
+        return $achados;
     }
 
     /**

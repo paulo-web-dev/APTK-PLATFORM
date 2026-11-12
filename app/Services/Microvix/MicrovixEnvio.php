@@ -5,6 +5,7 @@ namespace App\Services\Microvix;
 use App\Jobs\EnviarPedidoMicrovix;
 use App\Models\MicrovixProduct;
 use App\Models\Order;
+use App\Rules\Cidade;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -155,6 +156,8 @@ class MicrovixEnvio
         ], fn ($v) => trim((string) $v) === ''));
         if ($faltando) {
             $motivos[] = 'endereço incompleto (falta '.implode(', ', $faltando).')';
+        } elseif (! Cidade::valida($order->ship_city)) {
+            $motivos[] = 'cidade inválida ("'.trim((string) $order->ship_city).'")';
         }
 
         return $motivos ? implode('; ', $motivos) : null;

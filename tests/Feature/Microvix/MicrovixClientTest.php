@@ -339,4 +339,47 @@ class MicrovixClientTest extends TestCase
 
         $this->assertSame(1, $tentativas);
     }
+
+    /* -----------------------------------------------------------------
+     | Segredos ecoados pelo Importador nunca vão pro log
+     ------------------------------------------------------------------ */
+
+    public function test_resposta_do_importador_vai_pro_log_sem_o_xml_ecoado_e_com_a_chave_mascarada(): void
+    {
+        Http::fake(['*' => Http::response(file_get_contents(base_path('tests/Fixtures/microvix/importa-sucesso.xml')))]);
+
+        $this->client()->importa('B2CCadastraClientes', [['cod_cliente' => 1]]);
+
+        $resposta = MicrovixLog::sole()->response;
+        $this->assertStringContainsString('<b:XML>[omitido]</b:XML>', $resposta);
+        $this->assertStringContainsString('<b:Chave>***</b:Chave>', $resposta);
+        $this->assertStringNotContainsString('SENHA-PLACEHOLDER', $resposta);
+        $this->assertStringNotContainsString('CHAVE-PLACEHOLDER', $resposta);
+        // O resto da resposta fica para diagnóstico.
+        $this->assertStringContainsString('<b:ResultadoChamada>true</b:ResultadoChamada>', $resposta);
+    }
+
+    public function test_comando_limpa_os_registros_antigos_e_e_idempotente(): void
+    {
+        $sujo = file_get_contents(base_path('tests/Fixtures/microvix/importa-sucesso.xml'));
+        $log = MicrovixLog::create([
+            'direction' => 'in', 'method' => 'B2CCadastraClientes', 'request' => '<linx2:Pass>senha-crua</linx2:Pass>',
+            'response' => $sujo, 'success' => false, 'created_at' => now()->subDay(),
+        ]);
+        $limpo = MicrovixLog::create(['direction' => 'out', 'method' => 'B2CConsultaEmpresas', 'request' => '<x/>', 'response' => '<y/>', 'success' => true]);
+
+        $this->artisan('microvix:limpar-segredos-log', ['--dry-run' => true])->expectsOutputToContain('1 de 2 registro(s) seriam limpos')->assertSuccessful();
+        $this->assertSame($sujo, $log->fresh()->response);
+
+        $this->artisan('microvix:limpar-segredos-log')->expectsOutputToContain('1 de 2 registro(s) limpos')->assertSuccessful();
+
+        $log->refresh();
+        $this->assertStringContainsString('<b:XML>[omitido]</b:XML>', $log->response);
+        $this->assertStringContainsString('<b:Chave>***</b:Chave>', $log->response);
+        $this->assertStringNotContainsString('SENHA-PLACEHOLDER', $log->response);
+        $this->assertSame('<linx2:Pass>***</linx2:Pass>', $log->request);
+        $this->assertSame('<y/>', $limpo->fresh()->response);
+
+        $this->artisan('microvix:limpar-segredos-log')->expectsOutputToContain('0 de 2 registro(s) limpos')->assertSuccessful();
+    }
 }

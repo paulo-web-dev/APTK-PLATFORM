@@ -366,6 +366,115 @@ class MicrovixPedidoSenderTest extends TestCase
         // Métodos DIFERENTES podem dividir o segundo (a doc só proíbe o MESMO).
         $this->assertSame($sender->segundos['B2CCadastraClientes'][0], $sender->segundos['B2CCadastraPedido'][0]);
     }
+
+    /* -----------------------------------------------------------------
+     | Formato real do Importador (confirmado no pedido #58)
+     ------------------------------------------------------------------ */
+
+    /** Importador respondendo um XML montado a partir da fixture real. */
+    protected function fakeImportador(string $resposta): void
+    {
+        Http::fake([
+            '*api/integracao*' => Http::response($this->fixtureMicrovix('pedidos-vazio')),
+            '*Importador.svc*' => Http::response($resposta),
+        ]);
+    }
+
+    protected function sucessoReal(): string
+    {
+        return $this->fixtureMicrovix('importa-sucesso');
+    }
+
+    public function test_resposta_real_de_sucesso_e_reconhecida(): void
+    {
+        $this->fakeImportador($this->sucessoReal());
+
+        $this->assertSame('enviado', $this->sender()->enviar($this->pedidoParaEnvio('pix')));
+    }
+
+    public function test_succeeded_false_sem_mensagem_e_erro_de_negocio(): void
+    {
+        $this->fakeImportador(str_replace('<a:Succeeded>true</a:Succeeded>', '<a:Succeeded>false</a:Succeeded>', $this->sucessoReal()));
+
+        $this->expectException(MicrovixNegocioException::class);
+        $this->expectExceptionMessage('Succeeded=false');
+        $this->sender()->enviar($this->pedidoParaEnvio('pix'));
+    }
+
+    public function test_resultado_chamada_false_e_erro_de_negocio(): void
+    {
+        $this->fakeImportador(str_replace('<b:ResultadoChamada>true</b:ResultadoChamada>', '<b:ResultadoChamada>false</b:ResultadoChamada>', $this->sucessoReal()));
+
+        $this->expectException(MicrovixNegocioException::class);
+        $this->sender()->enviar($this->pedidoParaEnvio('pix'));
+    }
+
+    public function test_mensagem_com_itens_mesmo_com_succeeded_true_e_erro_e_junta_os_textos(): void
+    {
+        $this->fakeImportador(str_replace(
+            '<a:Mensagem xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/>',
+            '<a:Mensagem xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays"><b:string>Cliente sem cidade</b:string><b:string>CEP invalido</b:string></a:Mensagem>',
+            $this->sucessoReal(),
+        ));
+
+        try {
+            $this->sender()->enviar($this->pedidoParaEnvio('pix'));
+            $this->fail('Deveria ter lançado MicrovixNegocioException.');
+        } catch (MicrovixNegocioException $e) {
+            $this->assertStringContainsString('Cliente sem cidade; CEP invalido', $e->getMessage());
+        }
+    }
+
+    public function test_mensagem_erro_preenchida_junta_com_mensagem(): void
+    {
+        $this->fakeImportador($this->fixtureMicrovix('importa-falha'));
+
+        try {
+            $this->sender()->enviar($this->pedidoParaEnvio('pix'));
+            $this->fail('Deveria ter lançado MicrovixNegocioException.');
+        } catch (MicrovixNegocioException $e) {
+            $this->assertStringContainsString('Plano de pagamento informado nao existe no portal; Registro 1 nao importado', $e->getMessage());
+        }
+    }
+
+    public function test_succeeded_true_sem_importacao_log_nao_presume_sucesso(): void
+    {
+        $this->fakeImportador(preg_replace('#<a:importacaoLOG.*</a:importacaoLOG>#s', '', $this->sucessoReal()));
+
+        $this->expectException(MicrovixNegocioException::class);
+        $this->expectExceptionMessage('formato não reconhecido');
+        $this->sender()->enviar($this->pedidoParaEnvio('pix'));
+    }
+
+    public function test_cidade_em_sigla_fica_manual(): void
+    {
+        Http::fake();
+        $order = $this->pedidoParaEnvio('pix', ['ship_city' => 'VP']);
+
+        $this->assertSame('manual', $this->sender()->enviar($order));
+        Http::assertNothingSent();
+        $this->assertStringContainsString('cidade inválida ("VP")', $order->fresh()->microvix_envio_erro);
+    }
+
+    /* -----------------------------------------------------------------
+     | Reenvio do pedido em erro (caso do #58)
+     ------------------------------------------------------------------ */
+
+    public function test_reenvio_de_pedido_em_erro_recomeca_pela_consulta_e_cadastra_cliente_por_cpf(): void
+    {
+        $this->fakeFeliz();
+        // Estado do #58: cliente já foi cadastrado na Linx, o parse antigo marcou erro.
+        $order = $this->pedidoParaEnvio('pix', ['microvix_envio_estado' => 'erro', 'microvix_envio_erro' => 'formato não reconhecido']);
+
+        $this->assertSame('enviado', $this->sender()->enviar($order));
+
+        $corpos = $this->corposEnviados();
+        $this->assertStringContainsString('B2CConsultaPedidos', $corpos[0]);
+        $this->assertStringContainsString('B2CCadastraClientes', $corpos[1]);
+        // Repetir o cadastro do cliente é seguro: atualiza pelo CPF, não duplica.
+        $this->assertStringContainsString($this->param('atualizar_por_cpf', '1'), $corpos[1]);
+        $this->assertStringContainsString($this->param('cod_cliente', (string) $order->user_id), $corpos[1]);
+    }
 }
 
 /** Relógio de segundo virtual: nada dorme de verdade nos testes. */

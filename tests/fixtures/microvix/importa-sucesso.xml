@@ -1,15 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- PALPITE do formato de resposta do Importador.svc (padrão dos WS Linx).
-     A doc (seção 8) só mostra o request e nunca houve importa real.
-     Confirmar no primeiro envio real e ajustar fixture + parse. -->
-<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-  <s:Body>
-    <ImportarResponse xmlns="http://tempuri.org/">
-      <ImportarResult xmlns:a="http://schemas.datacontract.org/2004/07/Linx.Microvix.WebApi.Importacao" xmlns:i="http://www.w3.org/2001/XMLSchema-instance">
-        <a:Codigo>200</a:Codigo>
-        <a:Descricao>Registros importados com sucesso</a:Descricao>
-        <a:Sucesso>true</a:Sucesso>
-      </ImportarResult>
-    </ImportarResponse>
-  </s:Body>
-</s:Envelope>
+<!-- Resposta REAL do Importador.svc (B2CCadastraClientes do pedido #58,
+     12/11/2026), com a chave e o envelope ecoado trocados por placeholders. -->
+<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><ImportarResponse xmlns="http://tempuri.org/"><ImportarResult xmlns:a="http://schemas.datacontract.org/2004/07/Linx.Microvix.WebApi.Importacao.Api" xmlns:i="http://www.w3.org/2001/XMLSchema-instance"><a:Mensagem xmlns:b="http://schemas.microsoft.com/2003/10/Serialization/Arrays"/><a:Succeeded>true</a:Succeeded><a:importacaoLOG xmlns:b="http://schemas.datacontract.org/2004/07/Linx.Microvix.WebApi.Importacao.Entities"><b:Chave>CHAVE-PLACEHOLDER-0000-0000</b:Chave><b:DataHoraExecucao>2026-11-12T16:41:07.833</b:DataHoraExecucao><b:IdComando>454</b:IdComando><b:IdPortal>18443</b:IdPortal><b:MensagemErro/><b:NomeComando>B2CCadastraClientes</b:NomeComando><b:ResultadoChamada>true</b:ResultadoChamada><b:TempoExecucao>2088</b:TempoExecucao><b:XML>&lt;soapenv:Envelope&gt;&lt;linx2:Pass&gt;SENHA-PLACEHOLDER&lt;/linx2:Pass&gt;&lt;linx1:Name&gt;chave&lt;/linx1:Name&gt;&lt;linx1:Value&gt;CHAVE-PLACEHOLDER-0000-0000&lt;/linx1:Value&gt;&lt;/soapenv:Envelope&gt;</b:XML></a:importacaoLOG></ImportarResult></ImportarResponse></s:Body></s:Envelope>

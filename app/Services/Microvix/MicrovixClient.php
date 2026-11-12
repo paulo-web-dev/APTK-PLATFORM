@@ -158,7 +158,7 @@ class MicrovixClient
             'order_id'    => $orderId,
             'direction'   => $direction,
             'method'      => $method,
-            'request'     => $this->mascaraCredenciais($envelope),
+            'request'     => self::limparSegredos($envelope),
             'response'    => null,
             'http_status' => null,
             'success'     => true,
@@ -425,9 +425,10 @@ XML,
             'order_id'    => $this->orderId,
             'direction'   => $direction,
             'method'      => $method,
-            'request'     => $this->mascaraCredenciais($request),
-            // A resposta pode ecoar o Command enviado (com a chave) — mascara também.
-            'response'    => $response === null ? null : $this->mascaraCredenciais($response),
+            'request'     => self::limparSegredos($request),
+            // A resposta do Importador ecoa o envelope enviado (<b:XML>, com
+            // chave e senha em texto puro) e a chave (<b:Chave>) — limpa tudo.
+            'response'    => $response === null ? null : self::limparSegredos($response),
             'http_status' => $httpStatus,
             'success'     => $success,
             'error'       => $error,
@@ -435,7 +436,14 @@ XML,
         ]);
     }
 
-    protected function mascaraCredenciais(string $xml): string
+    /**
+     * Tudo que vai pra microvix_logs passa por aqui (e o
+     * microvix:limpar-segredos-log aplica o mesmo nos registros antigos):
+     * senha/chave dos envelopes mascaradas, <XML> ecoado pelo Importador
+     * trocado por "[omitido]" e <Chave> do importacaoLOG mascarada.
+     * Elementos casados por local-name (qualquer prefixo de namespace).
+     */
+    public static function limparSegredos(string $xml): string
     {
         // Envelope de saída: atributo password + <Parameter id="chave">.
         $xml = preg_replace('/password="[^"]*"/', 'password="***"', $xml);
@@ -448,6 +456,10 @@ XML,
             '$1***$2',
             $xml,
         );
+
+        // Resposta do Importador: envelope ecoado (escapado) e a chave.
+        $xml = preg_replace('/(<(?:[\w.-]+:)?XML(?:\s[^>]*)?>)[\s\S]*?(<\/(?:[\w.-]+:)?XML>)/', '$1[omitido]$2', $xml);
+        $xml = preg_replace('/(<(?:[\w.-]+:)?Chave(?:\s[^>]*)?>)[^<]*(<\/(?:[\w.-]+:)?Chave>)/', '$1***$2', $xml);
 
         return $xml;
     }
