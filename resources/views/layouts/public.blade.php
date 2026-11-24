@@ -79,6 +79,9 @@
   .cart-btn { position: relative; }
   .cart-count { position: absolute; top: 2px; right: 2px; background: var(--color-primary); color: var(--color-text-inverse); font-family: var(--font-mono); font-size: 10px; font-weight: 500; min-width: 16px; height: 16px; border-radius: 8px; display: grid; place-items: center; padding: 0 4px; }
   .nav-toggle { display: none; }
+  .cupom-aviso { border-bottom: 1px solid var(--color-border); font-family: var(--font-mono); font-size: var(--text-sm); padding-block: 10px; text-align: center; }
+  .cupom-aviso.is-ok { color: var(--color-success); }
+  .cupom-aviso.is-erro { color: var(--color-text-muted); }
 
   /* ---- Banda escura institucional (feature) — Cuba Libre + Scotch ---- */
   .feature-band { background: var(--color-bg); color: var(--color-text); text-align: center; border-top: 1px solid var(--color-border); }
@@ -232,6 +235,13 @@
       </div>
     </div>
   </header>
+
+  {{-- Link de campanha ?cupom= (AplicarCupomDaUrl): aviso discreto, uma vez. --}}
+  @if (is_array($cupomAviso = session('cupom_aviso')))
+    <div class="cupom-aviso {{ $cupomAviso['ok'] ? 'is-ok' : 'is-erro' }}" role="status">
+      <div class="container-aptk">{{ $cupomAviso['mensagem'] }}</div>
+    </div>
+  @endif
 
   <main>
     @yield('content')

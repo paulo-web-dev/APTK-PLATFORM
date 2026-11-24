@@ -190,6 +190,14 @@ class MicrovixPedidoSender
             'ecommerce_origem' => mb_substr((string) config('app.url'), 0, 200),
         ];
 
+        // Cupom: o desconto vai no cabeçalho (campo desconto) e os itens com
+        // o preço cheio; o código vai em descricao_cupom_desconto (doc
+        // B2CCadastraPedido). Conferir no 1º pedido real com cupom se a nota
+        // sai com o desconto certo (ESTADO-ATUAL §25).
+        if (filled($order->coupon_code)) {
+            $payload['descricao_cupom_desconto'] = mb_substr((string) $order->coupon_code, 0, 160);
+        }
+
         // Parâmetros de faturamento opcionais: só entram se descobertos
         // (microvix:descobrir) e preenchidos no .env.
         foreach ([

@@ -46,6 +46,12 @@ class OrderController extends Controller
             MicrovixEnvio::filtrar($query, $microvix);
         }
 
+        // Filtro por cupom (código do snapshot do pedido).
+        $cupom = \App\Services\CouponService::normalizar($request->query('cupom'));
+        if ($cupom !== '') {
+            $query->where('coupon_code', $cupom);
+        }
+
         // Busca: CPF (com ou sem pontuação), número (APTK-00012 ou 12), nome ou e-mail.
         $search = trim((string) $request->query('q'));
         if ($search !== '') {
@@ -75,6 +81,8 @@ class OrderController extends Controller
             'aConferir' => ReconciliacaoPagamento::aConferir()->count(),
             'microvix'  => $microvix,
             'microvixLigado' => MicrovixEnvio::ligado(),
+            'cupom'     => $cupom,
+            'cupons'    => Order::whereNotNull('coupon_code')->distinct()->orderBy('coupon_code')->pluck('coupon_code'),
         ]);
     }
 

@@ -39,6 +39,8 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            // ?cupom=CODIGO em qualquer GET (link de campanha).
+            \App\Http\Middleware\AplicarCupomDaUrl::class,
         ],
 
         'api' => [

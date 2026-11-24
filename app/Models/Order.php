@@ -15,6 +15,9 @@ class Order extends Model
         'status',
         'subtotal',
         'discount',
+        'coupon_id',
+        'coupon_code',
+        'customer_email',
         'shipping_cost',
         'total',
         'payment_method',
@@ -188,6 +191,11 @@ class Order extends Model
     public function mesclarPaymentDetails(array $novos): void
     {
         $this->update(['payment_details' => array_merge($this->payment_details ?? [], $novos)]);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function user(): BelongsTo

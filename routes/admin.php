@@ -56,6 +56,7 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/cupons', [CouponController::class, 'index'])->name('coupons.index');
     Route::get('/cupons/novo', [CouponController::class, 'create'])->name('coupons.create');
     Route::post('/cupons', [CouponController::class, 'store'])->name('coupons.store');
+    Route::get('/cupons/{coupon}', [CouponController::class, 'show'])->name('coupons.show');
     Route::get('/cupons/{coupon}/editar', [CouponController::class, 'edit'])->name('coupons.edit');
     Route::put('/cupons/{coupon}', [CouponController::class, 'update'])->name('coupons.update');
     Route::delete('/cupons/{coupon}', [CouponController::class, 'destroy'])->name('coupons.destroy');

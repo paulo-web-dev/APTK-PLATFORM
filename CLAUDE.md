@@ -253,8 +253,29 @@ manual de status no admin não dispara. Fila `notificacoes` com `afterCommit`
 centavos; os pagamentos cobram o pedido da Appmax (`order_id`), sem valor
 próprio — parcelado divide o mesmo total. Frete = `FreteService::cotar`, a
 mesma função do `/frete/cotar` da tela, do carrinho e do CEP enviados; valor
-do front nunca entra. **Cupom não é aplicado no checkout** (`discount` sempre
-0; os cupons do admin ainda não têm uso na loja).
+do front nunca entra. Com cupom, `discount` = o desconto gravado no pedido
+(ver Cupons).
+
+**Cupons** (leva 19): regras só em `CouponService::avaliar` (um lugar). Sessão
+guarda só o código (`session('cupom')`), reavaliado no carrinho, checkout e
+fechamento: inativar/expirar vale na hora. Um por pedido. Desconto só nos
+produtos (garrafa custom inclusa), nunca no frete; % arredonda em 2 casas, fixo
+≤ subtotal. Uso = pedido com o cupom não cancelado (Pix pendente segura;
+cancelado libera). Por cliente e primeira compra comparam `ship_cpf` (só
+dígitos) e e-mail normalizado (`orders.customer_email`, snapshot, ou o da
+conta); primeira compra = pedido `processing|paid|shipped|delivered`.
+`placeFromCart` reavalia com `lockForUpdate` na linha do cupom (antes do lock
+de produtos) e com o CPF do form; recusado → `CupomRecusadoException`, nada
+gravado, volta ao checkout com o motivo (nunca cobra diferente do que a tela
+mostrou). Pedido grava `coupon_id`, `coupon_code`, `discount`. Link
+`?cupom=X` em qualquer GET (`AplicarCupomDaUrl`, grupo web): guarda e
+redireciona sem o parâmetro, preservando os demais; raiz de domínio de marca
+com `?cupom=` leva 301 pra APTK. Linx: `desconto` + `descricao_cupom_desconto`
+no cabeçalho, itens com preço cheio. Admin: datas `dd/mm/aaaa hh:mm` em
+Brasília (UTC no banco), relatório em `admin.coupons.show`, filtro `?cupom=`
+nos pedidos, cupom usado não se apaga (inativar). Seed dos eventos:
+`db:seed --class=CuponsEventosNov2026Seeder --force` (idempotente, não
+sobrescreve). Clube não usa cupom.
 
 **Linx Microvix ERP** (WS B2C): fase 1 implementada — espelho somente-leitura.
 Doc em `docs/linx-microvix-ws-b2c.md`; **em divergência de nome de campo, vale o
@@ -390,4 +411,4 @@ qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 - Não rodar `migrate:fresh` sem avisar — apaga dados locais.
 - Depois de mexer em rota, rodar `php artisan route:clear`.
 - Mudanças do cliente vêm agrupadas em "levas" numeradas, cada uma com escopo fechado
-  antes da execução. As levas 01 a 18 já foram concluídas.
+  antes da execução. As levas 01 a 19 já foram concluídas.

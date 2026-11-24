@@ -42,6 +42,8 @@ Route::get('/carrinho', [CartController::class, 'index'])->name('cart.index');
 Route::post('/carrinho/adicionar', [CartController::class, 'add'])->name('cart.add');
 Route::patch('/carrinho/atualizar', [CartController::class, 'update'])->name('cart.update');
 Route::delete('/carrinho/remover', [CartController::class, 'remove'])->name('cart.remove');
+Route::post('/carrinho/cupom', [CartController::class, 'aplicarCupom'])->name('cart.coupon.apply');
+Route::delete('/carrinho/cupom', [CartController::class, 'removerCupom'])->name('cart.coupon.remove');
 
 /*
 |--------------------------------------------------------------------------

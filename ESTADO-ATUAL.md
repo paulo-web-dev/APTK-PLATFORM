@@ -1196,6 +1196,41 @@ id do pedido, chave primária) antes do pedido e dos itens.
 - `microvix:sync` e `microvix:conciliar` não estão no scheduler: a regra de
   estoque só vale quando a conciliação roda.
 
+## 25. Leva 19 — cupons de ponta a ponta (23/11/2026)
+
+Antes: o CRUD do admin existia, mas `OrderService::placeFromCart` fixava
+`$discount = 0.0` e nenhuma tela lia cupom. Appmax (`discount_value`) e Linx
+(`desconto`) já levavam `orders.discount`. Regras no CLAUDE.md (Cupons).
+
+Caso imediato: MITRE15 e COMMUNIT15 (15%, só primeira compra, 1 por cliente,
+até 31/12/2026 23:59). Depois do deploy:
+
+```
+php artisan migrate --force
+php artisan db:seed --class=CuponsEventosNov2026Seeder --force
+```
+
+Links do mailing: `https://aptk.unysystens.com.br/?cupom=MITRE15` (ou qualquer
+página da loja com `?cupom=`; `utm_*` são preservados).
+
+### 25.1 Conferir no primeiro pedido real com cupom (Linx)
+
+O desconto vai no cabeçalho do `B2CCadastraPedido` (`desconto` +
+`descricao_cupom_desconto`) e os itens com o preço cheio. A doc não diz se a
+Linx rateia o desconto entre os itens na nota. **No primeiro pedido pago com
+cupom: abrir a trilha em `/admin/microvix/pedidos/{id}` e conferir na Linx se
+a nota sai com o desconto certo** (total = itens − desconto + frete). Se não
+ratear, mandar o desconto por item (`vl_unitario` líquido) — leva própria.
+
+### 25.2 Limites aceitos
+
+- Duas compras simultâneas do mesmo CPF com cupons de primeira compra
+  DIFERENTES (ex.: MITRE15 e COMMUNIT15 ao mesmo tempo) travam linhas
+  diferentes e podem passar as duas.
+- `min_order` compara só o subtotal dos produtos (sem frete).
+- Datas de cupom gravadas antes da leva 19 estavam em horário local; agora
+  são UTC (diferença de 3 h em cupom antigo, se houver).
+
 ## 7. Histórico — varredura de 2026-08-20 (mantida como referência)
 
 > Snapshot ANTERIOR ao commit `0c07f3a` (Microvix fase 1). O que mudou desde:

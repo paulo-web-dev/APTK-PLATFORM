@@ -21,8 +21,8 @@ use Tests\TestCase;
  * (/frete/cotar) — o servidor recalcula pela mesma função, do mesmo
  * carrinho e CEP, e nunca aceita valor vindo do front.
  *
- * Desconto: o checkout ainda não aplica cupom (discount sempre 0); a
- * fórmula com desconto é travada no AppmaxService::createOrder.
+ * Sem cupom, discount = 0 aqui; com cupom, a mesma fórmula é travada no
+ * CupomTest (Pix, cartão parcelado e boleto).
  */
 class ValorCobradoTest extends TestCase
 {

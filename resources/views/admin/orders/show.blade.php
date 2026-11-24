@@ -144,7 +144,11 @@
                     <div class="kv"><span class="k">Subtotal</span><span class="v">R$ {{ number_format($order->subtotal, 2, ',', '.') }}</span></div>
                     <div class="kv"><span class="k">Frete</span><span class="v">R$ {{ number_format($order->shipping_cost, 2, ',', '.') }}</span></div>
                     <div class="kv"><span class="k">Opção de frete</span><span class="v">{{ $order->shippingLabel() ?? '—' }}</span></div>
-                    <div class="kv"><span class="k">Desconto</span><span class="v">R$ {{ number_format($order->discount, 2, ',', '.') }}</span></div>
+                    @if ($order->coupon_code)
+                        <div class="kv"><span class="k">Cupom</span><span class="v">@if ($order->coupon_id)<a href="{{ route('admin.coupons.show', $order->coupon_id) }}" style="color:var(--color-primary);">{{ $order->coupon_code }}</a>@else{{ $order->coupon_code }}@endif · −{{ moeda_br($order->discount) }}</span></div>
+                    @else
+                        <div class="kv"><span class="k">Desconto</span><span class="v">R$ {{ number_format($order->discount, 2, ',', '.') }}</span></div>
+                    @endif
                     <div class="kv"><span class="k">Total</span><span class="v" style="color:var(--color-primary);">R$ {{ number_format($order->total, 2, ',', '.') }}</span></div>
                 </div>
             </div>

@@ -138,6 +138,7 @@ class PedidoNovo extends Mailable
             'itens'     => $itens,
             'subtotal'  => moeda_br($o->subtotal),
             'desconto'  => (float) $o->discount > 0 ? '− '.moeda_br($o->discount) : moeda_br(0),
+            'desconto_rotulo' => $o->coupon_code ? "Cupom {$o->coupon_code}" : 'Desconto',
             'frete_valor' => moeda_br($o->shipping_cost),
             'total'     => moeda_br($o->total),
             'pagamento' => [

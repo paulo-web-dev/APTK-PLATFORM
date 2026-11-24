@@ -38,8 +38,16 @@
         @if ($active)<input type="hidden" name="status" value="{{ $active }}">@endif
         @if ($microvix)<input type="hidden" name="microvix" value="{{ $microvix }}">@endif
         <input type="text" name="q" value="{{ $search }}" placeholder="Buscar por CPF, número, nome ou e-mail…" class="admin-input" style="flex:1;">
+        @if ($cupons->isNotEmpty() || $cupom !== '')
+            <select name="cupom" class="admin-select" aria-label="Filtrar por cupom" onchange="this.form.submit()">
+                <option value="">Todos os cupons</option>
+                @foreach ($cupons as $codigo)
+                    <option value="{{ $codigo }}" {{ $cupom === $codigo ? 'selected' : '' }}>Cupom {{ $codigo }}</option>
+                @endforeach
+            </select>
+        @endif
         <button type="submit" class="admin-btn">Buscar</button>
-        @if ($search !== '')
+        @if ($search !== '' || $cupom !== '')
             <a href="{{ route('admin.orders.index', array_filter(['status' => $active])) }}" class="admin-btn admin-btn--ghost">Limpar</a>
         @endif
     </form>
@@ -58,7 +66,7 @@
                         <td class="td-muted" data-label="Data">{{ data_br($o->created_at) }}</td>
                         <td class="td-num" data-label="Itens">{{ $o->items_count }}</td>
                         <td class="td-muted" data-label="Frete">{{ $o->shippingName() ?? '—' }}@if ($o->shipping_cost > 0) <span class="td-num">· R$ {{ number_format($o->shipping_cost, 2, ',', '.') }}</span>@endif</td>
-                        <td class="td-num" data-label="Total">R$ {{ number_format($o->total, 2, ',', '.') }}</td>
+                        <td class="td-num" data-label="Total">R$ {{ number_format($o->total, 2, ',', '.') }}@if ($o->coupon_code)<br><span class="td-muted" style="font-size:var(--text-xs);">cupom {{ $o->coupon_code }}</span>@endif</td>
                         <td class="td-muted" data-label="Pagamento">{{ $payLabels[$o->payment_method] ?? ($o->payment_method ?? '—') }}</td>
                         <td data-label="Status">@include('admin.partials.status', ['order' => $o])</td>
                     </tr>

@@ -35,7 +35,7 @@ ITENS
 @endforeach
 
 Subtotal: {!! $subtotal !!}
-Desconto: {!! $desconto !!}
+{!! $desconto_rotulo !!}: {!! $desconto !!}
 Frete: {!! $frete_valor !!}
 TOTAL: {!! $total !!}
 

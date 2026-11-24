@@ -1,7 +1,7 @@
 Pagamento confirmado {!! $numero !!}
 
 {!! $cliente !!}
-{!! $forma !!} · {!! $total !!}
+{!! $forma !!} · {!! $total !!}@if ($cupom) · {!! $cupom !!}@endif
 Confirmado em {!! $pago_em !!} (horário de Brasília)
 @if ($linx_manual)
 

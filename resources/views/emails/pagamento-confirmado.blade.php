@@ -26,7 +26,7 @@
                 <div style="font-size:20px;font-weight:bold;color:#3F8F63;">Pago</div>
                 <div style="padding-top:4px;font-size:15px;line-height:1.5;color:#020203;">
                     {{ $cliente }}<br>
-                    {{ $forma }} · <strong>{{ $total }}</strong><br>
+                    {{ $forma }} · <strong>{{ $total }}</strong>@if ($cupom) · {{ $cupom }}@endif<br>
                     Confirmado em {{ $pago_em }} (horário de Brasília)
                 </div>
             </td></tr>

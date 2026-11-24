@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Exceptions\AppmaxException;
+use App\Exceptions\CupomRecusadoException;
 use App\Exceptions\OutOfStockException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
@@ -12,6 +13,7 @@ use App\Services\AppmaxService;
 use App\Services\AvisoPedido;
 use App\Services\Microvix\MicrovixEnvio;
 use App\Services\CartService;
+use App\Services\CouponService;
 use App\Services\FreteService;
 use App\Services\OrderService;
 use App\Services\ReconciliacaoPagamento;
@@ -53,6 +55,7 @@ class CheckoutController extends Controller
         protected OrderService $orders,
         protected AppmaxService $appmax,
         protected FreteService $frete,
+        protected CouponService $cupons,
     ) {
     }
 
@@ -81,6 +84,8 @@ class CheckoutController extends Controller
             'precisaMaiorIdade'   => $user === null || ! $user->declarouMaioridade(),
             'items'               => $this->cart->items(),
             'total'               => $this->cart->total(),
+            // Prévia do cupom com o e-mail da conta (o CPF só chega no POST).
+            'cupom'               => $this->cupons->daSessao($this->cart->total(), $user?->email),
             'maxInstallments'     => max(1, (int) config('appmax.max_installments', 3)),
             'minInstallmentValue' => (float) config('appmax.min_installment_value', 30.00),
             // External ID da loja: obrigatório pra tokenização (doc Appmax JS).
@@ -123,10 +128,14 @@ class CheckoutController extends Controller
 
         // Parcelas: o limite depende do total COM frete (parcela mínima).
         // Mesmo cálculo do OrderService, antes de gravar qualquer coisa.
+        // Total = produtos − cupom + frete (o cupom é reavaliado com o CPF
+        // no fechamento; aqui vale a prévia, que só pode ser maior ou igual).
         if ($data['payment_method'] === 'cartao') {
             $items = $this->cart->items();
             $frete = $this->frete->opcao($items, (string) $data['zipcode'], $data['shipping_method']);
-            $max = AppmaxService::maxParcelas((float) $items->sum('subtotal') + (float) $frete['valor']);
+            $subtotal = (float) $items->sum('subtotal');
+            $cupom = $this->cupons->daSessao($subtotal, $request->user()->email, $data['cpf'] ?? null);
+            $max = AppmaxService::maxParcelas($subtotal - ($cupom?->desconto ?? 0) + (float) $frete['valor']);
 
             if ((int) $data['installments'] > $max) {
                 return redirect()
@@ -144,6 +153,15 @@ class CheckoutController extends Controller
             $order = $this->orders->placeFromCart($request->user(), $data);
         } catch (OutOfStockException $e) {
             return redirect()->route('cart.index')->with('stock_error', $e->getMessage());
+        } catch (CupomRecusadoException $e) {
+            // Nada foi gravado. Sem o cupom o total muda: o cliente confere
+            // e finaliza de novo (nunca cobrar diferente do que viu).
+            $this->cupons->remover();
+
+            return redirect()
+                ->route('checkout.index')
+                ->withInput($request->except([...self::CAMPOS_CARTAO_PROIBIDOS, 'appmax_token']))
+                ->with('cupom_recusado', $e->getMessage().' Removemos o cupom; confira o total e finalize de novo.');
         }
 
         try {

@@ -105,11 +105,17 @@
                     @endforeach
                 </div>
 
+                @php $desconto = $cupom?->aplicado ? $cupom->desconto : 0; @endphp
+                @include('shop.partials.cupom-forms')
                 <aside class="cart-summary">
                     <h3 class="summary-title">Resumo</h3>
                     <div class="summary-row"><span>Subtotal</span><span>R$ {{ number_format($total, 2, ',', '.') }}</span></div>
+                    @if ($desconto > 0)
+                        <div class="summary-row" style="color:var(--color-success);"><span>Cupom {{ $cupom->codigo }}</span><span>− R$ {{ number_format($desconto, 2, ',', '.') }}</span></div>
+                    @endif
                     <div class="summary-row muted"><span>Frete</span><span>No checkout</span></div>
-                    <div class="summary-total"><span>Total</span><span>R$ {{ number_format($total, 2, ',', '.') }}</span></div>
+                    <div class="summary-total"><span>Total</span><span>R$ {{ number_format($total - $desconto, 2, ',', '.') }}</span></div>
+                    @include('shop.partials.cupom', ['cupom' => $cupom])
 
                     <a href="{{ route('checkout.index') }}" class="btn-aptk btn-aptk--block" style="margin-top:20px;">Finalizar compra</a>
                     @guest

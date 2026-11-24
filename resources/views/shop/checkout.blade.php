@@ -87,11 +87,19 @@
         @if (session('payment_error'))
             <div class="pay-error">{{ session('payment_error') }}</div>
         @endif
+        @if (session('cupom_recusado'))
+            <div class="pay-error">{{ session('cupom_recusado') }}</div>
+        @endif
 
 
         {{-- Só data-appmax-customer (coleta de IP). A tokenização roda no
              form separado #appmaxCardForm, no fim da página: os dados crus
              do cartão nunca fazem parte DESTE form. --}}
+        @php
+            $desconto = $cupom?->aplicado ? $cupom->desconto : 0;
+            $produtosLiquido = round($total - $desconto, 2); // o JS soma o frete
+        @endphp
+        @include('shop.partials.cupom-forms')
         <form id="checkoutForm" data-appmax-customer action="{{ route('checkout.store') }}" method="POST">
             @csrf
             {{-- IP coletado pelo Appmax JS (obrigatório p/ homologação — doc 3.1).
@@ -103,7 +111,7 @@
             <details class="cko-mini">
                 <summary>
                     <span>Seu pedido · {{ $items->sum('qty') }} {{ $items->sum('qty') === 1 ? 'item' : 'itens' }}</span>
-                    <span class="v">R$ {{ number_format($total, 2, ',', '.') }}</span>
+                    <span class="v">R$ {{ number_format($produtosLiquido, 2, ',', '.') }}</span>
                 </summary>
                 <div class="mini-itens">
                     @foreach ($items as $row)
@@ -309,9 +317,9 @@
                                     {{-- Sem juros (a loja absorve). As opções são remontadas pelo
                                          JS quando o frete muda o total; o servidor revalida. --}}
                                     <select id="installments" name="installments" data-max="{{ $maxInstallments }}" data-minimo="{{ number_format($minInstallmentValue, 2, '.', '') }}" data-old="{{ old('installments', 1) }}">
-                                        @for ($i = 1; $i <= \App\Services\AppmaxService::maxParcelas($total); $i++)
+                                        @for ($i = 1; $i <= \App\Services\AppmaxService::maxParcelas($produtosLiquido); $i++)
                                             <option value="{{ $i }}" {{ (int) old('installments', 1) === $i ? 'selected' : '' }}>
-                                                {{ $i }}x de R$ {{ number_format($total / $i, 2, ',', '.') }}{{ $i === 1 ? ' à vista' : ' sem juros' }}
+                                                {{ $i }}x de R$ {{ number_format($produtosLiquido / $i, 2, ',', '.') }}{{ $i === 1 ? ' à vista' : ' sem juros' }}
                                             </option>
                                         @endfor
                                     </select>
@@ -349,9 +357,14 @@
                     @endforeach
                     <div class="sum-lines">
                         <div class="sum-line"><span>Subtotal</span><span>R$ {{ number_format($total, 2, ',', '.') }}</span></div>
+                        @if ($desconto > 0)
+                            <div class="sum-line" style="color:var(--color-success);"><span>Cupom {{ $cupom->codigo }}</span><span>− R$ {{ number_format($desconto, 2, ',', '.') }}</span></div>
+                        @endif
                         <div class="sum-line"><span id="sumFreteNome">Frete</span><span id="sumFrete">a calcular</span></div>
                     </div>
-                    <div class="sum-total"><span>Total</span><span id="sumTotal" data-subtotal="{{ number_format($total, 2, '.', '') }}">R$ {{ number_format($total, 2, ',', '.') }}</span></div>
+                    {{-- data-subtotal = produtos − cupom; o JS soma o frete. --}}
+                    <div class="sum-total"><span>Total</span><span id="sumTotal" data-subtotal="{{ number_format($produtosLiquido, 2, '.', '') }}">R$ {{ number_format($produtosLiquido, 2, ',', '.') }}</span></div>
+                    @include('shop.partials.cupom', ['cupom' => $cupom])
                     {{-- 18+: conta antiga sem a declaração (ou visitante que entrar
                          com uma). Desabilitada = não vai no POST; o JS liga se o
                          login disser que precisa. --}}

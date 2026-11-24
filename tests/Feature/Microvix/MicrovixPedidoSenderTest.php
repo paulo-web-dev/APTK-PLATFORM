@@ -144,6 +144,31 @@ class MicrovixPedidoSenderTest extends TestCase
         $this->assertSame((float) $order->total, $totalLinx);
     }
 
+    public function test_cupom_vai_no_cabecalho_com_o_desconto_e_os_itens_com_preco_cheio(): void
+    {
+        $this->fakeFeliz();
+        $order = $this->pedidoParaEnvio('pix', [
+            'subtotal' => 379.80, 'discount' => 56.97, 'coupon_code' => 'MITRE15',
+            'shipping_cost' => 37.40, 'total' => 360.23,
+        ]);
+
+        $this->sender()->enviar($order->fresh(['items', 'user']));
+
+        $corpos = $this->corposEnviados();
+        $this->assertSame('56.97', $this->valor($corpos[3], 'desconto'));
+        $this->assertSame('MITRE15', $this->valor($corpos[3], 'descricao_cupom_desconto'));
+        $this->assertNull($this->valor($corpos[4], 'descricao_cupom_desconto'));
+        $this->assertStringContainsString($this->param('vl_unitario', '189.90'), $corpos[4]);
+    }
+
+    public function test_sem_cupom_nao_manda_descricao_cupom_desconto(): void
+    {
+        $this->fakeFeliz();
+        $this->sender()->enviar($this->pedidoParaEnvio('pix')->fresh(['items', 'user']));
+
+        $this->assertNull($this->valor($this->corposEnviados()[3], 'descricao_cupom_desconto'));
+    }
+
     /* -----------------------------------------------------------------
      | Manual: nada vai para a Linx
      ------------------------------------------------------------------ */

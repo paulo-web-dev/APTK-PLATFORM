@@ -34,7 +34,10 @@ class MarcaHost
             return $next($request);
         }
 
-        if ($request->path() === '/') {
+        // Link de campanha na raiz (ice4pros.com.br/?cupom=X): a LP sai sem
+        // sessão, então o cupom não teria onde ficar. Vai pra APTK com a
+        // query inteira (AplicarCupomDaUrl guarda e limpa o parâmetro).
+        if ($request->path() === '/' && ! $request->query->has('cupom')) {
             return response()->view($marca['view'], [
                 'layoutMarca' => 'layouts.marca',
                 'marca'       => $marca,
@@ -45,7 +48,7 @@ class MarcaHost
             return $next($request);
         }
 
-        $destino = rtrim(config('app.url'), '/').'/'.$request->path();
+        $destino = rtrim(config('app.url'), '/').'/'.ltrim($request->path(), '/');
 
         if ($query = $request->getQueryString()) {
             $destino .= '?'.$query;

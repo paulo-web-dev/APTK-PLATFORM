@@ -107,7 +107,7 @@
     <tr><td style="{{ $secao }}">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E5DBC9;">
             <tr><td style="{{ $linha }}">Subtotal</td><td align="right" style="{{ $linha }}">{{ $subtotal }}</td></tr>
-            <tr><td style="{{ $linha }}">Desconto</td><td align="right" style="{{ $linha }}">{{ $desconto }}</td></tr>
+            <tr><td style="{{ $linha }}">{{ $desconto_rotulo }}</td><td align="right" style="{{ $linha }}">{{ $desconto }}</td></tr>
             <tr><td style="{{ $linha }}">Frete</td><td align="right" style="{{ $linha }}">{{ $frete_valor }}</td></tr>
             <tr><td style="padding:10px 0;font-size:18px;font-weight:bold;color:#020203;border-top:1px solid #E5DBC9;">Total</td>
                 <td align="right" style="padding:10px 0;font-size:18px;font-weight:bold;color:#BF6300;border-top:1px solid #E5DBC9;">{{ $total }}</td></tr>

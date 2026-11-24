@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Services\CartService;
+use App\Services\CouponService;
 use App\Services\CustomService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,7 +35,40 @@ class CartController extends Controller
             'items'   => $items,
             'total'   => $this->cart->total(),
             'recusas' => $recusas,
+            'cupom'   => app(CouponService::class)->daSessao($this->cart->total(), auth()->user()?->email),
         ]);
+    }
+
+    /**
+     * Aplica o cupom digitado (carrinho ou checkout: volta pra página de
+     * origem). Um cupom por pedido: o novo substitui o anterior. Recusado
+     * não fica na sessão. Com o carrinho vazio guarda assim mesmo (o link
+     * ?cupom= também guarda antes de haver itens).
+     */
+    public function aplicarCupom(Request $request, CouponService $cupons): RedirectResponse
+    {
+        $codigo = CouponService::normalizar($request->input('cupom'));
+
+        if ($codigo === '') {
+            return back()->with('cupom_erro', 'Digite o código do cupom.');
+        }
+
+        $avaliacao = $cupons->avaliar($codigo, $this->cart->total(), $request->user()?->email);
+
+        if (! $avaliacao->aplicado) {
+            return back()->with('cupom_erro', $avaliacao->mensagem());
+        }
+
+        $cupons->guardar($codigo);
+
+        return back()->with('cupom_ok', $avaliacao->mensagem());
+    }
+
+    public function removerCupom(CouponService $cupons): RedirectResponse
+    {
+        $cupons->remover();
+
+        return back()->with('cupom_ok', 'Cupom removido.');
     }
 
     public function add(Request $request): RedirectResponse

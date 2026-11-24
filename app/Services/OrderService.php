@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Exceptions\CupomRecusadoException;
 use App\Exceptions\OutOfStockException;
+use App\Models\Coupon;
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -20,6 +22,7 @@ class OrderService
         protected CartService $cart,
         protected FreteService $frete,
         protected CustomService $custom,
+        protected CouponService $cupons,
     ) {
     }
 
@@ -66,7 +69,30 @@ class OrderService
             ? $this->frete->opcao($items, (string) $data['zipcode'], $data['shipping_method'])
             : null;
 
-        $order = DB::transaction(function () use ($user, $data, $items, $frete) {
+        $codigoCupom = $this->cupons->codigoNaSessao();
+        $cpf = isset($data['cpf']) ? CouponService::cpfNormalizado($data['cpf']) : null;
+        $email = CouponService::emailNormalizado($user->email);
+
+        $order = DB::transaction(function () use ($user, $data, $items, $frete, $codigoCupom, $cpf, $email) {
+            // 00) Cupom (um por pedido), revalidado AQUI com lock na linha do
+            //     cupom: dois fechamentos simultâneos do mesmo cliente entram
+            //     em fila e o segundo já vê o pedido do primeiro (limite por
+            //     cliente / total). Lock do cupom sempre ANTES do de produtos
+            //     (ordem fixa, sem deadlock). Recusado → nada é gravado e o
+            //     cliente volta ao checkout com o motivo: nunca cobrar valor
+            //     diferente do que a tela mostrou.
+            $subtotal = round((float) $items->sum('subtotal'), 2);
+            $cupom = null;
+
+            if ($codigoCupom) {
+                $coupon = Coupon::where('code', CouponService::normalizar($codigoCupom))->lockForUpdate()->first();
+                $cupom = $this->cupons->avaliar($codigoCupom, $subtotal, $email, $cpf, $coupon);
+
+                if (! $cupom->aplicado) {
+                    throw new CupomRecusadoException($cupom);
+                }
+            }
+
             // 0) Revalida o estoque por volume DENTRO da transação, com lock
             //    de linha. Validar antes dela abriria a corrida clássica: duas
             //    compras simultâneas do último item leriam "tem 1" e as duas
@@ -129,8 +155,7 @@ class OrderService
             ]);
 
             // 2) Totais.
-            $subtotal = (float) $items->sum('subtotal');
-            $discount = 0.0;
+            $discount = $cupom ? $cupom->desconto : 0.0;
             $shipping = $frete ? (float) $frete['valor'] : 0.0;
             $total    = round($subtotal + $shipping - $discount, 2);
 
@@ -155,10 +180,6 @@ class OrderService
             // CPF: o checkout valida mas o dado morria aqui. Grava no usuário
             // (só se ainda não tiver — não sobrescreve cadastro existente).
             // B2CCadastraClientes (Microvix) exige doc_cliente.
-            $cpf = isset($data['cpf'])
-                ? preg_replace('/\D+/', '', $data['cpf'])
-                : null;
-
             if ($cpf && blank($user->cpf)) {
                 $user->forceFill(['cpf' => $cpf])->save();
             }
@@ -171,6 +192,7 @@ class OrderService
                 'address_id'        => $address->id,
                 'ship_name'         => $address->name,
                 'ship_cpf'          => $cpf,
+                'customer_email'    => $email,
                 'ship_phone'        => $data['phone'] ?? null,
                 'ship_zipcode'      => $address->zipcode,
                 'ship_street'       => $address->street,
@@ -182,6 +204,8 @@ class OrderService
                 'status'          => 'pending',
                 'subtotal'        => $subtotal,
                 'discount'        => $discount,
+                'coupon_id'       => $cupom?->coupon->id,
+                'coupon_code'     => $cupom?->codigo,
                 'shipping_cost'   => $shipping,
                 'total'           => $total,
                 'payment_method'  => $data['payment_method'],
@@ -220,8 +244,10 @@ class OrderService
                 $product->save();
             }
 
-            // 6) Esvazia o carrinho (só chega aqui se tudo deu certo).
+            // 6) Esvazia o carrinho e tira o cupom da sessão (só chega aqui
+            //    se tudo deu certo; restoreCartFromOrder devolve os dois).
             $this->cart->clear();
+            $this->cupons->remover();
 
             return $order;
         });
@@ -363,6 +389,12 @@ class OrderService
             // Só os campos do cliente: o nome da bebida volta a vir da config.
             $p = $item->isCustom() ? Arr::only($item->personalizacao, CustomService::CAMPOS) : null;
             $this->cart->add((int) $item->product_id, (int) $item->qty, $item->size, $p);
+        }
+
+        // O pedido foi cancelado (o uso do cupom está liberado): o cupom
+        // volta pra sessão e é reavaliado na próxima tentativa.
+        if ($order->coupon_code) {
+            $this->cupons->guardar($order->coupon_code);
         }
     }
 }

@@ -58,6 +58,7 @@ class PagamentoConfirmado extends Mailable
             'linx_manual' => app(MicrovixEnvio::class)->avisoManual($o),
             'cliente'    => $o->user->name ?? $o->ship_name ?? '—',
             'total'      => moeda_br($o->total),
+            'cupom'      => $o->coupon_code ? "cupom {$o->coupon_code} (−".moeda_br($o->discount).')' : null,
             'forma'      => (PedidoNovo::FORMAS[$o->payment_method] ?? ($o->payment_method ?: '—'))
                 .($o->payment_method === 'cartao' ? ' · '.((int) ($d['installments'] ?? 1)).'x' : ''),
             'pago_em'    => data_br($o->paid_at ?? now()),
