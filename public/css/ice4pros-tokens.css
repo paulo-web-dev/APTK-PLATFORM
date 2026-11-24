@@ -1,0 +1,171 @@
+/* =====================================================================
+   ICE4PROS — IDENTIDADE VISUAL  ·  public/css/ice4pros-tokens.css
+   ---------------------------------------------------------------------
+   Fonte: logotipo oficial / PDF da marca. Só carregado pelo
+   layouts.ice4pros (LP /ice4pros e domínio ice4pros.com.br). Tudo
+   escopado em body[data-marca="ice4pros"]: nada vaza pra APTK/BARIN.
+   Sem Bootstrap e sem aptk.css por baixo. Dark fixo, sem toggle.
+
+   Cores de marca: só as três abaixo. Hover/borda/superfície derivam
+   delas por color-mix. Contraste (WCAG):
+     turquesa × preto  5,6:1  (AA; turquesa em texto só nos destaques grandes)
+     branco   × preto 16,4:1  (texto corrido sempre branco)
+     branco   × turquesa 2,9:1 -> REPROVA: sobre turquesa, texto preto.
+   ===================================================================== */
+
+/* Oswald (OFL, public/fonts/Oswald-OFL.txt), auto-hospedada. */
+@font-face{font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;src:url('../fonts/Oswald-Regular.woff2') format('woff2');}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:700;font-display:swap;src:url('../fonts/Oswald-Bold.woff2') format('woff2');}
+
+body[data-marca="ice4pros"] {
+  /* Marca */
+  --i4p-turquesa: #40A4B7;
+  --i4p-preto:    #231F20;
+  --i4p-branco:   #FFFFFF;
+
+  /* Derivados */
+  --i4p-turquesa-hover: color-mix(in srgb, var(--i4p-turquesa) 82%, var(--i4p-branco));
+  --i4p-turquesa-ativo: color-mix(in srgb, var(--i4p-turquesa) 85%, var(--i4p-preto));
+  --i4p-preto-hover:    color-mix(in srgb, var(--i4p-preto) 85%, var(--i4p-branco));
+  --i4p-superficie:     color-mix(in srgb, var(--i4p-branco) 4%, var(--i4p-preto));
+  --i4p-borda:          color-mix(in srgb, var(--i4p-branco) 14%, var(--i4p-preto));
+  --i4p-borda-forte:    color-mix(in srgb, var(--i4p-branco) 32%, var(--i4p-preto));
+  --i4p-borda-escura:   color-mix(in srgb, var(--i4p-preto) 35%, var(--i4p-turquesa));
+  --i4p-texto:          var(--i4p-branco);
+  --i4p-texto-suave:    color-mix(in srgb, var(--i4p-branco) 74%, var(--i4p-preto)); /* 9,6:1 — só rótulos */
+
+  /* Tipografia — trocar aqui quando a marca mandar a fonte original */
+  --i4p-font-display: 'Oswald', 'Arial Narrow', Impact, sans-serif;
+  --i4p-font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --i4p-tracking: 0.04em;
+
+  /* Escala e forma (mais seca que a APTK: cantos quase retos) */
+  --i4p-radius: 2px;
+  --i4p-container: 1200px;
+  --i4p-gutter: clamp(16px, 4vw, 32px);
+  --i4p-section: clamp(56px, 8vw, 96px);
+  --i4p-header-h: 72px;
+
+  margin: 0;
+  background: var(--i4p-preto);
+  color: var(--i4p-texto);
+  font-family: var(--i4p-font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---- Reset mínimo (sem Bootstrap) ---- */
+body[data-marca="ice4pros"] *,
+body[data-marca="ice4pros"] *::before,
+body[data-marca="ice4pros"] *::after { box-sizing: border-box; }
+body[data-marca="ice4pros"] img,
+body[data-marca="ice4pros"] svg,
+body[data-marca="ice4pros"] video { display: block; max-width: 100%; }
+body[data-marca="ice4pros"] p { margin: 0 0 1em; }
+body[data-marca="ice4pros"] a { color: inherit; }
+body[data-marca="ice4pros"] :focus-visible { outline: 2px solid var(--i4p-turquesa); outline-offset: 3px; }
+
+body[data-marca="ice4pros"] h1,
+body[data-marca="ice4pros"] h2,
+body[data-marca="ice4pros"] h3 {
+  font-family: var(--i4p-font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--i4p-tracking);
+  line-height: 1.05;
+  margin: 0 0 .5em;
+}
+
+/* ---- Estrutura ---- */
+[data-marca="ice4pros"] .i4p-container { width: 100%; max-width: var(--i4p-container); margin-inline: auto; padding-inline: var(--i4p-gutter); }
+[data-marca="ice4pros"] .i4p-section { padding-block: var(--i4p-section); }
+[data-marca="ice4pros"] .i4p-section--superficie { background: var(--i4p-superficie); border-block: 1px solid var(--i4p-borda); }
+[data-marca="ice4pros"] .i4p-section-head { max-width: 720px; margin-bottom: clamp(28px, 4vw, 44px); }
+[data-marca="ice4pros"] .i4p-section-title { font-size: clamp(1.9rem, 4.5vw, 3rem); }
+[data-marca="ice4pros"] .i4p-section-head p { margin: 0; }
+
+/* Faixa turquesa sólida: texto e caveira em preto */
+[data-marca="ice4pros"] .i4p-faixa { background: var(--i4p-turquesa); color: var(--i4p-preto); }
+[data-marca="ice4pros"] .i4p-faixa a { color: var(--i4p-preto); }
+
+/* Eyebrow: rótulo pequeno em branco suave, marcado por um traço turquesa */
+[data-marca="ice4pros"] .i4p-eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--i4p-font-display); font-weight: 400;
+  font-size: 13px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--i4p-texto-suave); margin-bottom: 16px;
+}
+[data-marca="ice4pros"] .i4p-eyebrow::before { content: ""; width: 28px; height: 2px; background: var(--i4p-turquesa); }
+[data-marca="ice4pros"] .i4p-faixa .i4p-eyebrow { color: var(--i4p-preto); }
+[data-marca="ice4pros"] .i4p-faixa .i4p-eyebrow::before { background: var(--i4p-preto); }
+
+/* Destaque grande em turquesa (título/número; nunca texto corrido) */
+[data-marca="ice4pros"] .i4p-destaque { color: var(--i4p-turquesa); }
+
+/* ---- Botões ---- */
+[data-marca="ice4pros"] .i4p-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 48px; padding: 12px 26px;
+  font-family: var(--i4p-font-display); font-weight: 700; font-size: 15px;
+  letter-spacing: .1em; text-transform: uppercase; text-decoration: none;
+  background: var(--i4p-turquesa); color: var(--i4p-preto);
+  border: 2px solid var(--i4p-turquesa); border-radius: var(--i4p-radius);
+  cursor: pointer; transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+[data-marca="ice4pros"] .i4p-btn:hover { background: var(--i4p-turquesa-hover); border-color: var(--i4p-turquesa-hover); color: var(--i4p-preto); }
+[data-marca="ice4pros"] .i4p-btn:active { background: var(--i4p-turquesa-ativo); border-color: var(--i4p-turquesa-ativo); }
+
+[data-marca="ice4pros"] .i4p-btn--outline { background: transparent; color: var(--i4p-branco); border-color: var(--i4p-borda-forte); }
+[data-marca="ice4pros"] .i4p-btn--outline:hover { background: transparent; color: var(--i4p-branco); border-color: var(--i4p-turquesa); }
+
+/* Sobre a faixa turquesa */
+[data-marca="ice4pros"] .i4p-btn--escuro { background: var(--i4p-preto); color: var(--i4p-branco); border-color: var(--i4p-preto); }
+[data-marca="ice4pros"] .i4p-btn--escuro:hover { background: var(--i4p-preto-hover); border-color: var(--i4p-preto-hover); color: var(--i4p-branco); }
+[data-marca="ice4pros"] .i4p-faixa .i4p-btn--outline { color: var(--i4p-preto); border-color: var(--i4p-preto); }
+[data-marca="ice4pros"] .i4p-faixa .i4p-btn--outline:hover { background: var(--i4p-preto); color: var(--i4p-branco); }
+
+[data-marca="ice4pros"] .i4p-btn--sm { min-height: 38px; padding: 7px 16px; font-size: 13px; }
+[data-marca="ice4pros"] .i4p-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+
+/* ---- Cards ---- */
+[data-marca="ice4pros"] .i4p-card {
+  background: var(--i4p-preto); border: 1px solid var(--i4p-borda);
+  border-top: 2px solid var(--i4p-borda-forte); border-radius: var(--i4p-radius);
+  padding: 28px 24px; transition: border-color .2s ease;
+}
+[data-marca="ice4pros"] .i4p-card:hover { border-top-color: var(--i4p-turquesa); }
+[data-marca="ice4pros"] .i4p-card h3 { font-size: 1.35rem; margin-bottom: 10px; }
+[data-marca="ice4pros"] .i4p-card p { margin: 0; font-size: 15px; }
+
+/* ---- Formulários (nenhum na LP hoje: o domínio de marca não tem sessão
+        nem CSRF; fica o padrão pronto pra quando houver) ---- */
+[data-marca="ice4pros"] .i4p-label { display: block; font-family: var(--i4p-font-display); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 6px; }
+[data-marca="ice4pros"] .i4p-input {
+  width: 100%; min-height: 48px; padding: 10px 14px; font: inherit;
+  background: var(--i4p-superficie); color: var(--i4p-branco);
+  border: 1px solid var(--i4p-borda-forte); border-radius: var(--i4p-radius);
+}
+[data-marca="ice4pros"] .i4p-input::placeholder { color: var(--i4p-texto-suave); }
+[data-marca="ice4pros"] .i4p-input:focus { outline: none; border-color: var(--i4p-turquesa); box-shadow: 0 0 0 3px color-mix(in srgb, var(--i4p-turquesa) 35%, transparent); }
+
+/* ---- Header ---- */
+[data-marca="ice4pros"] .i4p-header { border-bottom: 1px solid var(--i4p-borda); background: var(--i4p-preto); }
+[data-marca="ice4pros"] .i4p-header .i4p-container { min-height: var(--i4p-header-h); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+[data-marca="ice4pros"] .i4p-logo img { width: clamp(132px, 22vw, 170px); height: auto; }
+[data-marca="ice4pros"] .i4p-header-nav { display: flex; align-items: center; gap: 20px; }
+[data-marca="ice4pros"] .i4p-header-link { font-family: var(--i4p-font-display); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; text-decoration: none; color: var(--i4p-texto-suave); }
+[data-marca="ice4pros"] .i4p-header-link:hover { color: var(--i4p-branco); }
+
+/* ---- Footer ---- */
+[data-marca="ice4pros"] .i4p-footer { border-top: 1px solid var(--i4p-borda); padding-block: 28px; }
+[data-marca="ice4pros"] .i4p-footer .i4p-container { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; }
+[data-marca="ice4pros"] .i4p-footer p { margin: 0; font-size: 13px; color: var(--i4p-texto-suave); }
+[data-marca="ice4pros"] .i4p-footer a { color: var(--i4p-branco); text-underline-offset: 3px; }
+[data-marca="ice4pros"] .i4p-footer a:hover { color: var(--i4p-turquesa); }
+
+@media (max-width: 560px) {
+  [data-marca="ice4pros"] .i4p-header-link--opcional { display: none; }
+  [data-marca="ice4pros"] .i4p-ctas .i4p-btn { width: 100%; }
+}

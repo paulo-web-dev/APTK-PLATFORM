@@ -50,8 +50,9 @@ class WhatsappTest extends TestCase
             $this->assertSame([], array_values(array_diff(array_unique($numeros[1]), ['5511934298435'])), $url);
         }
 
-        // Rodapé em todas menos login e cadastro (layout guest, sem rodapé) + Full Custom.
-        $this->assertSame(count(self::PAGINAS) - 2 + 1, $vistos);
+        // Rodapé em todas menos login e cadastro (layout guest, sem rodapé) e
+        // /ice4pros (layout próprio da Ice4Pros, sem o rodapé da APTK) + Full Custom.
+        $this->assertSame(count(self::PAGINAS) - 3 + 1, $vistos);
 
         // Admin: nenhum número de WhatsApp que não seja o da APTK.
         $admin = User::create(['name' => 'Admin', 'email' => 'admin@aptk.test', 'password' => bcrypt('x'), 'role' => 'admin']);

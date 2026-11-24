@@ -3,7 +3,9 @@
        Recebe $marca do middleware MarcaHost. Mesmos tokens da APTK
        (aptk.css em cima do Bootstrap), dark fixo — mas sem header/nav/
        busca/login/carrinho/feature band da loja, e sem nenhum form:
-       a resposta sai antes da sessão, CSRF não existe neste domínio. */
+       a resposta sai antes da sessão, CSRF não existe neste domínio.
+       Genérico pra marca futura: a Ice4Pros tem layout próprio
+       (layouts.ice4pros) e ignora o $layoutMarca. */
 @endphp
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">

@@ -8,7 +8,7 @@ use Tests\TestCase;
 /**
  * Domínio próprio de marca (MarcaHost + config/marcas.php):
  * raiz serve a LP isolada, resto leva 301 pra APTK, assets passam,
- * e as rotas da APTK (/ice4pros, /barin) seguem intocadas.
+ * e /barin segue no layout da APTK.
  */
 class MarcaHostTest extends TestCase
 {
@@ -27,7 +27,7 @@ class MarcaHostTest extends TestCase
             // conteúdo da LP intacto
             ->assertSee('O melhor gelo cristal do Brasil')
             // layout isolado presente...
-            ->assertSee('marca-header')
+            ->assertSee('i4p-header')
             ->assertSee('uma marca')
             // ...e nada do layout público da APTK
             ->assertDontSee('site-header')
@@ -38,8 +38,8 @@ class MarcaHostTest extends TestCase
 
     public function test_hosts_www_e_de_dev_tambem_servem_a_lp(): void
     {
-        $this->get('http://www.ice4pros.com.br/')->assertOk()->assertSee('marca-header');
-        $this->get('http://ice4pros.localhost/')->assertOk()->assertSee('marca-header');
+        $this->get('http://www.ice4pros.com.br/')->assertOk()->assertSee('i4p-header');
+        $this->get('http://ice4pros.localhost/')->assertOk()->assertSee('i4p-header');
     }
 
     public function test_canonical_e_og_no_contexto_isolado(): void
@@ -56,20 +56,21 @@ class MarcaHostTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('site-header')
-            ->assertDontSee('marca-header');
+            ->assertDontSee('i4p-header');
     }
 
-    public function test_ice4pros_no_host_da_aptk_mantem_o_layout_completo(): void
+    public function test_ice4pros_no_host_da_aptk_usa_o_layout_da_ice4pros(): void
     {
+        // Desde a identidade própria, /ice4pros na APTK é a mesma LP isolada
+        // do ice4pros.com.br (sem o header/nav/newsletter da loja).
         $this->get('/ice4pros')
             ->assertOk()
             ->assertSee('O melhor gelo cristal do Brasil')
-            // layout público completo: header, nav, feature band, newsletter
-            ->assertSee('site-header')
-            ->assertSee('site-nav')
-            ->assertSee('feature-band')
-            ->assertSee('news-form')
-            ->assertDontSee('marca-header')
+            ->assertSee('i4p-header')
+            ->assertDontSee('site-header')
+            ->assertDontSee('site-nav')
+            ->assertDontSee('feature-band')
+            ->assertDontSee('news-form')
             // canonical aponta pro domínio próprio também neste contexto
             ->assertSee('<link rel="canonical" href="https://ice4pros.com.br/">', false);
     }
@@ -79,7 +80,7 @@ class MarcaHostTest extends TestCase
         $this->get('/barin')
             ->assertOk()
             ->assertSee('site-header')
-            ->assertDontSee('marca-header');
+            ->assertDontSee('i4p-header');
     }
 
     public function test_qualquer_caminho_no_host_de_marca_redireciona_301_pra_aptk(): void

@@ -96,6 +96,15 @@ Amarula nude `#D0B29B`, Cobre metálico. Tipografia: PP Rader (display/UI) e Neu
 (editorial), ambas WOFF2 locais em `public/fonts/`. **Dark mode é a identidade da marca**,
 com toggle global — não tratar como opcional.
 
+**Identidade Ice4Pros:** `/ice4pros` e a raiz de `ice4pros.com.br` (MarcaHost) usam
+`layouts.ice4pros` + `public/css/ice4pros-tokens.css` (tokens `--i4p-*` escopados em
+`body[data-marca="ice4pros"]`; turquesa `#40A4B7`, preto `#231F20`, branco; Oswald em
+`public/fonts/`, família em `--i4p-font-display`; texto corrido na sans do sistema).
+Sem Bootstrap, sem `aptk.css`/fontes da APTK, sem theme-init. Sobre turquesa o texto é
+preto (branco reprova AA). Logos em `public/img/marcas/ice4pros/`, caveira inline via
+`<x-ice4pros.caveira>` (currentColor). Links pra APTK sempre `aptk_route()`. BARIN
+segue no `layouts.public`. `Ice4prosIdentidadeTest` trava o isolamento.
+
 **Componentes de marca:** `<x-brand.symbol>`, `<x-brand.logo>`, `<x-brand.sunburst>`,
 `<x-brand.divider>`.
 
