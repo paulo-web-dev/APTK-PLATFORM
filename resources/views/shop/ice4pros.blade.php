@@ -1,11 +1,19 @@
 {{-- Identidade da Ice4Pros (layouts.ice4pros + ice4pros-tokens.css) nos dois
-     endereços: /ice4pros na APTK e a raiz de ice4pros.com.br (MarcaHost). --}}
+     endereços: /ice4pros na APTK e a raiz de ice4pros.com.br (MarcaHost).
+     Leva 21: textos do briefing (docs/ice4pros-alteracoes.md) — literais.
+     Títulos em caixa de frase no fonte: o CSS da marca põe em caixa alta. --}}
 @extends('layouts.ice4pros')
 
-@section('brand_title', 'Ice4Pros — O Melhor Gelo Cristal do Brasil')
-@section('meta_description', 'Ice4Pros: gelo cristal gourmet, cristalino e padronizado. O gelo oficial do Guia Michelin Brasil. Cubos, esferas, diamantes e retangulares para bares, restaurantes e eventos.')
+@section('brand_title', 'Ice4Pros — Gelo em estado de arte')
+@section('meta_description', 'Ice4Pros: gelo cristal profissional, padronizado e personalizável. O gelo oficial do Guia Michelin Brasil. Cubos, esferas, diamantes e retangulares para bares, restaurantes, hotéis e eventos.')
 {{-- Mesma página nos dois contextos; o domínio próprio é o preferido. --}}
 @section('canonical', config('marcas.marcas.ice4pros.url').'/')
+
+@php
+    $i4pWhats = whatsapp_link(config('marcas.marcas.ice4pros.whatsapp_mensagem'), 'ice4pros');
+    $i4pProdutos = marca_url('ice4pros', 'produtos');
+    $i4pFotos = 'img/marcas/ice4pros/fotos/';
+@endphp
 
 @push('styles')
 <style>
@@ -13,7 +21,7 @@
   .i4p-hero { border-bottom: 1px solid var(--i4p-borda); }
   .i4p-hero .i4p-container { display: grid; grid-template-columns: 1.15fr .85fr; gap: clamp(32px, 5vw, 64px); align-items: center; padding-block: clamp(48px, 7vw, 88px); }
   .i4p-hero h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); margin-bottom: 20px; max-width: 13ch; }
-  .i4p-hero .lead { font-size: 1.125rem; max-width: 540px; margin-bottom: 30px; }
+  .i4p-hero .lead { font-size: 1.125rem; max-width: 560px; margin-bottom: 30px; }
   .i4p-video { justify-self: center; width: min(100%, 320px); }
   .i4p-video video { width: 100%; aspect-ratio: 9 / 16; max-height: 560px; object-fit: cover; border: 1px solid var(--i4p-borda); border-radius: var(--i4p-radius); background: var(--i4p-superficie); }
 
@@ -24,50 +32,58 @@
 
   /* Sobre */
   .i4p-sobre .i4p-container { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 5vw, 64px); align-items: center; }
-  .i4p-num-strip { display: flex; gap: 40px; margin-top: 30px; flex-wrap: wrap; }
-  .i4p-num-strip .num { display: block; font-family: var(--i4p-font-display); font-weight: 700; font-size: 2.6rem; line-height: 1; }
+  .i4p-num-strip { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 12px 48px; margin-top: 30px; }
+  .i4p-num-strip .num { display: block; font-family: var(--i4p-font-display); font-weight: 700; font-size: 2.6rem; line-height: 1; text-transform: uppercase; margin-bottom: 10px; }
   .i4p-num-strip .lbl { font-family: var(--i4p-font-display); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--i4p-texto-suave); }
-  .i4p-ph { aspect-ratio: 4 / 3; border: 1px dashed var(--i4p-borda-forte); border-radius: var(--i4p-radius); display: grid; place-items: center; background: var(--i4p-superficie); color: var(--i4p-texto-suave); font-family: var(--i4p-font-display); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; text-align: center; padding: 10px; }
+  .i4p-foto { margin: 0; border-radius: var(--i4p-radius); overflow: hidden; background: var(--i4p-superficie); }
+  .i4p-foto img { width: 100%; height: 100%; object-fit: cover; }
+  .i4p-sobre .i4p-foto { aspect-ratio: 4 / 5; max-height: 620px; }
 
-  /* Produtos, soluções, diferenciais */
+  /* Formatos (home) */
   .gelo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  .gelo-card .g-icon { display: block; font-size: 34px; line-height: 1; margin-bottom: 18px; }
+  .gelo-card { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .gelo-card .i4p-foto { aspect-ratio: 4 / 5; border-radius: 0; }
+  .gelo-card .g-corpo { padding: 22px 20px 26px; }
+
+  /* Soluções e diferenciais */
   .sol-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
   .sol-card .s-kicker { display: block; font-family: var(--i4p-font-display); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--i4p-texto-suave); margin-bottom: 12px; }
-  .sol-card .s-num { display: block; font-family: var(--i4p-font-display); font-weight: 700; font-size: 2.4rem; line-height: 1; margin-bottom: 14px; }
+  .dif-icone { display: block; width: 40px; height: 40px; color: var(--i4p-turquesa); margin-bottom: 18px; }
 
-  /* Clientes */
-  .cli-strip { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-  .cli-chip { font-family: var(--i4p-font-display); font-size: 14px; letter-spacing: .12em; text-transform: uppercase; border: 1px solid var(--i4p-borda-forte); border-radius: var(--i4p-radius); padding: 8px 18px; }
-
-  /* Fechamento: faixa turquesa com a caveira em preto */
-  .i4p-closing .i4p-container { max-width: 760px; display: flex; flex-direction: column; align-items: center; text-align: center; }
-  .i4p-closing .i4p-caveira { width: min(260px, 70%); height: auto; margin-bottom: 28px; }
-  .i4p-closing h2 { font-size: clamp(2rem, 5vw, 3rem); }
-  .i4p-closing p { font-size: 1.125rem; max-width: 520px; margin-bottom: 30px; }
-  .i4p-closing .i4p-ctas { justify-content: center; }
+  /* Clientes: nome em caixa com contorno + foto 3:4 (ou placeholder) */
+  .cli-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 28px 16px; list-style: none; margin: 0; padding: 0; }
+  .cli-nome { display: grid; place-items: center; min-height: 44px; padding: 8px 10px; margin-bottom: 8px; border: 1px solid var(--i4p-borda-forte); font-family: var(--i4p-font-display); font-size: 14px; letter-spacing: .1em; text-transform: uppercase; text-align: center; line-height: 1.2; }
+  .cli-foto { aspect-ratio: 3 / 4; }
+  .cli-ph { aspect-ratio: 3 / 4; display: grid; place-content: center; justify-items: center; gap: 12px; background: var(--i4p-borda); color: var(--i4p-texto-suave); font-size: 14px; }
+  .cli-ph svg { width: 44px; height: 44px; }
 
   @media (max-width: 980px) {
     .i4p-hero .i4p-container, .i4p-sobre .i4p-container { grid-template-columns: 1fr; }
     .gelo-grid { grid-template-columns: repeat(2, 1fr); }
     .sol-grid { grid-template-columns: 1fr; }
+    .cli-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
-  @media (max-width: 560px) { .gelo-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .cli-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) {
+    .i4p-num-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 16px; }
+    .i4p-num-strip .num { font-size: 1.7rem; }
+  }
+  @media (max-width: 400px) { .gelo-grid { grid-template-columns: 1fr; } }
 </style>
 @endpush
 
 @section('content')
 
-  {{-- HERO — vídeo vertical do cubo (mesmo arquivo da Collab) --}}
+  {{-- 1. HERO — vídeo vertical do cubo (mesmo arquivo da Collab) --}}
   <section class="i4p-hero">
     <div class="i4p-container">
       <div>
-        <span class="i4p-eyebrow">Ice4Pros · marca da holding</span>
-        <h1>O melhor gelo cristal do Brasil</h1>
-        <p class="lead">Gelos perfeitos, cristalinos e padronizados — de classe mundial. Água hiperfiltrada, pedras translúcidas e a logotipagem pioneira no país, servindo a alta coquetelaria desde 2017.</p>
+        <span class="i4p-eyebrow">Ice4Pros · marca da holding Small Batches</span>
+        <h1>Gelo em estado de arte.</h1>
+        <p class="lead">Gelo cristal profissional, padronizado e personalizável para quem cria, serve e celebra. Desde 2017, unimos água, hiperfiltração, precisão técnica e logotipagem pioneira no país para ampliar possibilidades criativas e elevar a experiência da alta coquetelaria.</p>
         <div class="i4p-ctas">
-          <a href="{{ aptk_route('catalog', ['categoria' => 'ice4pros']) }}" class="i4p-btn">Conheça os produtos</a>
-          <a href="{{ whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.') }}" target="_blank" rel="noopener" class="i4p-btn i4p-btn--outline">Falar com o comercial</a>
+          <a href="{{ $i4pProdutos }}" class="i4p-btn">Conheça os produtos</a>
+          <a href="{{ $i4pWhats }}" target="_blank" rel="noopener" class="i4p-btn i4p-btn--outline">Falar com o comercial</a>
         </div>
       </div>
       <div class="i4p-video">
@@ -87,144 +103,138 @@
     </div>
   </section>
 
-  {{-- SOBRE / HISTÓRIA --}}
+  {{-- 3. SOBRE A MARCA --}}
   <section class="i4p-section i4p-sobre">
     <div class="i4p-container">
       <div>
         <span class="i4p-eyebrow">Sobre a marca</span>
-        <h2 class="i4p-section-title">Inovação em estado sólido, desde 2017</h2>
-        <p>Fundada em 2017, a Ice4Pros trouxe grandes inovações ao mercado de coquetelaria brasileiro através da confecção de gelos perfeitos, cristalinos e padronizados.</p>
-        <p>Criamos um produto de classe mundial: inovamos no tratamento e na qualidade da água utilizada, na capacidade de gerar pedras translúcidas, na forma — e também na <strong>logotipagem</strong>, conceito pioneiro trazido ao Brasil pela Ice4Pros.</p>
+        <h2 class="i4p-section-title">Inovação em estado sólido</h2>
+        <p>Há quase uma década, a Ice4Pros contribui para transformar a percepção do gelo na coquetelaria brasileira: de um simples insumo a um elemento fundamental na construção de cada bebida.</p>
+        <p>Com estrutura fabril própria e tecnologia especializada de corte, desenvolvemos soluções que combinam excelência técnica e liberdade criativa. Da diversidade de formatos às possibilidades de personalização, nosso compromisso é respeitar a intenção de cada receita e potencializar o trabalho dos profissionais da coquetelaria.</p>
         <div class="i4p-num-strip">
-          <div><span class="num i4p-destaque">2017</span><span class="lbl">Fundação</span></div>
+          <div><span class="num i4p-destaque">Fábrica</span><span class="lbl">Própria</span></div>
           <div><span class="num i4p-destaque">3×</span><span class="lbl">Guia Michelin</span></div>
           <div><span class="num i4p-destaque">4×</span><span class="lbl">Mais duração</span></div>
         </div>
       </div>
-      {{-- Foto institucional — placeholder marcado (cliente enviará). --}}
-      <div class="i4p-ph"><span>Foto — produção do gelo cristal<br>em breve</span></div>
+      <figure class="i4p-foto">
+        <img src="{{ asset($i4pFotos.'producao-gelo.jpg') }}" alt="Produção do gelo cristal Ice4Pros" loading="lazy" width="720" height="900">
+      </figure>
     </div>
   </section>
 
-  {{-- PRODUTOS — as 4 linhas de gelo --}}
+  {{-- 4. PRODUTOS — os formatos --}}
   <section class="i4p-section i4p-section--superficie">
     <div class="i4p-container">
       <div class="i4p-section-head">
         <span class="i4p-eyebrow">Produtos</span>
-        <h2 class="i4p-section-title">Uma pedra pra cada drink</h2>
-        <p>Formatos padronizados, transparência inigualável e o serviço certo pra cada taça.</p>
+        <h2 class="i4p-section-title">Cada formato, uma intenção.</h2>
+        <p>Formatos padronizados, transparência excepcional e precisão para elevar a experiência de cada coquetel.</p>
       </div>
       <div class="gelo-grid">
-        <div class="i4p-card gelo-card">
-          <span class="g-icon i4p-destaque" aria-hidden="true">◻</span>
-          <h3>Cubos</h3>
-          <p>Ideais para Negroni, Boulevardier, Old Fashioned e variações.</p>
-        </div>
-        <div class="i4p-card gelo-card">
-          <span class="g-icon i4p-destaque" aria-hidden="true">◯</span>
-          <h3>Esferas</h3>
-          <p>Ideais para Whiskey, Negroni, Boulevardier e variações.</p>
-        </div>
-        <div class="i4p-card gelo-card">
-          <span class="g-icon i4p-destaque" aria-hidden="true">◇</span>
-          <h3>Diamantes</h3>
-          <p>Ideais para Mojitos, High Balls, Caipirinhas e variações.</p>
-        </div>
-        <div class="i4p-card gelo-card">
-          <span class="g-icon i4p-destaque" aria-hidden="true">▭</span>
-          <h3>Retangulares</h3>
-          <p>Ideais para Whiskey, Champagne e drinks em taças Coupe e Martini.</p>
-        </div>
+        @foreach ([
+            ['Cubos', 'cubo50.jpg', 'Ideais para Negroni, Old Fashioned, Penicillin, Boulevardier e suas variações.'],
+            ['Esfera', 'formato-esfera.jpg', 'Ideais para Whisky on the Rocks, Godfather, Rusty Nail e coquetéis autorais que valorizam a apresentação e o controle da diluição.'],
+            ['Diamantes', 'formato-diamante.jpg', 'Ideais para releituras de clássicos servidos em taças coupe, como Manhattan, Daiquiri, Aviation e Sidecar, além de criações autorais.'],
+            ['Retangulares', 'retangular.jpg', 'Ideais para Paloma, Highball, Tom Collins e demais long drinks.'],
+        ] as [$nome, $foto, $texto])
+          <div class="i4p-card gelo-card">
+            <figure class="i4p-foto">
+              <img src="{{ asset($i4pFotos.$foto) }}" alt="Gelo Ice4Pros no formato {{ mb_strtolower($nome) }}" loading="lazy">
+            </figure>
+            <div class="g-corpo">
+              <h3>{{ $nome }}</h3>
+              <p>{{ $texto }}</p>
+            </div>
+          </div>
+        @endforeach
       </div>
     </div>
   </section>
 
-  {{-- SOLUÇÕES --}}
+  {{-- 5. SOLUÇÕES --}}
   <section class="i4p-section">
     <div class="i4p-container">
       <div class="i4p-section-head">
         <span class="i4p-eyebrow">Soluções</span>
-        <h2 class="i4p-section-title">Do balcão ao grande evento</h2>
+        <h2 class="i4p-section-title">Soluções à altura de cada experiência.</h2>
       </div>
       <div class="sol-grid">
         <div class="i4p-card sol-card">
           <span class="s-kicker">Trade</span>
-          <h3>Bares & restaurantes</h3>
-          <p>Abastecimento recorrente com padrão de coquetelaria de assinatura — o mesmo gelo servido nas melhores casas do país.</p>
+          <h3>Bares, restaurantes &amp; hospitalidade</h3>
+          <p>Abastecimento recorrente com qualidade, precisão e consistência. Soluções desenvolvidas para atender às necessidades de cada operação, respeitando a identidade de suas criações e a excelência do serviço.</p>
         </div>
         <div class="i4p-card sol-card">
-          <span class="s-kicker">Marca</span>
-          <h3>Gelo logotipado</h3>
-          <p>Sua marca carimbada na pedra: o conceito pioneiro da Ice4Pros pra ativações, lançamentos e experiências memoráveis.</p>
+          <span class="s-kicker">Marcas</span>
+          <h3>Gelo personalizado</h3>
+          <p>Transformamos o gelo em uma extensão da identidade de cada marca. Personalizações, formatos exclusivos e soluções criativas para ativações, lançamentos e experiências que valorizam cada detalhe.</p>
         </div>
         <div class="i4p-card sol-card">
           <span class="s-kicker">Eventos</span>
-          <h3>Eventos & corporativo</h3>
-          <p>Volume, logística e consistência pra casamentos, festivais e eventos corporativos de qualquer escala.</p>
+          <h3>Eventos e celebrações</h3>
+          <p>Soluções em gelo profissional que aliam capacidade produtiva, planejamento e consistência para casamentos, celebrações, festivais e eventos corporativos.</p>
         </div>
       </div>
     </div>
   </section>
 
-  {{-- PRINCIPAIS CLIENTES --}}
+  {{-- 6. PRINCIPAIS CLIENTES — config/ice4pros.php (foto null = placeholder) --}}
   <section class="i4p-section i4p-section--superficie">
     <div class="i4p-container">
       <div class="i4p-section-head">
         <span class="i4p-eyebrow">Principais clientes</span>
-        <h2 class="i4p-section-title">No copo de quem entende</h2>
+        <h2 class="i4p-section-title">Ao lado de quem eleva a coquetelaria.</h2>
       </div>
-      <div class="cli-strip">
-        <span class="cli-chip">Braz Pizzaria</span>
-        <span class="cli-chip">Gurumê</span>
-        <span class="cli-chip">Hotel Emiliano</span>
-        <span class="cli-chip">Guilhotina</span>
-        <span class="cli-chip">Astor</span>
-        <span class="cli-chip">Hotel Unique</span>
-        <span class="cli-chip">Hotel Pullman</span>
-        <span class="cli-chip">Pirajá</span>
-        <span class="cli-chip">Cacau Show</span>
-      </div>
+      <ul class="cli-grid">
+        @foreach (config('ice4pros.clientes', []) as $cliente)
+          <li class="cli-item">
+            <span class="cli-nome">{{ $cliente['nome'] }}</span>
+            @if (! empty($cliente['foto']))
+              <figure class="i4p-foto cli-foto">
+                <img src="{{ asset($i4pFotos.$cliente['foto']) }}" alt="Coquetel com gelo Ice4Pros no {{ $cliente['nome'] }}" loading="lazy">
+              </figure>
+            @else
+              {{-- FOTO: coquetel do parceiro ({{ $cliente['nome'] }}), pendente da marca --}}
+              <div class="cli-ph" data-foto-pendente>
+                <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 8h32L24 26Z"/><path d="M24 26v14"/><path d="M15 40h18"/></svg>
+                <span>Foto do drink</span>
+              </div>
+            @endif
+          </li>
+        @endforeach
+      </ul>
     </div>
   </section>
 
-  {{-- DIFERENCIAIS --}}
+  {{-- 7. DIFERENCIAIS — ícones de traço fino em turquesa (refs 07-icone-card*) --}}
   <section class="i4p-section">
     <div class="i4p-container">
       <div class="i4p-section-head">
         <span class="i4p-eyebrow">Diferenciais</span>
-        <h2 class="i4p-section-title">Por que gelo cristal gourmet</h2>
+        <h2 class="i4p-section-title">A excelência está nos detalhes.</h2>
       </div>
       <div class="sol-grid">
         <div class="i4p-card sol-card">
-          <span class="s-num i4p-destaque">01</span>
-          <h3>Qualidade incomparável</h3>
-          <p>As melhores matérias-primas e finalização impecável — a qualidade dos gelos Ice4Pros é incomparável.</p>
+          <svg class="dif-icone" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 4 7 9v9c0 8.5 5.5 15 13 18 7.5-3 13-9.5 13-18V9Z"/><path d="m14 20 4.5 4.5L27 16"/></svg>
+          <h3>Qualidade e precisão</h3>
+          <p>Produzidos com água hiperfiltrada e rigorosos processos de tratamento, corte e padronização, os gelos Ice4Pros unem pureza, consistência e desempenho em cada formato.</p>
         </div>
         <div class="i4p-card sol-card">
-          <span class="s-num i4p-destaque">02</span>
-          <h3>Derretimento 4× mais lento</h3>
-          <p>Estrutura robusta e água hiperfiltrada: durabilidade 4 vezes maior em comparação aos gelos comuns — o drink não dilui.</p>
+          <svg class="dif-icone" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 5h20M10 35h20"/><path d="M12 5c0 7 8 9 8 15s-8 8-8 15"/><path d="M28 5c0 7-8 9-8 15s8 8 8 15"/></svg>
+          <h3>Controle da diluição</h3>
+          <p>Estrutura compacta e processos especializados de produção proporcionam um derretimento mais lento e controlado, preservando o equilíbrio, a intensidade e o perfil sensorial de cada coquetel por mais tempo.</p>
         </div>
         <div class="i4p-card sol-card">
-          <span class="s-num i4p-destaque">03</span>
-          <h3>Acabamento incrível</h3>
-          <p>Técnicas de finalização inovadoras e transparência inigualável — o visual do drink em outro nível.</p>
+          <svg class="dif-icone" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 6h18l7 9-16 20L4 15Z"/><path d="M4 15h32"/><path d="m15 6-3 9 8 20 8-20-3-9"/></svg>
+          <h3>Transparência e acabamento</h3>
+          <p>Técnicas especializadas de produção e lapidação resultam em gelos cristalinos, com geometria precisa e acabamento refinado, valorizando a apresentação e a experiência de cada coquetel.</p>
         </div>
       </div>
     </div>
   </section>
 
-  {{-- CTA FINAL --}}
-  <section class="i4p-section i4p-closing i4p-faixa">
-    <div class="i4p-container">
-      <x-ice4pros.caveira />
-      <h2>Leve o gelo cristal pro seu negócio</h2>
-      <p>Conte o seu formato — bar, restaurante, evento ou revenda — e a gente monta a melhor condição.</p>
-      <div class="i4p-ctas">
-        <a href="{{ whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.') }}" target="_blank" rel="noopener" class="i4p-btn i4p-btn--escuro">Falar com o comercial</a>
-        <a href="{{ aptk_route('catalog', ['categoria' => 'ice4pros']) }}" class="i4p-btn i4p-btn--outline">Ver produtos</a>
-      </div>
-    </div>
-  </section>
+  {{-- 8. ENCERRAMENTO — mesmo banner do portfólio --}}
+  <x-ice4pros.encerramento />
 
 @endsection

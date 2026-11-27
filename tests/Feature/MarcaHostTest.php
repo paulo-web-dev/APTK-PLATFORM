@@ -25,7 +25,7 @@ class MarcaHostTest extends TestCase
 
         $response->assertOk()
             // conteúdo da LP intacto
-            ->assertSee('O melhor gelo cristal do Brasil')
+            ->assertSee('Gelo em estado de arte.')
             // layout isolado presente...
             ->assertSee('i4p-header')
             ->assertSee('uma marca')
@@ -48,7 +48,7 @@ class MarcaHostTest extends TestCase
             ->assertSee('<link rel="canonical" href="https://ice4pros.com.br/">', false)
             ->assertSee('<meta property="og:url" content="https://ice4pros.com.br/">', false)
             ->assertSee('<meta property="og:site_name" content="Ice4Pros">', false)
-            ->assertSee('<title>Ice4Pros — O Melhor Gelo Cristal do Brasil</title>', false);
+            ->assertSee('<title>Ice4Pros — Gelo em estado de arte</title>', false);
     }
 
     public function test_raiz_no_host_da_aptk_continua_sendo_a_home(): void
@@ -65,7 +65,7 @@ class MarcaHostTest extends TestCase
         // do ice4pros.com.br (sem o header/nav/newsletter da loja).
         $this->get('/ice4pros')
             ->assertOk()
-            ->assertSee('O melhor gelo cristal do Brasil')
+            ->assertSee('Gelo em estado de arte.')
             ->assertSee('i4p-header')
             ->assertDontSee('site-header')
             ->assertDontSee('site-nav')
@@ -114,12 +114,35 @@ class MarcaHostTest extends TestCase
         );
     }
 
-    public function test_ctas_da_lp_no_host_de_marca_apontam_pra_aptk(): void
+    public function test_ctas_da_lp_no_host_de_marca_ficam_na_marca(): void
     {
+        // Leva 21: produtos = portfólio no próprio domínio; comercial = WhatsApp
+        // da Ice4Pros. Nada mais leva pra loja ou pra /collabs da APTK.
         $this->get('http://ice4pros.com.br/')
-            ->assertSee($this->aptkUrl('/loja?categoria=ice4pros'), false)
-            // Leva 20: o comercial vai direto pro WhatsApp, não mais pra /collabs.
-            ->assertSee(e(whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.')), false)
+            ->assertSee('href="/produtos"', false)
+            ->assertSee(e(whatsapp_link(config('marcas.marcas.ice4pros.whatsapp_mensagem'), 'ice4pros')), false)
+            ->assertDontSee($this->aptkUrl('/loja?categoria=ice4pros'), false)
             ->assertDontSee($this->aptkUrl('/collabs'), false);
+    }
+
+    public function test_ctas_da_lp_no_host_da_aptk_levam_pro_portfolio_na_aptk(): void
+    {
+        $this->get('/ice4pros')
+            ->assertSee('href="'.route('ice4pros.produtos').'"', false)
+            ->assertDontSee('href="/produtos"', false);
+    }
+
+    public function test_portfolio_no_host_de_marca_nao_redireciona(): void
+    {
+        $this->get('http://ice4pros.com.br/produtos')
+            ->assertOk()
+            ->assertSee('Explore nossos formatos')
+            ->assertSee('<link rel="canonical" href="https://ice4pros.com.br/produtos">', false)
+            ->assertDontSee('site-header');
+
+        // link de campanha continua indo pra APTK (a página de marca não tem sessão)
+        $this->get('http://ice4pros.com.br/produtos?cupom=X')
+            ->assertStatus(301)
+            ->assertHeader('Location', $this->aptkUrl('/produtos?cupom=X'));
     }
 }

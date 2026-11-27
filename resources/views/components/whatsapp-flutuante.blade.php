@@ -1,4 +1,4 @@
-@props(['mensagem' => null])
+@props(['mensagem' => null, 'marca' => null])
 @php
     /* Botão flutuante de WhatsApp (leva 20): canto inferior direito de todas
        as páginas públicas (layouts.public, layouts.marca, layouts.ice4pros).
@@ -6,7 +6,8 @@
        o yield aqui (vem escapado, por isso o decode). Cores pelos tokens
        --color-whatsapp / --color-on-whatsapp: verde oficial na APTK
        (aptk-tokens.css), turquesa + preto na Ice4Pros (ice4pros-tokens.css).
-       CSS próprio aqui porque a Ice4Pros não carrega o aptk.css. */
+       CSS próprio aqui porque a Ice4Pros não carrega o aptk.css.
+       marca = slug com número próprio (Ice4Pros, leva 21); sem = APTK. */
     $texto = trim(html_entity_decode((string) $mensagem, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     $texto = $texto !== '' ? $texto : 'Olá! Vim pelo site da APTK.';
 @endphp
@@ -37,7 +38,7 @@
   }
   @media (prefers-reduced-motion: reduce) { .wa-flutuante { transition: none; } }
 </style>
-<a href="{{ whatsapp_link($texto) }}" target="_blank" rel="noopener"
+<a href="{{ whatsapp_link($texto, $marca) }}" target="_blank" rel="noopener"
    class="wa-flutuante" aria-label="Falar no WhatsApp" data-whatsapp-flutuante>
   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor">
     <path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.64.07-.3-.15-1.26-.46-2.39-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.7.63.71.22 1.36.19 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35Z"/>

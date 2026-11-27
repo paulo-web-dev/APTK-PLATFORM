@@ -22,7 +22,15 @@ class Ice4prosIdentidadeTest extends TestCase
         ];
     }
 
-    /** @dataProvider enderecosDaIce4pros */
+    public static function paginasDaIce4pros(): array
+    {
+        return self::enderecosDaIce4pros() + [
+            'portfólio na APTK'          => ['/ice4pros/produtos'],
+            'portfólio no domínio próprio' => ['http://ice4pros.com.br/produtos'],
+        ];
+    }
+
+    /** @dataProvider paginasDaIce4pros */
     public function test_lp_carrega_so_a_identidade_da_ice4pros(string $url): void
     {
         $this->get($url)
@@ -47,7 +55,7 @@ class Ice4prosIdentidadeTest extends TestCase
             ->assertSee('img/marcas/ice4pros/favicon.svg', false)
             ->assertSee('img/aptk/home-ice4pros.jpg', false) // og:image
             ->assertSee('img/marcas/ice4pros/ice4pros-wordmark.svg', false)
-            ->assertSee('class="i4p-caveira"', false);
+            ->assertSee('class="i4p-wordmark', false); // encerramento (leva 21: wordmark no lugar da caveira)
     }
 
     public function test_tokens_estao_escopados_na_marca(): void

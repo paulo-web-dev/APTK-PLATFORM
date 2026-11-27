@@ -7,8 +7,10 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * WhatsApp único da APTK: config('marcas.whatsapp') ← APTK_WHATSAPP, link
- * sempre por whatsapp_link(). Nenhuma página renderiza outro número.
+ * WhatsApp por marca: páginas da APTK (e BARIN) só com config('marcas.whatsapp')
+ * ← APTK_WHATSAPP; páginas da Ice4Pros só com o número próprio (leva 21,
+ * config marcas.marcas.ice4pros.whatsapp ← ICE4PROS_WHATSAPP). Link sempre
+ * por whatsapp_link().
  */
 class WhatsappTest extends TestCase
 {
@@ -17,7 +19,18 @@ class WhatsappTest extends TestCase
     private const PAGINAS = [
         '/', '/loja', '/custom', '/quem-somos', '/clube', '/eventos', '/collabs',
         '/assinantes', '/novidades', '/barin', '/ice4pros', '/carrinho', '/login', '/register',
+        '/ice4pros/produtos',
     ];
+
+    /** Páginas da Ice4Pros: número próprio da marca. */
+    private const PAGINAS_ICE4PROS = ['/ice4pros', '/ice4pros/produtos'];
+
+    private function numeroDa(string $url): string
+    {
+        return in_array($url, self::PAGINAS_ICE4PROS, true)
+            ? config('marcas.marcas.ice4pros.whatsapp')
+            : config('marcas.whatsapp');
+    }
 
     public function test_helpers_montam_link_e_numero_da_aptk(): void
     {
@@ -41,13 +54,13 @@ class WhatsappTest extends TestCase
             preg_match_all('#<a\b[^>]*href="(https://wa\.me/[^"]*)"[^>]*>#', $html, $links, PREG_SET_ORDER);
             foreach ($links as [$tag, $href]) {
                 $vistos++;
-                $this->assertMatchesRegularExpression('#^https://wa\.me/'.config('marcas.whatsapp').'(\?text=[^"]+)?$#', html_entity_decode($href), "{$url}: {$href}");
+                $this->assertMatchesRegularExpression('#^https://wa\.me/'.$this->numeroDa($url).'(\?text=[^"]+)?$#', html_entity_decode($href), "{$url}: {$href}");
                 $this->assertStringContainsString('target="_blank"', $tag, $url);
                 $this->assertStringContainsString('rel="noopener', $tag, $url);
             }
             // Qualquer wa.me fora de <a> também tem de ser o da APTK.
             preg_match_all('#wa\.me/(\d+)#', $html, $numeros);
-            $this->assertSame([], array_values(array_diff(array_unique($numeros[1]), [config('marcas.whatsapp')])), $url);
+            $this->assertSame([], array_values(array_diff(array_unique($numeros[1]), [$this->numeroDa($url)])), $url);
         }
 
         // Pelo menos um link (rodapé, CTAs, botão flutuante). Contagem exata
@@ -67,6 +80,15 @@ class WhatsappTest extends TestCase
     {
         $this->get('/')
             ->assertSee('href="https://wa.me/5511934298435" target="_blank" rel="noopener" aria-label="WhatsApp da APTK: (11) 93429-8435"', false);
+    }
+
+    public function test_ice4pros_tem_numero_proprio(): void
+    {
+        $this->assertSame('5511917248795', config('marcas.marcas.ice4pros.whatsapp'));
+        $this->assertSame('https://wa.me/5511917248795', whatsapp_link(null, 'ice4pros'));
+        $this->assertSame('(11) 91724-8795', whatsapp_formatado('ice4pros'));
+        // marca sem número próprio cai no da APTK
+        $this->assertSame('https://wa.me/5511934298435', whatsapp_link(null, 'marca-sem-numero'));
     }
 
     public function test_numero_vem_do_env(): void

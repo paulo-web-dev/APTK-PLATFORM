@@ -39,7 +39,7 @@ class SemMailtoTest extends TestCase
         $collabs = $this->get('/collabs')->getContent();
         $this->assertGreaterThanOrEqual(2, substr_count($collabs, e(whatsapp_link('Olá! Vim pelo site e quero conversar sobre uma collab / projeto personalizado.'))));
 
-        $this->get('/ice4pros')->assertSee(whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.'), false);
+        $this->get('/ice4pros')->assertSee(e(whatsapp_link(config('marcas.marcas.ice4pros.whatsapp_mensagem'), 'ice4pros')), false);
         $this->get('/barin')->assertSee(whatsapp_link('Olá! Vim pelo site e quero falar sobre revenda da BARIN.'), false);
     }
 }

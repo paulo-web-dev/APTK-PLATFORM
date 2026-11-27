@@ -71,22 +71,53 @@ if (! function_exists('cpf_formatado')) {
 
 if (! function_exists('whatsapp_link')) {
     /**
-     * Link do WhatsApp da APTK (config marcas.whatsapp), com mensagem
-     * pré-preenchida opcional. Todo link de WhatsApp do site passa por aqui.
+     * Link do WhatsApp com mensagem pré-preenchida opcional. Todo link de
+     * WhatsApp do site passa por aqui. Sem $marca = número da APTK (config
+     * marcas.whatsapp); com $marca = número próprio da marca (config
+     * marcas.marcas.{slug}.whatsapp, ex. 'ice4pros').
      */
-    function whatsapp_link(?string $mensagem = null): string
+    function whatsapp_link(?string $mensagem = null, ?string $marca = null): string
     {
-        $link = 'https://wa.me/'.config('marcas.whatsapp');
+        $link = 'https://wa.me/'.whatsapp_numero($marca);
 
         return filled($mensagem) ? $link.'?text='.rawurlencode($mensagem) : $link;
     }
 }
 
-if (! function_exists('whatsapp_formatado')) {
-    /** Número da APTK para exibição: "(11) 93429-8435" (sem o DDI 55). */
-    function whatsapp_formatado(): string
+if (! function_exists('whatsapp_numero')) {
+    /** Só dígitos, com DDI: o da marca (se tiver número próprio) ou o da APTK. */
+    function whatsapp_numero(?string $marca = null): string
     {
-        $n = preg_replace('/^55(?=\d{10,11}$)/', '', (string) config('marcas.whatsapp'));
+        $numero = $marca !== null ? config("marcas.marcas.{$marca}.whatsapp") : null;
+
+        return (string) ($numero ?: config('marcas.whatsapp'));
+    }
+}
+
+if (! function_exists('marca_url')) {
+    /**
+     * Página de uma marca com domínio próprio (config marcas.marcas.{slug}):
+     * no domínio da marca, o caminho relativo ('/', '/produtos'); no domínio
+     * da APTK, a rota equivalente (/ice4pros, /ice4pros/produtos).
+     */
+    function marca_url(string $marca, string $pagina = ''): string
+    {
+        $pagina = trim($pagina, '/');
+        $hosts = config("marcas.marcas.{$marca}.hosts", []);
+
+        if (app()->bound('request') && in_array(request()->getHost(), $hosts, true)) {
+            return '/'.$pagina;
+        }
+
+        return route($pagina === '' ? $marca : "{$marca}.{$pagina}");
+    }
+}
+
+if (! function_exists('whatsapp_formatado')) {
+    /** Número para exibição: "(11) 93429-8435" (sem o DDI 55). */
+    function whatsapp_formatado(?string $marca = null): string
+    {
+        $n = preg_replace('/^55(?=\d{10,11}$)/', '', whatsapp_numero($marca));
 
         return preg_match('/^(\d{2})(\d{4,5})(\d{4})$/', $n, $m) ? "({$m[1]}) {$m[2]}-{$m[3]}" : $n;
     }

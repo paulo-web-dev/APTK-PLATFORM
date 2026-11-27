@@ -8,7 +8,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Domínio próprio de marca (config/marcas.php): a raiz serve a LP da marca
- * com layout isolado; o resto leva 301 pro mesmo caminho no domínio da APTK.
+ * com layout isolado, assim como as páginas listadas em 'paginas' (leva 21:
+ * ice4pros.com.br/produtos); o resto leva 301 pro mesmo caminho no domínio
+ * da APTK.
  *
  * Global no Kernel, depois do TrustProxies (Host correto atrás de proxy) e
  * do modo manutenção (em manutenção, marca responde 503 como todo o resto).
@@ -39,6 +41,15 @@ class MarcaHost
         // query inteira (AplicarCupomDaUrl guarda e limpa o parâmetro).
         if ($request->path() === '/' && ! $request->query->has('cupom')) {
             return response()->view($marca['view'], [
+                'layoutMarca' => 'layouts.marca',
+                'marca'       => $marca,
+            ]);
+        }
+
+        // Leva 21: outras páginas da marca (config marcas.marcas.{slug}.paginas).
+        $pagina = $marca['paginas'][$request->path()] ?? null;
+        if ($pagina !== null && ! $request->query->has('cupom')) {
+            return response()->view($pagina, [
                 'layoutMarca' => 'layouts.marca',
                 'marca'       => $marca,
             ]);

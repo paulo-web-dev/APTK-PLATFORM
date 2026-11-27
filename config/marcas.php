@@ -26,6 +26,18 @@ return [
             'view'  => 'shop.ice4pros',
             'url'   => 'https://ice4pros.com.br',
             'hosts' => ['ice4pros.com.br', 'www.ice4pros.com.br', 'ice4pros.localhost'],
+
+            // Leva 21: páginas além da raiz servidas no domínio da marca
+            // (caminho => view). O resto leva 301 pra APTK. No domínio da
+            // APTK a mesma view sai em /ice4pros/{caminho} (marca_url()).
+            'paginas' => [
+                'produtos' => 'shop.ice4pros-produtos',
+            ],
+
+            // Leva 21: WhatsApp comercial próprio (só dígitos, com DDI) e a
+            // mensagem de todos os CTAs comerciais das páginas da marca.
+            'whatsapp' => preg_replace('/\D+/', '', (string) env('ICE4PROS_WHATSAPP', '5511917248795')),
+            'whatsapp_mensagem' => 'Olá! Conheci a Ice4Pros através do site e gostaria de receber mais informações sobre o portfólio e as soluções disponíveis.',
         ],
 
     ],
@@ -59,10 +71,11 @@ return [
     |--------------------------------------------------------------------------
     | WhatsApp da APTK
     |--------------------------------------------------------------------------
-    | Número único de todos os links de WhatsApp do site (rodapé, Full
-    | Custom): só dígitos, com DDI e DDD. Link sempre via whatsapp_link();
-    | número escrito via whatsapp_formatado(). Lembrar do config:cache em
-    | produção.
+    | Número de todos os links de WhatsApp das páginas da APTK (e da BARIN):
+    | só dígitos, com DDI e DDD. Link sempre via whatsapp_link(); número
+    | escrito via whatsapp_formatado(). Marca com número próprio (Ice4Pros,
+    | leva 21) tem 'whatsapp' na entrada dela em 'marcas' e passa o slug:
+    | whatsapp_link($msg, 'ice4pros'). Lembrar do config:cache em produção.
     */
     'whatsapp' => preg_replace('/\D+/', '', (string) env('APTK_WHATSAPP', '5511934298435')),
 

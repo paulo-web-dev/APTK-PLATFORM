@@ -42,13 +42,15 @@ class WhatsappFlutuanteTest extends TestCase
             'collabs'       => ['/collabs', 'Olá! Vim pelo site e quero conversar sobre uma collab / projeto personalizado.'],
             'barin'         => ['/barin', 'Olá! Vim pelo site e quero saber mais sobre a BARIN.'],
             'carrinho'      => ['/carrinho', 'Olá! Vim pelo site da APTK.'],
-            'ice4pros'      => ['/ice4pros', 'Olá! Vim pelo site da Ice4Pros.'],
-            'host ice4pros' => ['http://ice4pros.com.br/', 'Olá! Vim pelo site da Ice4Pros.'],
+            'ice4pros'      => ['/ice4pros', 'Olá! Conheci a Ice4Pros através do site e gostaria de receber mais informações sobre o portfólio e as soluções disponíveis.', '5511917248795'],
+            'portfólio'     => ['/ice4pros/produtos', 'Olá! Conheci a Ice4Pros através do site e gostaria de receber mais informações sobre o portfólio e as soluções disponíveis.', '5511917248795'],
+            'host ice4pros' => ['http://ice4pros.com.br/', 'Olá! Conheci a Ice4Pros através do site e gostaria de receber mais informações sobre o portfólio e as soluções disponíveis.', '5511917248795'],
+            'host produtos' => ['http://ice4pros.com.br/produtos', 'Olá! Conheci a Ice4Pros através do site e gostaria de receber mais informações sobre o portfólio e as soluções disponíveis.', '5511917248795'],
         ];
     }
 
     /** @dataProvider paginas */
-    public function test_botao_aparece_com_a_mensagem_da_pagina(string $url, string $mensagem): void
+    public function test_botao_aparece_com_a_mensagem_da_pagina(string $url, string $mensagem, string $numero = '5511934298435'): void
     {
         $tag = $this->flutuante($this->get($url)->assertOk()->getContent());
 
@@ -56,7 +58,7 @@ class WhatsappFlutuanteTest extends TestCase
         $this->assertStringContainsString('aria-label="Falar no WhatsApp"', $tag);
         $this->assertStringContainsString('target="_blank"', $tag);
         $this->assertStringContainsString('rel="noopener"', $tag);
-        $this->assertStringContainsString('https://wa.me/'.config('marcas.whatsapp').'?text=', $tag);
+        $this->assertStringContainsString('https://wa.me/'.$numero.'?text=', $tag);
         $this->assertSame($mensagem, $this->mensagem($tag));
     }
 

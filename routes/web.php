@@ -83,6 +83,8 @@ Route::view('/barin', 'shop.barin')->name('barin');
 Route::get('/novidades', [NovidadesController::class, 'index'])->name('novidades.index');
 Route::get('/novidades/{slug}', [NovidadesController::class, 'show'])->name('novidades.show');
 Route::view('/ice4pros', 'shop.ice4pros')->name('ice4pros');
+// Leva 21: portfólio Ice4Pros (no domínio da marca: ice4pros.com.br/produtos, MarcaHost).
+Route::view('/ice4pros/produtos', 'shop.ice4pros-produtos')->name('ice4pros.produtos');
 
 // Clube (pré-lançamento): captação de interesse → Lead tipo "clube".
 Route::post('/clube/interesse', [PageController::class, 'clubeInteresse'])->name('clube.interesse');

@@ -101,7 +101,13 @@ com toggle global — não tratar como opcional.
 `body[data-marca="ice4pros"]`; turquesa `#40A4B7`, preto `#231F20`, branco; Oswald em
 `public/fonts/`, família em `--i4p-font-display`; texto corrido na sans do sistema).
 Sem Bootstrap, sem `aptk.css`/fontes da APTK, sem theme-init. Sobre turquesa o texto é
-preto (branco reprova AA). Logos em `public/img/marcas/ice4pros/`, caveira inline via
+preto (branco reprova AA). Portfólio (leva 21) em `/ice4pros/produtos` e
+`ice4pros.com.br/produtos` (`marcas.marcas.ice4pros.paginas`, servido pelo
+MarcaHost); link sempre `marca_url('ice4pros', 'produtos')`. Cards, Custom Ice
+e clientes em `config/ice4pros.php`; fotos em `public/img/marcas/ice4pros/fotos/`.
+Encerramento comum `<x-ice4pros.encerramento>`; wordmark inline
+`<x-ice4pros.wordmark [mono]>`. Texto-fonte sempre "Ice4Pros" (caixa alta só
+por CSS). Logo da Small Batches no rodapé: pendente (TODO no layout). Logos em `public/img/marcas/ice4pros/`, caveira inline via
 `<x-ice4pros.caveira>` (currentColor). Links pra APTK sempre `aptk_route()`. BARIN
 segue no `layouts.public`. `Ice4prosIdentidadeTest` trava o isolamento.
 
@@ -119,10 +125,16 @@ eyebrow/título/texto/link, proporção via `--mc-ratio`) e `<x-photo-slot ratio
 **Links das marcas** nos cards do ecossistema (Quem Somos): `config/marcas.php`
 → `links` (url + label). Mudou → `config:cache` em produção.
 
-**WhatsApp único:** `config('marcas.whatsapp')` ← `APTK_WHATSAPP` (padrão
-5511934298435). Link sempre `whatsapp_link(?$mensagem)` (aba nova,
-`rel="noopener"`); número escrito `whatsapp_formatado()` → "(11) 93429-8435".
-Nunca número no código. `WhatsappTest` varre as páginas.
+**WhatsApp por marca:** APTK (e BARIN) = `config('marcas.whatsapp')` ←
+`APTK_WHATSAPP` (padrão 5511934298435); Ice4Pros = número próprio
+`marcas.marcas.ice4pros.whatsapp` ← `ICE4PROS_WHATSAPP` (padrão 5511917248795,
+leva 21), sempre com `marcas.marcas.ice4pros.whatsapp_mensagem`. Link sempre
+`whatsapp_link(?$mensagem, ?$marca)` (aba nova, `rel="noopener"`); número
+escrito `whatsapp_formatado(?$marca)`. Nunca número no código. Contato
+comercial nunca é `mailto:` (leva 20: no Windows abre o Outlook); e-mail só
+como texto no rodapé. Botão flutuante `<x-whatsapp-flutuante>` nos três
+layouts públicos, mensagem por `@section('whatsapp_mensagem')`.
+`WhatsappTest`, `SemMailtoTest` e `WhatsappFlutuanteTest` varrem as páginas.
 
 **Custom Simples (leva 11): compra direta.** Configurador em `/custom` (primeira
 dobra; bebida, texto, fonte — texto sempre preto) → `POST /custom/carrinho` (`custom.cart`); não cria mais lead.
@@ -411,4 +423,4 @@ qualquer pasta de upload nova ali precisa da mesma re-inclusão explícita).
 - Não rodar `migrate:fresh` sem avisar — apaga dados locais.
 - Depois de mexer em rota, rodar `php artisan route:clear`.
 - Mudanças do cliente vêm agrupadas em "levas" numeradas, cada uma com escopo fechado
-  antes da execução. As levas 01 a 19 já foram concluídas.
+  antes da execução. As levas 01 a 21 já foram concluídas.

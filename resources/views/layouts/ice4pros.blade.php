@@ -40,12 +40,12 @@
 
   <header class="i4p-header">
     <div class="i4p-container">
-      <a href="{{ $i4p['url'] }}/" class="i4p-logo" aria-label="Ice4Pros — início">
+      <a href="{{ marca_url('ice4pros') }}" class="i4p-logo" aria-label="Ice4Pros — início">
         <img src="{{ asset('img/marcas/ice4pros/ice4pros-wordmark.svg') }}" alt="Ice4Pros" width="170" height="37">
       </a>
       <nav class="i4p-header-nav" aria-label="Ice4Pros">
         <a href="{{ aptk_route('home') }}" class="i4p-header-link i4p-header-link--opcional">APTK Spirits</a>
-        <a href="{{ whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.') }}" target="_blank" rel="noopener" class="i4p-btn i4p-btn--outline i4p-btn--sm">Comercial</a>
+        <a href="{{ whatsapp_link($i4p['whatsapp_mensagem'], 'ice4pros') }}" target="_blank" rel="noopener" class="i4p-btn i4p-btn--outline i4p-btn--sm">Comercial</a>
       </nav>
     </div>
   </header>
@@ -56,12 +56,14 @@
 
   <footer class="i4p-footer">
     <div class="i4p-container">
-      <p>{{ $i4p['nome'] }} · contato pelo <a href="{{ whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.') }}" target="_blank" rel="noopener">WhatsApp</a> · <span class="i4p-email">{{ config('marcas.email_contato') }}</span></p>
+      <p>{{ $i4p['nome'] }} · contato pelo <a href="{{ whatsapp_link($i4p['whatsapp_mensagem'], 'ice4pros') }}" target="_blank" rel="noopener">WhatsApp</a> · <span class="i4p-email">{{ config('marcas.email_contato') }}</span></p>
+      {{-- TODO leva 21: logo da Small Batches no lugar do texto quando a marca enviar o arquivo. --}}
       <p>uma marca <a href="{{ aptk_route('home') }}">Small Batches</a> · © {{ date('Y') }}</p>
     </div>
   </footer>
 
-  <x-whatsapp-flutuante :mensagem="$__env->yieldContent('whatsapp_mensagem', 'Olá! Vim pelo site da Ice4Pros.')" />
+  {{-- Leva 21: número próprio da Ice4Pros e a mensagem padrão do briefing em todo CTA comercial. --}}
+  <x-whatsapp-flutuante marca="ice4pros" :mensagem="$i4p['whatsapp_mensagem']" />
 
   @stack('scripts')
 </body>
