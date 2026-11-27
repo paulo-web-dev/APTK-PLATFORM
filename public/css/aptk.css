@@ -142,6 +142,10 @@ ul.list-clean { margin: 0; padding: 0; list-style: none; }
 
 .btn-aptk--block { width: 100%; }
 
+/* Variante grande (CTA principal de seção, ex.: Full Custom) */
+.btn-aptk--lg { padding: 18px 34px; font-size: var(--text-base); }
+@media (max-width: 520px) { .btn-aptk--lg { width: 100%; padding-inline: 20px; } }
+
 /* Card base */
 .card-aptk {
   background: var(--color-bg-card);

@@ -23,6 +23,10 @@ body[data-marca="ice4pros"] {
   --i4p-preto:    #231F20;
   --i4p-branco:   #FFFFFF;
 
+  /* Botão flutuante de WhatsApp: turquesa com ícone preto (branco reprova AA) */
+  --color-whatsapp:    var(--i4p-turquesa);
+  --color-on-whatsapp: var(--i4p-preto);
+
   /* Derivados */
   --i4p-turquesa-hover: color-mix(in srgb, var(--i4p-turquesa) 82%, var(--i4p-branco));
   --i4p-turquesa-ativo: color-mix(in srgb, var(--i4p-turquesa) 85%, var(--i4p-preto));

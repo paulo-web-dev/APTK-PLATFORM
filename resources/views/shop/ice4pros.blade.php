@@ -67,7 +67,7 @@
         <p class="lead">Gelos perfeitos, cristalinos e padronizados — de classe mundial. Água hiperfiltrada, pedras translúcidas e a logotipagem pioneira no país, servindo a alta coquetelaria desde 2017.</p>
         <div class="i4p-ctas">
           <a href="{{ aptk_route('catalog', ['categoria' => 'ice4pros']) }}" class="i4p-btn">Conheça os produtos</a>
-          <a href="{{ aptk_route('pages.show', 'collabs') }}" class="i4p-btn i4p-btn--outline">Falar com o comercial</a>
+          <a href="{{ whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.') }}" target="_blank" rel="noopener" class="i4p-btn i4p-btn--outline">Falar com o comercial</a>
         </div>
       </div>
       <div class="i4p-video">
@@ -221,7 +221,7 @@
       <h2>Leve o gelo cristal pro seu negócio</h2>
       <p>Conte o seu formato — bar, restaurante, evento ou revenda — e a gente monta a melhor condição.</p>
       <div class="i4p-ctas">
-        <a href="{{ aptk_route('pages.show', 'collabs') }}" class="i4p-btn i4p-btn--escuro">Falar com o comercial</a>
+        <a href="{{ whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.') }}" target="_blank" rel="noopener" class="i4p-btn i4p-btn--escuro">Falar com o comercial</a>
         <a href="{{ aptk_route('catalog', ['categoria' => 'ice4pros']) }}" class="i4p-btn i4p-btn--outline">Ver produtos</a>
       </div>
     </div>

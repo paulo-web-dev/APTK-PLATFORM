@@ -114,6 +114,7 @@
   .footer-news input:focus { outline: none; border-color: var(--color-primary); }
   .footer-news .news-ok { color: var(--color-success); font-size: var(--text-xs); margin: 10px 0 0; }
   .footer-news .news-err { color: var(--color-danger); font-size: var(--text-xs); margin: 10px 0 0; }
+  .footer-email { user-select: all; color: var(--color-text-muted); font-size: var(--text-sm); }
   .footer-bottom { border-top: 1px solid var(--color-border); padding-block: 26px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
   .footer-bottom p { color: var(--color-text-muted); font-size: var(--text-xs); margin: 0; }
   .footer-bottom .pays { display: flex; gap: 10px; }
@@ -272,6 +273,8 @@
             <x-brand.logo />
           </a>
           <p>Drinks &amp; histórias pra contar. Destilados e drinks autorais da APTK, ao lado das marcas BARIN e Ice4Pros.</p>
+          {{-- E-mail só como texto copiável, nunca destino de botão (leva 20). --}}
+          <p class="footer-email">{{ config('marcas.email_contato') }}</p>
           <div class="footer-social">
             <a href="https://www.instagram.com/aptkspirits/" target="_blank" rel="noopener noreferrer" aria-label="Instagram da APTK">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
@@ -343,6 +346,8 @@
       document.querySelector('.site-header').classList.toggle('nav-open');
     });
   </script>
+  <x-whatsapp-flutuante :mensagem="$__env->yieldContent('whatsapp_mensagem')" />
+
   @stack('scripts')
   {{-- toggle de tema removido (leva 03: dark fixo) --}}
 </body>

@@ -5,6 +5,7 @@
 @extends('layouts.public')
 
 @section('title', 'BARIN — A linha artesanal da holding · APTK Spirits')
+@section('whatsapp_mensagem', 'Olá! Vim pelo site e quero saber mais sobre a BARIN.')
 @section('meta_description', 'BARIN: bebidas artesanais com receitas próprias e identidade de bar. Conheça a marca artesanal da holding APTK Spirits.')
 
 @push('styles')
@@ -180,7 +181,7 @@
       <p>A linha BARIN está na loja APTK — engarrafada, pronta e com a assinatura do balcão.</p>
       <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center;">
         <a href="{{ route('catalog', ['categoria' => 'barin']) }}" class="btn-aptk">Conheça os produtos</a>
-        <a href="{{ route('pages.show', 'collabs') }}" class="btn-aptk btn-aptk--outline">Revenda e parcerias</a>
+        <a href="{{ whatsapp_link('Olá! Vim pelo site e quero falar sobre revenda da BARIN.') }}" target="_blank" rel="noopener" class="btn-aptk btn-aptk--outline">Revenda e parcerias</a>
       </div>
     </div>
   </section>

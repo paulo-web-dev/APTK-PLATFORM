@@ -1,6 +1,7 @@
 @extends('layouts.public')
 
 @section('title', $product->name . ' · APTK Spirits')
+@section('whatsapp_mensagem', 'Olá! Vim pelo site e tenho uma dúvida sobre '.$product->name.'.')
 
 @push('styles')
 <style>

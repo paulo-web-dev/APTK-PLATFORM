@@ -118,6 +118,8 @@ class MarcaHostTest extends TestCase
     {
         $this->get('http://ice4pros.com.br/')
             ->assertSee($this->aptkUrl('/loja?categoria=ice4pros'), false)
-            ->assertSee($this->aptkUrl('/collabs'), false);
+            // Leva 20: o comercial vai direto pro WhatsApp, não mais pra /collabs.
+            ->assertSee(e(whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.')), false)
+            ->assertDontSee($this->aptkUrl('/collabs'), false);
     }
 }

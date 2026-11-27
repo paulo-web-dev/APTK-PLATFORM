@@ -21,6 +21,9 @@ use Illuminate\View\View;
  */
 class CustomController extends Controller
 {
+    /** Leva 20: mensagem do WhatsApp do Full Custom (topo, fim e flutuante). */
+    public const WHATSAPP_FULL_CUSTOM = 'Olá! Vim pelo site e quero saber mais sobre o Full Custom.';
+
     public function __construct(
         protected CartService $cart,
         protected CustomService $custom,

@@ -2,6 +2,9 @@
 
 @section('title', $page['title'] . ' · APTK Spirits')
 @section('meta_description', $page['lead'])
+@if (! empty($page['whatsapp']))
+  @section('whatsapp_mensagem', $page['whatsapp'])
+@endif
 
 {{-- Tem fechamento próprio — esconde a faixa institucional do layout. --}}
 @section('hide_feature_band', '1')
@@ -89,7 +92,7 @@
         <h1>{{ $page['title'] }}</h1>
         <p class="lead">{{ $page['lead'] }}</p>
         @if (! empty($page['hero_cta']))
-          <a href="{{ $page['hero_cta']['href'] }}" class="btn-aptk">{{ $page['hero_cta']['label'] }}</a>
+          <a href="{{ $page['hero_cta']['href'] }}" @if (str_starts_with($page['hero_cta']['href'], 'https://')) target="_blank" rel="noopener" @endif class="btn-aptk">{{ $page['hero_cta']['label'] }}</a>
         @endif
       </div>
       <div class="hero-vvideo">
@@ -113,7 +116,7 @@
       <h1>{{ $page['title'] }}</h1>
       <p class="lead">{{ $page['lead'] }}</p>
       @if (! empty($page['hero_cta']))
-        <a href="{{ $page['hero_cta']['href'] }}" class="btn-aptk">{{ $page['hero_cta']['label'] }}</a>
+        <a href="{{ $page['hero_cta']['href'] }}" @if (str_starts_with($page['hero_cta']['href'], 'https://')) target="_blank" rel="noopener" @endif class="btn-aptk">{{ $page['hero_cta']['label'] }}</a>
       @endif
     </div>
   </section>
@@ -209,7 +212,7 @@
       <h2>{{ $page['closing_title'] }}</h2>
       <p>{{ $page['closing_text'] }}</p>
       <div class="cta-row">
-        <a href="{{ $page['closing_cta']['href'] }}" class="btn-aptk">{{ $page['closing_cta']['label'] }}</a>
+        <a href="{{ $page['closing_cta']['href'] }}" @if (str_starts_with($page['closing_cta']['href'], 'https://')) target="_blank" rel="noopener" @endif class="btn-aptk">{{ $page['closing_cta']['label'] }}</a>
         @if (! empty($page['closing_cta2']))
           <a href="{{ $page['closing_cta2']['href'] }}" class="btn-aptk btn-aptk--outline">{{ $page['closing_cta2']['label'] }}</a>
         @endif

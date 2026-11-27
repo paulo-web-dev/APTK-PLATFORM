@@ -23,6 +23,9 @@
   --color-scotch: #BF6300;  /* Scotch — ambar assinatura */
   --color-nude:   #D0B29B;  /* Amarula */
   --color-copper: #B87333;  /* Cobre (aprox. p/ tela) */
+  /* WhatsApp (botão flutuante, leva 20): verde oficial + ícone branco. */
+  --color-whatsapp:    #25D366;
+  --color-on-whatsapp: #FFFFFF;
   --copper-foil:  linear-gradient(135deg,#7A4A22 0%,#C98A4E 28%,#F0C79A 50%,#B87333 72%,#8A5A2C 100%);
 
   /* ----- Tokens semanticos — TEMA CLARO (base editorial) ----- */

@@ -5,6 +5,7 @@
 @extends('layouts.public')
 
 @section('title', 'Eventos · APTK Spirits')
+@section('whatsapp_mensagem', 'Olá! Vim pelo site e quero uma proposta para um evento.')
 @section('meta_description', 'Eventos APTK: bar de alta coquetelaria, gifting, brand experiences e customização para eventos corporativos, lançamentos e celebrações privadas.')
 
 {{-- Fechamento próprio ("Vamos criar juntos?"), sem a banda institucional. --}}
@@ -66,7 +67,7 @@
         <h1 class="title-editorial">Grandes encontros merecem uma assinatura especial.</h1>
         <p>Da alta coquetelaria aos detalhes que fazem a diferença, criamos soluções personalizadas para eventos que pedem mais do que o convencional.</p>
         <p>Unimos criatividade, excelência e hospitalidade para transformar cada ocasião em uma celebração com identidade própria.</p>
-        <a href="{{ $proposta }}" class="btn-aptk">Solicite uma proposta <span class="btn-arrow">→</span></a>
+        <a href="{{ $proposta }}" target="_blank" rel="noopener" class="btn-aptk">Solicite uma proposta <span class="btn-arrow">→</span></a>
       </div>
     </div>
   </section>
@@ -194,7 +195,7 @@
       <span class="eyebrow">Vamos criar juntos?</span>
       <h2 class="title-editorial">Seu próximo evento merece algo extraordinário.</h2>
       <p>Conte para nós o que você está planejando. Nossa equipe transforma ideias em soluções personalizadas, com a criatividade e a excelência da alta coquetelaria APTK.</p>
-      <a href="{{ $proposta }}" class="btn-aptk">Solicitar proposta <span class="btn-arrow">→</span></a>
+      <a href="{{ $proposta }}" target="_blank" rel="noopener" class="btn-aptk">Solicitar proposta <span class="btn-arrow">→</span></a>
     </div>
   </section>
 @endsection

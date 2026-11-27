@@ -23,14 +23,15 @@ class EventosPaginaTest extends TestCase
             ->assertSee('Diferentes formatos. A mesma excelência.')
             ->assertSee('Da primeira ideia ao último brinde.')
             ->assertSee('Seu próximo evento merece algo extraordinário.')
-            ->assertSee('mailto:contato@aptkspirits.com', false)
+            ->assertSee(e(whatsapp_link('Olá! Vim pelo site e quero uma proposta para um evento.')), false)
+            ->assertDontSee('mailto:', false)
             ->assertDontSee('Ver a carta');
     }
 
     public function test_portfolio_some_sem_itens(): void
     {
         $this->withViewErrors([])
-            ->view('shop.eventos', ['portfolio' => [], 'proposta' => 'mailto:teste@exemplo.test'])
+            ->view('shop.eventos', ['portfolio' => [], 'proposta' => whatsapp_link()])
             ->assertDontSee('Marcas que já brindaram com a APTK.');
     }
 

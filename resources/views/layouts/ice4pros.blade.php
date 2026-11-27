@@ -45,7 +45,7 @@
       </a>
       <nav class="i4p-header-nav" aria-label="Ice4Pros">
         <a href="{{ aptk_route('home') }}" class="i4p-header-link i4p-header-link--opcional">APTK Spirits</a>
-        <a href="{{ aptk_route('pages.show', 'collabs') }}" class="i4p-btn i4p-btn--outline i4p-btn--sm">Comercial</a>
+        <a href="{{ whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.') }}" target="_blank" rel="noopener" class="i4p-btn i4p-btn--outline i4p-btn--sm">Comercial</a>
       </nav>
     </div>
   </header>
@@ -56,10 +56,12 @@
 
   <footer class="i4p-footer">
     <div class="i4p-container">
-      <p>{{ $i4p['nome'] }} · contato pelo <a href="{{ aptk_route('pages.show', 'collabs') }}">comercial</a></p>
+      <p>{{ $i4p['nome'] }} · contato pelo <a href="{{ whatsapp_link('Olá! Vim pelo site da Ice4Pros e quero falar com o comercial.') }}" target="_blank" rel="noopener">WhatsApp</a> · <span class="i4p-email">{{ config('marcas.email_contato') }}</span></p>
       <p>uma marca <a href="{{ aptk_route('home') }}">Small Batches</a> · © {{ date('Y') }}</p>
     </div>
   </footer>
+
+  <x-whatsapp-flutuante :mensagem="$__env->yieldContent('whatsapp_mensagem', 'Olá! Vim pelo site da Ice4Pros.')" />
 
   @stack('scripts')
 </body>

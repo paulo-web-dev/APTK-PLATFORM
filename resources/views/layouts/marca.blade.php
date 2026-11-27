@@ -44,6 +44,7 @@
   .marca-footer .container-aptk { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
   .marca-footer p { margin: 0; color: var(--color-text-muted); font-size: var(--text-xs); }
   .marca-footer a { color: var(--color-text-muted); text-decoration: underline; text-underline-offset: 3px; }
+  .marca-footer .marca-email { user-select: all; }
   .marca-footer a:hover { color: var(--color-primary); }
   </style>
 
@@ -65,10 +66,12 @@
 
   <footer class="marca-footer">
     <div class="container-aptk">
-      <p>{{ $marca['nome'] }} · contato pelo <a href="{{ aptk_route('pages.show', 'collabs') }}">comercial</a></p>
+      <p>{{ $marca['nome'] }} · contato pelo <a href="{{ whatsapp_link('Olá! Vim pelo site da '.$marca['nome'].' e quero falar com o comercial.') }}" target="_blank" rel="noopener">WhatsApp</a> · <span class="marca-email">{{ config('marcas.email_contato') }}</span></p>
       <p>uma marca <a href="{{ aptk_route('home') }}">Small Batches</a> · © {{ date('Y') }}</p>
     </div>
   </footer>
+
+  <x-whatsapp-flutuante :mensagem="$__env->yieldContent('whatsapp_mensagem', 'Olá! Vim pelo site da '.$marca['nome'].'.')" />
 
   @stack('scripts')
 </body>

@@ -10,6 +10,12 @@ use Illuminate\View\View;
 
 class PageController extends Controller
 {
+    /* Leva 20: CTAs de contato comercial vão pro WhatsApp (whatsapp_link),
+       nunca mailto. O e-mail (config marcas.email_contato) fica só como texto
+       no rodapé. */
+    public const WHATSAPP_EVENTOS = 'Olá! Vim pelo site e quero uma proposta para um evento.';
+    public const WHATSAPP_COLLABS = 'Olá! Vim pelo site e quero conversar sobre uma collab / projeto personalizado.';
+
     public function show(string $slug): View
     {
         // Páginas com layout próprio.
@@ -33,7 +39,8 @@ class PageController extends Controller
             return view('shop.eventos', [
                 // Leva 14: portfólio = grade de collabs (só aparece com ≥ 1 item).
                 'portfolio' => self::collabs(),
-                'proposta'  => $this->mailto('Evento — solicitar proposta — APTK'),
+                // Leva 20: WhatsApp no lugar do mailto (no Windows o mailto abria o Outlook).
+                'proposta'  => whatsapp_link(self::WHATSAPP_EVENTOS),
             ]);
         }
 
@@ -96,11 +103,6 @@ class PageController extends Controller
             ->all();
     }
 
-    /** E-mail de contato (config/marcas.php) com assunto pré-preenchido. */
-    private function mailto(string $subject): string
-    {
-        return 'mailto:'.config('marcas.email_contato').'?subject='.rawurlencode($subject);
-    }
 
     /**
      * Conteúdo das páginas institucionais, renderizado por shop/page.blade.php.
@@ -126,7 +128,8 @@ class PageController extends Controller
                 'video'     => 'video/ice4pros-cubo.mp4',
                 'video_tag' => 'Ice4Pros — o cubo perfeito',
                 'image'    => 'img/aptk/parceiros-hero.jpg',
-                'hero_cta' => ['label' => 'Compartilhar minha ideia', 'href' => $this->mailto('Collab / projeto personalizado — APTK')],
+                'whatsapp' => self::WHATSAPP_COLLABS,
+                'hero_cta' => ['label' => 'Compartilhar minha ideia', 'href' => whatsapp_link(self::WHATSAPP_COLLABS)],
 
                 // Portfólio de collabs (leva 14): config/collabs.php.
                 'cases_eyebrow' => 'Nossas parcerias',
@@ -150,7 +153,7 @@ class PageController extends Controller
 
                 'closing_title' => 'Na APTK, cada garrafa pode contar uma história',
                 'closing_text'  => 'Conte a sua — e a gente transforma em uma edição exclusiva.',
-                'closing_cta'   => ['label' => 'Falar com o comercial', 'href' => $this->mailto('Collab / projeto personalizado — APTK')],
+                'closing_cta'   => ['label' => 'Falar com o comercial', 'href' => whatsapp_link(self::WHATSAPP_COLLABS)],
                 'closing_cta2'  => null,
             ],
 

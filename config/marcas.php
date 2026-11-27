@@ -49,9 +49,9 @@ return [
     |--------------------------------------------------------------------------
     | E-mail de contato (leva 14)
     |--------------------------------------------------------------------------
-    | Destino de todos os CTAs de e-mail do site (Collabs, Eventos), com
-    | assunto pré-preenchido (PageController::mailto). Lembrar do
-    | config:cache em produção.
+    | Leva 20: só texto copiável nos rodapés (public, marca, Ice4Pros).
+    | Nenhum botão usa mailto: (no Windows abria o Outlook); contato
+    | comercial é sempre WhatsApp. Lembrar do config:cache em produção.
     */
     'email_contato' => 'contato@aptkspirits.com',
 

@@ -1,6 +1,7 @@
 @extends('layouts.public')
 
 @section('title', 'Custom — Rótulo personalizado · APTK Spirits')
+@section('whatsapp_mensagem', \App\Http\Controllers\Shop\CustomController::WHATSAPP_FULL_CUSTOM)
 @section('meta_description', 'APTK Custom: escolha o coquetel, o estilo do rótulo e a mensagem — ou traga a identidade da sua marca no Full Custom.')
 
 @section('hide_feature_band', '1')
@@ -45,6 +46,9 @@
   .cst-previa__txt.is-vazio { opacity: .35; }
   .cst-side h1 { font-size: clamp(2rem, 4.2vw, 2.8rem); margin: 14px 0 16px; }
   .cst-side > p { color: var(--color-text-muted); line-height: 1.75; margin: 0 0 28px; }
+  .cst-full-cta { margin: 0 0 28px; padding: 18px 20px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg-card); }
+  .cst-full-cta p { margin: 0 0 14px; color: var(--color-text-muted); font-size: var(--text-sm); line-height: 1.6; }
+  .cst-full-cta p a { color: var(--color-primary); }
   .cst-form { background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 28px; }
   .cst-step { border: 0; margin: 0 0 22px; padding: 0 0 22px; border-bottom: 1px solid var(--color-border); min-width: 0; }
   .cst-step legend { float: none; width: auto; font-family: var(--font-display); font-weight: 700; font-size: var(--text-lg); color: var(--color-text); margin-bottom: 14px; padding: 0; }
@@ -96,7 +100,8 @@
     .cst-hero .container-aptk, .full-grid { grid-template-columns: 1fr; gap: 36px; }
     .cst-config { grid-template-columns: minmax(0, 1fr); grid-template-areas: "side" "media" "form"; grid-template-rows: none; row-gap: 24px; }
     .cst-side h1 { margin-bottom: 10px; }
-    .cst-side > p { margin-bottom: 0; }
+    .cst-side > p { margin-bottom: 18px; }
+    .cst-full-cta { margin-bottom: 0; }
     .cst-config-media { position: static; }
     .cst-moldura { max-width: 340px; }
     /* Miniatura: trilho sticky de altura zero no topo do formulário — a
@@ -143,6 +148,14 @@
         <span class="eyebrow">Crie seu Drink</span>
         <h1 class="title-editorial">Um coquetel. A sua assinatura.</h1>
         <p>Escolha seu coquetel favorito, escreva a sua mensagem e defina o estilo do rótulo. A garrafa de {{ $volume }} sai com o seu pedido, pronta para presentear.</p>
+        {{-- Leva 20: Full Custom na primeira dobra (desktop e celular), além do bloco do fim. --}}
+        <div class="cst-full-cta">
+          <p>Quer o rótulo com a arte da sua marca? Conheça o <a href="#full-custom">Full Custom</a>.</p>
+          <a href="{{ whatsapp_link(\App\Http\Controllers\Shop\CustomController::WHATSAPP_FULL_CUSTOM) }}"
+             target="_blank" rel="noopener" class="btn-aptk btn-aptk--lg">
+            Solicitar orçamento do Full Custom <span class="btn-arrow">→</span>
+          </a>
+        </div>
       </div>
 
       <div class="cst-config-media">
@@ -295,9 +308,9 @@
         <span class="eyebrow">Full Custom</span>
         <h2 class="title-editorial">Sua identidade. Nossa criação.</h2>
         <p>Muito além de um rótulo personalizado. Desenvolvemos projetos exclusivos que conectam sua marca ao universo da alta coquetelaria, com criatividade, sofisticação e atenção a cada detalhe.</p>
-        <a href="{{ whatsapp_link('Olá! Quero um orçamento de Full Custom (rótulo com arte própria) da APTK.') }}"
-           target="_blank" rel="noopener" class="btn-aptk btn-aptk--outline">
-          Fale com nossa equipe <span class="btn-arrow">→</span>
+        <a href="{{ whatsapp_link(\App\Http\Controllers\Shop\CustomController::WHATSAPP_FULL_CUSTOM) }}"
+           target="_blank" rel="noopener" class="btn-aptk btn-aptk--lg">
+          Solicitar orçamento do Full Custom <span class="btn-arrow">→</span>
         </a>
       </div>
       <img class="full-img" src="{{ asset('img/aptk/custom-full.jpg') }}" alt="Negroni da APTK com rótulo personalizado “Melhor pai do mundo”" loading="lazy">
